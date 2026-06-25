@@ -41,6 +41,7 @@ const DailyCollectionSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
 });
+DailyCollectionSchema.index({ bikeId: 1, date: 1 });
 
 // --- EXPENSES (Credit & Payable Integration) ---
 const ExpenseSchema = new mongoose.Schema({
@@ -65,6 +66,7 @@ const LoanSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
+LoanSchema.index({ type: 1, resolved: 1 });
 
 // --- INCOME SOURCES ---
 const IncomeSourceSchema = new mongoose.Schema({
@@ -72,6 +74,7 @@ const IncomeSourceSchema = new mongoose.Schema({
   name: { type: String, required: true }, // e.g. "Shop 1 Rent", "Daily Sales", etc.
   amount: { type: Number, required: true },
   wallet: { type: String, enum: ['Business', 'Pocket', 'Drawer'], default: 'Business' },
+  note: { type: String, default: '' },
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });

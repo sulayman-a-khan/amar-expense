@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Amar Hishab (আমার হিসাব)
 
-## Getting Started
+A mobile-first daily ledger built for someone who needs an ultra-reliable, anxiety-free way to track bike rentals, expenses, multiple income streams, and loans — with explicit color-coding and a Double-Check Guard on every entry.
 
-First, run the development server:
+## Stack
+- Next.js 16 (App Router)
+- Tailwind CSS v4
+- MongoDB + Mongoose
+- Cloudinary (expense receipt photos)
+
+## Color Convention (fixed app-wide)
+- 🟢 Green — Income
+- 🔴 Red — Expense
+- 🔵 Blue — Loans / Transfers
+
+## Local Setup
+
+```bash
+npm install
+```
+
+Fill in `.env.local` (see `DEPLOYMENT.md`), then:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+  app/
+    page.js                      # Dashboard (Modules 6, 9)
+    ledger/page.js                # Full transaction ledger, filterable
+    loans/page.js                  # Loans & liabilities, resolve flow (Module 4)
+    layout.js
+    globals.css
+    api/
+      bikes/route.js               # Module 1: shifts, off-day, rent shortfall tracking
+      expenses/route.js             # Module 2: credit/payable toggle
+      incomes/route.js               # Module 5: Shop Rent / Daily / Irregular
+      loans-transfers/route.js        # Module 3 & 4: wallet transfers, loans
+      dashboard/route.js               # Aggregated summary + missing-entry check
+      transactions/route.js             # Unified ledger feed
+      upload-signature/route.js          # Signed Cloudinary upload params
+  components/
+    EntryFlow.jsx                  # Shared FAB + action sheet + save flow (used on every page)
+    EntrySheet.jsx                  # The 5 entry forms (rent/income/expense/transfer/loan)
+    DoubleCheckModal.jsx             # Module 10: confirmation guard
+    YesterdayCheckBlock.jsx           # Module 9: missing-entry blocking modal
+    ImageUploader.jsx                  # Cloudinary receipt photo upload
+    BottomNav.jsx, SummaryCard.jsx, WalletRow.jsx, FleetCard.jsx, TimelineLog.jsx, PageHeader.jsx
+  models/models.js                 # All Mongoose schemas
+  lib/db.js, lib/cloudinary.js
+```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `DEPLOYMENT.md` for the full MongoDB Atlas, Cloudinary, and Vercel setup guide.

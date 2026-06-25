@@ -8,7 +8,7 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: 'Amar Hishab - Daily Ledger',
+  title: 'Amar Hishab — Daily Ledger',
   description: 'Ultra-reliable ledger designed for visual tracking and peace of mind.',
 };
 
@@ -17,12 +17,12 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${outfit.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-        <meta name="theme-color" content="#18181b" />
+        <meta name="theme-color" content="#F4F5F7" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 min-h-screen flex flex-col antialiased">
-        <main className="flex-1 w-full max-w-md mx-auto bg-white dark:bg-zinc-900 min-h-screen shadow-xl relative pb-24 border-x border-zinc-100 dark:border-zinc-800">
+      <body className="bg-[#F4F5F7] text-[#1A1D29] min-h-screen flex flex-col antialiased">
+        <main className="flex-1 w-full max-w-md mx-auto bg-[#F4F5F7] min-h-screen relative pb-28">
           {children}
         </main>
       </body>

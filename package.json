@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "cloudinary": "^2.5.1",
     "lucide-react": "^1.21.0",
     "mongoose": "^9.7.2",
     "next": "16.2.9",

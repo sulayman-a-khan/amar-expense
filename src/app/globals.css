@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fcfcfd;
-  --foreground: #1c1917;
+  --background: #F4F5F7;
+  --surface: #FFFFFF;
+  --foreground: #1A1D29;
+  --muted: #6B7280;
+  --border: #E8EAED;
   --primary-font: 'Outfit', sans-serif;
+
+  /* Semantic color-coding (fixed app-wide, per spec) */
+  --income: #16A34A;
+  --income-bg: #F0FDF4;
+  --income-border: #BBF7D0;
+  --expense: #DC2626;
+  --expense-bg: #FEF2F2;
+  --expense-border: #FECACA;
+  --loan: #2563EB;
+  --loan-bg: #EFF6FF;
+  --loan-border: #BFDBFE;
 }
 
 @theme inline {
@@ -38,5 +52,26 @@ body {
 }
 
 .animate-slide-up {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-scale-in {
+  animation: fadeScaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-up, .animate-fade-scale-in {
+    animation: none;
+  }
 }

@@ -1,0 +1,99 @@
+'use client';
+
+import { useState } from 'react';
+
+export default function AddBikeModal({ isOpen, onClose, onSaved }) {
+  const [name, setName] = useState('');
+  const [driver, setDriver] = useState('');
+  const [dailyRent, setDailyRent] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!isOpen) return null;
+
+  const reset = () => {
+    setName('');
+    setDriver('');
+    setDailyRent('');
+    setError('');
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  const handleSave = async () => {
+    if (!name.trim() || !driver.trim() || dailyRent === '' || Number(dailyRent) < 0) {
+      setError('Please fill in all fields with valid values.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch('/api/bikes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', name: name.trim(), driver: driver.trim(), dailyRent }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setError(data.error || 'Failed to add bike.');
+      } else {
+        onSaved();
+        handleClose();
+      }
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-5 z-50">
+      <div className="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-scale-in">
+        <h4 className="font-bold text-[#1A1D29] text-base mb-1">Add New Bike</h4>
+        <p className="text-xs text-[#6B7280] mb-4">Add a vehicle to your fleet</p>
+
+        <div className="space-y-3 mb-4">
+          <div>
+            <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-1">Bike Name</label>
+            <input
+              type="text" value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. 04"
+              className="w-full border border-[#E8EAED] bg-[#F4F5F7] text-[#1A1D29] rounded-xl px-4 py-3 text-sm focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-1">Driver Name</label>
+            <input
+              type="text" value={driver} onChange={(e) => setDriver(e.target.value)}
+              placeholder="e.g. Jamal Hossain"
+              className="w-full border border-[#E8EAED] bg-[#F4F5F7] text-[#1A1D29] rounded-xl px-4 py-3 text-sm focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-1">Daily Rent (৳)</label>
+            <input
+              type="number" min="0" value={dailyRent} onChange={(e) => setDailyRent(e.target.value)}
+              placeholder="e.g. 500"
+              className="w-full border border-[#E8EAED] bg-[#F4F5F7] text-[#1A1D29] rounded-xl px-4 py-3 text-sm focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {error && <p className="text-xs text-[#DC2626] font-semibold mb-3">{error}</p>}
+
+        <div className="flex gap-2">
+          <button onClick={handleClose} disabled={saving} className="flex-1 py-3 text-xs font-bold bg-[#F4F5F7] rounded-xl text-[#6B7280] disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving} className="flex-1 py-3 text-xs font-bold bg-[#1A1D29] text-white rounded-xl disabled:opacity-60">
+            {saving ? 'Adding…' : 'Add Bike'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

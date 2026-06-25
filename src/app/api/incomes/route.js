@@ -1,61 +1,51 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { Wallet, DailyCollection, Expense, WalletTransfer, Bike } from '@/models/model';
+import { Wallet, IncomeSource } from '@/models/models';
 
+export async function GET() {
+  try {
+    await connectToDatabase();
+    const incomes = await IncomeSource.find({}).sort({ date: -1 }).limit(200);
+    return NextResponse.json({ incomes });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// Module 5: Multiple Incomes — Shop Rent (monthly fixed), Daily, Irregular
 export async function POST(request) {
   try {
     await connectToDatabase();
     const body = await request.json();
-    const { amount, type, wallet, toWallet, bikeId, note } = body;
-    const today = new Date();
+    const { type, name, amount, wallet, date, note } = body;
 
-    // ১. RENT IN FUNCTIONALITY
-    if (type === 'rent') {
-      const bike = await Bike.findById(bikeId);
-
-      // DailyCollection কালেকশনে ডাটা পুশ
-      await DailyCollection.create({
-        bikeId,
-        date: today,
-        shift: 'Full Day',
-        expectedRent: bike ? bike.dailyRent : 500,
-        paidRent: Number(amount),
-        offDayReason: 'N/A'
-      });
-
-      // Business ওয়ালেটে ব্যালেন্স প্লাস
-      await Wallet.findOneAndUpdate({ name: 'Business' }, { $inc: { balance: Number(amount) } });
+    if (!type || !name || !amount) {
+      return NextResponse.json({ error: 'Type, Name, and Amount are required.' }, { status: 400 });
     }
 
-    // ২. EXPENSE FUNCTIONALITY
-    else if (type === 'expense') {
-      await Expense.create({
-        category: 'General',
-        amount: Number(amount),
-        note: note || '',
-        wallet: wallet,
-        date: today
-      });
-
-      // নির্দিষ্ট ওয়ালেট থেকে ব্যালেন্স মাইনাস
-      await Wallet.findOneAndUpdate({ name: wallet }, { $inc: { balance: -Number(amount) } });
+    const parsedAmount = Number(amount);
+    const targetWalletName = wallet || 'Business';
+    const targetWallet = await Wallet.findOne({ name: targetWalletName });
+    if (!targetWallet) {
+      return NextResponse.json({ error: `Wallet ${targetWalletName} not found.` }, { status: 400 });
     }
 
-    // ৩. TRANSFER FUNCTIONALITY
-    else if (type === 'transfer') {
-      await WalletTransfer.create({
-        fromWallet: wallet,
-        toWallet: toWallet,
-        amount: Number(amount),
-        date: today
-      });
+    const parsedDate = new Date(date || new Date());
+    parsedDate.setHours(12, 0, 0, 0);
 
-      // এক ওয়ালেট থেকে মাইনাস, অন্য ওয়ালেটে প্লাস
-      await Wallet.findOneAndUpdate({ name: wallet }, { $inc: { balance: -Number(amount) } });
-      await Wallet.findOneAndUpdate({ name: toWallet }, { $inc: { balance: Number(amount) } });
-    }
+    const income = await IncomeSource.create({
+      type, // 'ShopRent' | 'Daily' | 'Irregular'
+      name,
+      amount: parsedAmount,
+      wallet: targetWalletName,
+      date: parsedDate,
+      note: note || '',
+    });
 
-    return NextResponse.json({ success: true });
+    targetWallet.balance += parsedAmount;
+    await targetWallet.save();
+
+    return NextResponse.json({ success: true, income });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

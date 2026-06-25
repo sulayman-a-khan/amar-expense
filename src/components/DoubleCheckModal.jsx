@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export default function DoubleCheckModal({ isOpen, onClose, onConfirm, data }) {
+export default function DoubleCheckModal({ isOpen, onClose, onConfirm, data, saving, error }) {
   if (!isOpen) return null;
 
   return (
@@ -26,11 +26,21 @@ export default function DoubleCheckModal({ isOpen, onClose, onConfirm, data }) {
         <div className="p-5 space-y-3 bg-zinc-50/50 dark:bg-zinc-900/30">
           {Object.entries(data).map(([key, val]) => {
             if (val === undefined || val === null || val === '') return null;
-            
+            if (key === 'bikeId') return null; // internal id, not meaningful to the person
+
             // Format labels for better visual readability
             let displayKey = key.replace(/([A-Z])/g, ' $1');
             displayKey = displayKey.charAt(0).toUpperCase() + displayKey.slice(1);
-            
+
+            if (key === 'imageUrl') {
+              return (
+                <div key={key} className="flex justify-between items-center text-sm py-1 border-b border-dashed border-zinc-200 dark:border-zinc-800 last:border-none">
+                  <span className="text-zinc-500 dark:text-zinc-400 text-xs uppercase tracking-wider">Receipt Photo:</span>
+                  <img src={val} alt="Receipt preview" className="w-10 h-10 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700" />
+                </div>
+              );
+            }
+
             let displayVal = val;
             if (typeof val === 'boolean') {
               displayVal = val ? 'Yes' : 'No';
@@ -48,19 +58,30 @@ export default function DoubleCheckModal({ isOpen, onClose, onConfirm, data }) {
           })}
         </div>
 
+        {/* Error message, if a save failed */}
+        {error && (
+          <div className="px-5 pt-4">
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-xl px-3.5 py-2.5">
+              <p className="text-xs font-semibold text-red-700 dark:text-red-400">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="p-4 flex gap-3 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
           <button
             onClick={onClose}
-            className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 transition-colors"
+            disabled={saving}
+            className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 transition-colors disabled:opacity-50"
           >
             Go Back
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/25 transition-all active:scale-[0.98]"
+            disabled={saving}
+            className="flex-1 py-3 px-4 text-sm font-semibold rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/25 transition-all active:scale-[0.98] disabled:opacity-60"
           >
-            Confirm & Save
+            {saving ? 'Saving…' : error ? 'Try Again' : 'Confirm & Save'}
           </button>
         </div>
 

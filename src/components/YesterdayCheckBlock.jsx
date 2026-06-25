@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function YesterdayCheckBlock({ missingYesterday, missingReason, onEntryComplete }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,20 +14,37 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [dismissed, setDismissed] = useState(false);
+
+  // Track which bikes have been submitted in this session (so we can show
+  // them as done even before the API re-check comes back).
+  const [submittedBikeIds, setSubmittedBikeIds] = useState(new Set());
+  
+  // Track whether closing was submitted this session
+  const [closingSubmitted, setClosingSubmitted] = useState(false);
 
   // Lock target date to yesterday
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const formattedYesterday = yesterday.toISOString().split('T')[0];
 
+  // Auto-clear success messages after 3 seconds
+  const successTimer = useRef(null);
   useEffect(() => {
-    if (missingYesterday) {
+    if (successMsg) {
+      successTimer.current = setTimeout(() => setSuccessMsg(''), 3000);
+    }
+    return () => clearTimeout(successTimer.current);
+  }, [successMsg]);
+
+  useEffect(() => {
+    if (missingYesterday && !dismissed) {
       setIsOpen(true);
       fetchBikes();
     } else {
       setIsOpen(false);
     }
-  }, [missingYesterday]);
+  }, [missingYesterday, dismissed]);
 
   const fetchBikes = async () => {
     try {
@@ -41,6 +58,22 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
       console.error(e);
     }
   };
+
+  // Parse the missingReason to figure out which bikes are still needed
+  const needsClosing = missingReason?.includes('closing') && !closingSubmitted;
+  
+  // Bikes that haven't been submitted yet (either per API or this session)
+  const pendingBikes = bikes.filter(
+    (b) => !submittedBikeIds.has(b._id)
+  );
+
+  // Check if the reason mentions a specific bike as missing
+  const isBikeMissing = (bikeName) => {
+    if (!missingReason) return true; // if no reason, assume all need entry
+    return missingReason.includes(bikeName);
+  };
+
+  const actualPendingBikes = pendingBikes.filter((b) => isBikeMissing(b.name));
 
   const handleBikeSubmit = async (e) => {
     e.preventDefault();
@@ -71,9 +104,22 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
       if (data.error) {
         setErrorMsg(data.error);
       } else {
-        setSuccessMsg('Yesterday Bike Entry logged successfully!');
+        const bikeName = activeBike?.name || 'Bike';
+        setSuccessMsg(`✅ ${bikeName} entry saved!`);
+        setSubmittedBikeIds(prev => new Set([...prev, selectedBike]));
         setPaidRent('');
-        onEntryComplete();
+        setShift('Full Day');
+        
+        // Move to the next pending bike
+        const remaining = actualPendingBikes.filter(b => b._id !== selectedBike);
+        if (remaining.length > 0) {
+          setSelectedBike(remaining[0]._id);
+        }
+        
+        // If no more bikes and closing is done, refresh dashboard
+        if (remaining.length === 0 && !needsClosing) {
+          onEntryComplete();
+        }
       }
     } catch (err) {
       setErrorMsg('Failed to save yesterday entry.');
@@ -104,10 +150,15 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
       if (data.error) {
         setErrorMsg(data.error);
       } else {
-        setSuccessMsg('Yesterday Daily Closing logged successfully!');
+        setSuccessMsg('✅ Daily closing saved!');
         setClosingCash('');
         setNote('');
-        onEntryComplete();
+        setClosingSubmitted(true);
+        
+        // If all bikes are also done, refresh dashboard
+        if (actualPendingBikes.length === 0) {
+          onEntryComplete();
+        }
       }
     } catch (err) {
       setErrorMsg('Failed to save yesterday closing.');
@@ -116,7 +167,28 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
     }
   };
 
+  const handleSkip = () => {
+    setDismissed(true);
+    setIsOpen(false);
+    onEntryComplete();
+  };
+
   if (!isOpen) return null;
+
+  // Count completed vs total
+  const totalBikes = bikes.filter(b => isBikeMissing(b.name)).length;
+  const completedBikes = submittedBikeIds.size;
+  const allBikesDone = actualPendingBikes.length === 0;
+  const allDone = allBikesDone && !needsClosing;
+
+  // If everything is done after submitting in this session, auto-close
+  if (allDone && (submittedBikeIds.size > 0 || closingSubmitted)) {
+    // Give a brief delay so the user sees the success message
+    setTimeout(() => {
+      setIsOpen(false);
+      onEntryComplete();
+    }, 800);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-md">
@@ -128,7 +200,7 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
             Missing Entry Alert
           </span>
           <h2 className="mt-3 text-xl font-black text-zinc-900 dark:text-zinc-50">
-            Yesterday's Records Incomplete!
+            Yesterday&apos;s Records Incomplete!
           </h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {missingReason || 'Please record yesterday\'s entries to unlock the dashboard.'}
@@ -149,10 +221,15 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           
           {/* Section 1: Yesterday's Bike Entry */}
-          {bikes.length > 0 && (
+          {actualPendingBikes.length > 0 && (
             <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
               <h3 className="font-bold text-zinc-800 dark:text-zinc-200 mb-3 text-sm flex items-center gap-1.5">
-                🚲 Step 1: Yesterday's Bike Shift Rent
+                🚲 Step 1: Yesterday&apos;s Bike Shift Rent
+                {totalBikes > 1 && (
+                  <span className="ml-auto text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950 dark:text-blue-400 px-2 py-0.5 rounded-lg">
+                    {completedBikes}/{totalBikes} done
+                  </span>
+                )}
               </h3>
               <form onSubmit={handleBikeSubmit} className="space-y-3">
                 <div>
@@ -162,7 +239,7 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
                     onChange={(e) => setSelectedBike(e.target.value)}
                     className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
                   >
-                    {bikes.map(b => (
+                    {actualPendingBikes.map(b => (
                       <option key={b._id} value={b._id}>{b.name} - {b.driverName}</option>
                     ))}
                   </select>
@@ -216,51 +293,77 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
                   disabled={loading}
                   className="w-full py-2.5 text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl transition-colors"
                 >
-                  {loading ? 'Saving...' : 'Submit Bike Entry'}
+                  {loading ? 'Saving...' : `Submit Bike Entry (${actualPendingBikes.find(b => b._id === selectedBike)?.name || ''})`}
                 </button>
               </form>
             </div>
           )}
 
+          {/* Bikes completed indicator */}
+          {allBikesDone && totalBikes > 0 && (
+            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-center">
+              <p className="text-sm font-bold text-green-700 dark:text-green-400">✅ All bike entries recorded!</p>
+            </div>
+          )}
+
           {/* Section 2: Yesterday's Cash Closing */}
-          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-            <h3 className="font-bold text-zinc-800 dark:text-zinc-200 mb-3 text-sm flex items-center gap-1.5">
-              💵 Step 2: Yesterday's Closing Cash
-            </h3>
-            <form onSubmit={handleClosingSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">Actual Cash in Hand / Drawer (৳)</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="Counted cash balance"
-                  value={closingCash}
-                  onChange={(e) => setClosingCash(e.target.value)}
-                  className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
-                />
-              </div>
+          {needsClosing && (
+            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+              <h3 className="font-bold text-zinc-800 dark:text-zinc-200 mb-3 text-sm flex items-center gap-1.5">
+                💵 Step 2: Yesterday&apos;s Closing Cash
+              </h3>
+              <form onSubmit={handleClosingSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Actual Cash in Hand / Drawer (৳)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="Counted cash balance"
+                    value={closingCash}
+                    onChange={(e) => setClosingCash(e.target.value)}
+                    className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1">Notes</label>
-                <input
-                  type="text"
-                  placeholder="e.g. verified ok"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Notes</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. verified ok"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all"
-              >
-                {loading ? 'Saving...' : 'Lock Daily Closing'}
-              </button>
-            </form>
-          </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all"
+                >
+                  {loading ? 'Saving...' : 'Lock Daily Closing'}
+                </button>
+              </form>
+            </div>
+          )}
 
+          {/* Closing completed indicator */}
+          {closingSubmitted && (
+            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-center">
+              <p className="text-sm font-bold text-green-700 dark:text-green-400">✅ Daily closing recorded!</p>
+            </div>
+          )}
+
+        </div>
+
+        {/* Skip button */}
+        <div className="px-6 pb-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <button
+            onClick={handleSkip}
+            className="w-full py-2.5 text-xs font-semibold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+          >
+            Skip for Now →
+          </button>
         </div>
 
       </div>

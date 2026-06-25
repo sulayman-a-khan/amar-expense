@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, DailyClosing } from '@/models/model';
+import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, DailyClosing } from '@/models/models';
 
 export async function GET() {
   try {
