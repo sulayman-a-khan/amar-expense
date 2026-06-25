@@ -46,6 +46,7 @@ DailyCollectionSchema.index({ bikeId: 1, date: 1 });
 // --- EXPENSES (Credit & Payable Integration) ---
 const ExpenseSchema = new mongoose.Schema({
   category: { type: String, required: true },
+  bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', default: null },
   amount: { type: Number, required: true },
   note: { type: String, default: '' },
   imageUrl: { type: String, default: '' },

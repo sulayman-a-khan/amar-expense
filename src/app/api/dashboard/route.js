@@ -30,11 +30,14 @@ async function ensureBikes() {
   return bikes;
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
     await connectToDatabase();
 
-    const startOfDay = new Date();
+    const { searchParams } = new URL(request.url);
+    const dateParam = searchParams.get('date');
+
+    const startOfDay = dateParam ? new Date(dateParam) : new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const yesterdayStart = new Date(startOfDay);
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
@@ -52,6 +55,7 @@ export async function GET() {
       unresolvedLoans,
       yesterdayClosing,
       yesterdayCollections,
+      latestClosing,
     ] = await Promise.all([
       ensureBikes(),
       ensureWallets(),
@@ -61,6 +65,7 @@ export async function GET() {
       Loan.find({ resolved: false }),
       DailyClosing.findOne({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
       DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
+      DailyClosing.findOne().sort({ date: -1 }), // Get the latest closing cash
     ]);
 
     const walletsObj = {};
@@ -88,24 +93,30 @@ export async function GET() {
     todayCollections.forEach((c) => {
       activities.push({
         id: c._id,
+        createdAt: c.createdAt,
         time: new Date(c.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        type: 'income',
+        type: 'rent',
+        sourceType: 'DailyCollection',
         text: `Bike ${c.bikeId?.name || ''} Rent In: ৳${c.paidRent} জমা হয়েছে।`
       });
     });
     todayIncomes.forEach((i) => {
       activities.push({
         id: i._id,
+        createdAt: i.createdAt,
         time: new Date(i.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'income',
+        sourceType: 'IncomeSource',
         text: `${i.name} [${i.type}]: ৳${i.amount} → ${i.wallet}`
       });
     });
     todayExpenses.forEach((e) => {
       activities.push({
         id: e._id,
+        createdAt: e.createdAt,
         time: new Date(e.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'expense',
+        sourceType: 'Expense',
         text: `Expense [${e.category}]: ৳${e.amount} ${e.isCredit ? `(Credit → ${e.payableToShop})` : `(${e.wallet})`}. ${e.note ? `[${e.note}]` : ''}`
       });
     });
@@ -139,7 +150,8 @@ export async function GET() {
       bikes: bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent })),
       activities: activities.slice(0, 12),
       missingYesterday,
-      missingReason
+      missingReason,
+      latestClosingCash: latestClosing ? latestClosing.closingCash : 0
     });
 
   } catch (error) {

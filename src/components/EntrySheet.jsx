@@ -55,7 +55,7 @@ export default function EntrySheet({ type, bikes, onClose, onReviewSubmit }) {
 
         {type === 'rent' && <RentForm form={form} set={set} bikes={bikes} />}
         {type === 'income' && <IncomeForm form={form} set={set} />}
-        {type === 'expense' && <ExpenseForm form={form} set={set} />}
+        {type === 'expense' && <ExpenseForm form={form} set={set} bikes={bikes} />}
         {type === 'transfer' && <TransferForm form={form} set={set} />}
         {type === 'loan' && <LoanForm form={form} set={set} />}
 
@@ -177,12 +177,21 @@ function IncomeForm({ form, set }) {
   );
 }
 
-function ExpenseForm({ form, set }) {
+function ExpenseForm({ form, set, bikes }) {
   const isCredit = !!form.isCredit;
   return (
     <div className="space-y-4">
       <Field label="Category">
         <input type="text" required placeholder="e.g. Fuel, Parts, Food" value={form.category || ''} onChange={(e) => set('category', e.target.value)} className={inputCls} />
+      </Field>
+      
+      <Field label="Related Bike (Optional)">
+        <select value={form.bikeId || ''} onChange={(e) => set('bikeId', e.target.value)} className={inputCls}>
+          <option value="">None</option>
+          {bikes?.map((b) => (
+            <option key={b._id} value={b._id}>Bike {b.name}</option>
+          ))}
+        </select>
       </Field>
       <Field label="Amount (৳)">
         <input type="number" required min="0" value={form.amount || ''} onChange={(e) => set('amount', e.target.value)} className={inputCls} />

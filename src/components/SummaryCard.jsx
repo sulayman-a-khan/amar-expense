@@ -1,14 +1,28 @@
 'use client';
+import { formatGlobalDate } from '@/lib/dateUtils';
 
-export default function SummaryCard({ summary }) {
+export default function SummaryCard({ summary, selectedDate, onDateChange }) {
   const { netProfit = 0, totalIncome = 0, totalExpense = 0, totalReceivable = 0, totalPayable = 0 } = summary;
   const isPositive = netProfit >= 0;
 
   return (
     <section className="bg-white border border-[#E8EAED] rounded-[28px] p-6 shadow-sm">
-      <span className="text-[11px] font-bold text-[#6B7280] tracking-widest uppercase">
-        Today&apos;s Net Balance
-      </span>
+      <div className="flex justify-between items-center">
+        <span className="text-[11px] font-bold text-[#6B7280] tracking-widest uppercase">
+          Net Balance
+        </span>
+        <div className="relative">
+          <div className="text-[11px] font-semibold text-[#1A1D29] bg-[#F4F5F7] border border-[#E8EAED] rounded-lg px-2 py-1 flex items-center gap-1 cursor-pointer">
+            📅 {formatGlobalDate(selectedDate)}
+          </div>
+          <input 
+            type="date" 
+            value={selectedDate} 
+            onChange={onDateChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
+      </div>
       <h2 className={`text-[40px] font-black mt-1.5 tracking-tight leading-none ${isPositive ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
         {isPositive ? '+' : '−'} ৳{Math.abs(netProfit).toLocaleString('en-IN')}
       </h2>

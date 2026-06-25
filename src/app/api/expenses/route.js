@@ -16,7 +16,7 @@ export async function POST(req) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { category, amount, note, imageUrl, isCredit, payableToShop, wallet, date } = body;
+    const { category, amount, note, imageUrl, isCredit, payableToShop, wallet, date, bikeId } = body;
 
     // --- Validate everything up front, before writing anything ---
     if (!category || !amount || !date) {
@@ -44,6 +44,7 @@ export async function POST(req) {
     // --- All checks passed: now perform the writes ---
     const expense = await Expense.create({
       category,
+      bikeId: bikeId || null,
       amount: parsedAmount,
       note: note || '',
       imageUrl: imageUrl || '',
