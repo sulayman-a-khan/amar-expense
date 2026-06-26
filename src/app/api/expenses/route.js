@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Expense, Wallet, Loan } from '@/models/models';
+import { toNoonUTC } from '@/lib/dateUtils';
 
 export async function GET() {
   try {
@@ -27,12 +28,11 @@ export async function POST(req) {
     }
 
     const parsedAmount = Number(amount);
-    const parsedDate = new Date(date);
-    parsedDate.setHours(12, 0, 0, 0);
+    const parsedDate = toNoonUTC(date);
 
     let targetWallet = null;
     if (!isCredit) {
-      targetWallet = await Wallet.findOne({ name: wallet || 'Business' });
+      targetWallet = await Wallet.findOne({ name: wallet || 'Pocket' });
       if (!targetWallet) {
         return NextResponse.json({ error: `Wallet ${wallet} not found.` }, { status: 400 });
       }
@@ -50,7 +50,7 @@ export async function POST(req) {
       imageUrl: imageUrl || '',
       isCredit: !!isCredit,
       payableToShop: isCredit ? payableToShop : '',
-      wallet: isCredit ? 'Business' : (wallet || 'Business'),
+      wallet: isCredit ? '' : (wallet || 'Pocket'),
       date: parsedDate
     });
 

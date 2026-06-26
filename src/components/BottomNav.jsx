@@ -35,7 +35,7 @@ export default function BottomNav({ onSelectAction }) {
         </button>
 
         <NavButton icon="🤝" label="Loans" active={pathname === '/loans'} onClick={() => router.push('/loans')} />
-        <NavButton icon="⚙️" label="More" />
+        <NavButton icon="⏳" label="Due" active={pathname === '/due'} onClick={() => router.push('/due')} />
       </nav>
     </div>
   );

@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 const WalletSchema = new mongoose.Schema({
   name: {
     type: String,
-    enum: ['Business', 'Pocket', 'Drawer'],
+    enum: ['Pocket', 'Drawer'],
     required: true,
     unique: true,
   },
@@ -52,7 +52,7 @@ const ExpenseSchema = new mongoose.Schema({
   imageUrl: { type: String, default: '' },
   isCredit: { type: Boolean, default: false },
   payableToShop: { type: String, default: '' }, // Shop/mechanic name if credit
-  wallet: { type: String, enum: ['Business', 'Pocket', 'Drawer'], default: 'Business' },
+  wallet: { type: String, enum: ['Pocket', 'Drawer', ''], default: 'Pocket' },
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
@@ -74,7 +74,7 @@ const IncomeSourceSchema = new mongoose.Schema({
   type: { type: String, enum: ['ShopRent', 'Daily', 'Irregular'], required: true },
   name: { type: String, required: true }, // e.g. "Shop 1 Rent", "Daily Sales", etc.
   amount: { type: Number, required: true },
-  wallet: { type: String, enum: ['Business', 'Pocket', 'Drawer'], default: 'Business' },
+  wallet: { type: String, enum: ['Pocket', 'Drawer'], default: 'Pocket' },
   note: { type: String, default: '' },
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
@@ -90,12 +90,35 @@ const DailyClosingSchema = new mongoose.Schema({
 
 // --- WALLET TRANSFERS (Helper Log) ---
 const WalletTransferSchema = new mongoose.Schema({
-  fromWallet: { type: String, enum: ['Business', 'Pocket', 'Drawer'], required: true },
-  toWallet: { type: String, enum: ['Business', 'Pocket', 'Drawer'], required: true },
+  fromWallet: { type: String, enum: ['Pocket', 'Drawer'], required: true },
+  toWallet: { type: String, enum: ['Pocket', 'Drawer'], required: true },
   amount: { type: Number, required: true },
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
+
+// --- DRIVER DUE (running balance owed by a driver for rent shortfalls) ---
+// Separate from Loan/Liabilities by design — this is specifically rent
+// shortfall tracking per bike, not a general loan given to/taken from
+// someone. One document per bike holds the current running balance;
+// DriverDueEntry below logs each individual change for a visible history.
+const DriverDueSchema = new mongoose.Schema({
+  bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', required: true, unique: true },
+  balance: { type: Number, required: true, default: 0 }, // amount currently owed by the driver
+  updatedAt: { type: Date, default: Date.now },
+});
+
+const DriverDueEntrySchema = new mongoose.Schema({
+  bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', required: true },
+  dailyCollectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'DailyCollection', default: null },
+  type: { type: String, enum: ['shortfall', 'clearance'], required: true }, // shortfall = added to due, clearance = paid down
+  amount: { type: Number, required: true }, // always positive; type determines direction
+  balanceAfter: { type: Number, required: true }, // running balance right after this entry, for display
+  note: { type: String, default: '' },
+  date: { type: Date, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+DriverDueEntrySchema.index({ bikeId: 1, createdAt: -1 });
 
 // Export Models (preventing rebuild compile errors in Next.js Hot Reload)
 export const Wallet = mongoose.models.Wallet || mongoose.model('Wallet', WalletSchema);
@@ -106,3 +129,5 @@ export const Loan = mongoose.models.Loan || mongoose.model('Loan', LoanSchema);
 export const IncomeSource = mongoose.models.IncomeSource || mongoose.model('IncomeSource', IncomeSourceSchema);
 export const DailyClosing = mongoose.models.DailyClosing || mongoose.model('DailyClosing', DailyClosingSchema);
 export const WalletTransfer = mongoose.models.WalletTransfer || mongoose.model('WalletTransfer', WalletTransferSchema);
+export const DriverDue = mongoose.models.DriverDue || mongoose.model('DriverDue', DriverDueSchema);
+export const DriverDueEntry = mongoose.models.DriverDueEntry || mongoose.model('DriverDueEntry', DriverDueEntrySchema);

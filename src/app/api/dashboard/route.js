@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
-import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing } from '@/models/models';
+import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue } from '@/models/models';
+import { startOfTodayDhaka, toNoonUTC } from '@/lib/dateUtils';
 
-const WALLET_NAMES = ['Business', 'Pocket', 'Drawer'];
+const WALLET_NAMES = ['Pocket', 'Drawer'];
 
 async function ensureWallets() {
+  // One-time migration: an older version of this app had a 'Business'
+  // wallet. If that document still exists in the database, fold its
+  // balance into Pocket (rather than just deleting it, which would
+  // silently erase real money) and remove the stale wallet so it can
+  // never come back via the new Mongoose enum (which no longer allows it).
+  // findOneAndDelete is atomic, so even if two requests race here, only
+  // one of them can ever actually find+remove the document — preventing
+  // a double-credit into Pocket.
+  const staleBusiness = await Wallet.findOneAndDelete({ name: 'Business' });
+  if (staleBusiness && staleBusiness.balance !== 0) {
+    await Wallet.findOneAndUpdate(
+      { name: 'Pocket' },
+      { $inc: { balance: staleBusiness.balance } },
+      { upsert: true }
+    );
+  }
+
   // Single query to see which wallets already exist, then create only
   // the missing ones in parallel — avoids 3 sequential round-trips.
   const existing = await Wallet.find({ name: { $in: WALLET_NAMES } });
@@ -13,7 +31,7 @@ async function ensureWallets() {
 
   if (missing.length > 0) {
     await Wallet.insertMany(missing.map((name) => ({ name, balance: 0 })));
-    return Wallet.find({});
+    return Wallet.find({ name: { $in: WALLET_NAMES } });
   }
   return existing;
 }
@@ -30,6 +48,15 @@ async function ensureBikes() {
   return bikes;
 }
 
+// One-time cleanup: an older version of this app logged rent shortfalls as
+// generic Loan documents, which showed up mixed in on the Loans page. Those
+// are now tracked separately via DriverDue/DriverDueEntry instead, so any
+// leftover old-style entries (recognizable by their note prefix) are removed.
+// This never touches genuine loans given to/taken from someone.
+async function cleanupOldShortfallLoans() {
+  await Loan.deleteMany({ note: { $regex: '^Rent shortfall' } });
+}
+
 export async function GET(request) {
   try {
     await connectToDatabase();
@@ -37,11 +64,26 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get('date');
 
-    const startOfDay = dateParam ? new Date(dateParam) : new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // When a specific date is requested (e.g. backdated view), anchor it to
+    // that calendar day's midnight in Dhaka time. Otherwise use today in
+    // Dhaka time — never the server's own local timezone (Vercel runs UTC).
+    const startOfDay = dateParam
+      ? new Date(Date.UTC(
+          Number(dateParam.split('-')[0]),
+          Number(dateParam.split('-')[1]) - 1,
+          Number(dateParam.split('-')[2]),
+          0, 0, 0
+        ))
+      : startOfTodayDhaka();
     const yesterdayStart = new Date(startOfDay);
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
     const yesterdayEnd = new Date(startOfDay);
+
+    // One-time cleanup (safe to run on every request — becomes a no-op
+    // once the old records are gone): remove legacy rent-shortfall Loan
+    // documents before querying unresolvedLoans below, so they can never
+    // appear on the Loans page or inflate its totals.
+    await cleanupOldShortfallLoans();
 
     // Run every independent query concurrently instead of one-by-one —
     // this is what was making the dashboard slow to load, especially
@@ -56,6 +98,7 @@ export async function GET(request) {
       yesterdayClosing,
       yesterdayCollections,
       latestClosing,
+      driverDues,
     ] = await Promise.all([
       ensureBikes(),
       ensureWallets(),
@@ -66,6 +109,7 @@ export async function GET(request) {
       DailyClosing.findOne({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
       DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
       DailyClosing.findOne().sort({ date: -1 }), // Get the latest closing cash
+      DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId'),
     ]);
 
     const walletsObj = {};
@@ -80,13 +124,34 @@ export async function GET(request) {
 
     const netProfit = totalIncome - totalExpense;
 
-    // Module 4: Liability snapshot
-    let totalReceivable = 0;
+    // Module 4: Liability snapshot. "Owed to Me" combines two distinct
+    // sources — bike rent shortfalls (DriverDue) and cash given as loans
+    // (Loan, type Receivable) — shown together as one total but broken
+    // out separately so the dashboard can offer a tab for each.
+    let cashLoanReceivable = 0;
     let totalPayable = 0;
+    const cashLoans = [];
     unresolvedLoans.forEach((l) => {
-      if (l.type === 'Receivable') totalReceivable += l.amount;
-      else totalPayable += l.amount;
+      if (l.type === 'Receivable') {
+        cashLoanReceivable += l.amount;
+        cashLoans.push({ _id: l._id, person: l.person, amount: l.amount, date: l.date, note: l.note });
+      } else {
+        totalPayable += l.amount;
+      }
     });
+
+    let bikeDueTotal = 0;
+    const bikeDues = driverDues.map((d) => {
+      bikeDueTotal += d.balance;
+      return {
+        bikeId: d.bikeId?._id,
+        bikeName: d.bikeId?.name || '?',
+        driverName: d.bikeId?.driverName || 'Unknown',
+        amount: d.balance,
+      };
+    });
+
+    const totalReceivable = bikeDueTotal + cashLoanReceivable;
 
     // Activity timeline
     const activities = [];
@@ -146,7 +211,8 @@ export async function GET(request) {
 
     return NextResponse.json({
       wallets: walletsObj,
-      summary: { netProfit, totalIncome, totalExpense, totalReceivable, totalPayable },
+      summary: { netProfit, totalIncome, totalExpense, totalReceivable, totalPayable, bikeDueTotal, cashLoanReceivable },
+      receivableBreakdown: { bikeDues, cashLoans },
       bikes: bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent })),
       activities: activities.slice(0, 12),
       missingYesterday,
@@ -166,8 +232,7 @@ export async function POST(request) {
     const { action, date, closingCash, note } = body;
 
     if (action === 'dailyClosing') {
-      const closingDate = new Date(date || new Date());
-      closingDate.setHours(12, 0, 0, 0);
+      const closingDate = toNoonUTC(date);
 
       const existingClosing = await DailyClosing.findOne({ date: closingDate });
       if (existingClosing) {

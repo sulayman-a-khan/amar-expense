@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Loan, Wallet, WalletTransfer } from '@/models/models';
+import { toNoonUTC } from '@/lib/dateUtils';
 
 export async function GET() {
   try {
@@ -18,8 +19,7 @@ export async function POST(req) {
     const body = await req.json();
     const { action, type, person, amount, note, wallet, fromWallet, toWallet, date, loanId } = body;
 
-    const parsedDate = new Date(date || new Date());
-    parsedDate.setHours(12, 0, 0, 0);
+    const parsedDate = toNoonUTC(date);
 
     // 1. Log a new Loan
     if (action === 'loan') {

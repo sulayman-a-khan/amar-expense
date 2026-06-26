@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { yesterdayDhakaDateString } from '@/lib/dateUtils';
 
 export default function YesterdayCheckBlock({ missingYesterday, missingReason, onEntryComplete }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,10 +24,8 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
   // Track whether closing was submitted this session
   const [closingSubmitted, setClosingSubmitted] = useState(false);
 
-  // Lock target date to yesterday
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const formattedYesterday = yesterday.toISOString().split('T')[0];
+  // Lock target date to yesterday (in Dhaka time, not the browser's local timezone)
+  const formattedYesterday = yesterdayDhakaDateString();
 
   // Auto-clear success messages after 3 seconds
   const successTimer = useRef(null);

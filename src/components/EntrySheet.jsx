@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import ImageUploader from './ImageUploader';
+import { todayDhakaDateString } from '@/lib/dateUtils';
 
-const WALLETS = ['Business', 'Pocket', 'Drawer'];
-const today = () => new Date().toISOString().split('T')[0];
+const WALLETS = ['Pocket', 'Drawer'];
+const today = () => todayDhakaDateString();
 
 const TITLES = {
   rent: 'Bike Rent Collection',
@@ -295,6 +296,9 @@ function LoanForm({ form, set }) {
       </Field>
       <Field label="Amount (৳)">
         <input type="number" required min="0" value={form.amount || ''} onChange={(e) => set('amount', e.target.value)} className={inputCls} />
+      </Field>
+      <Field label="Date">
+        <input type="date" required max={today()} value={form.date || today()} onChange={(e) => set('date', e.target.value)} className={inputCls} />
       </Field>
       <Field label={type === 'Receivable' ? 'Pay Out From Wallet' : 'Receive Into Wallet'}>
         <select required value={form.wallet || ''} onChange={(e) => set('wallet', e.target.value)} className={inputCls}>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { Bike, DailyCollection, Expense, Loan } from '@/models/models';
+import { Bike, DailyCollection, Expense, DriverDue, DriverDueEntry } from '@/models/models';
+import { startOfTodayDhaka } from '@/lib/dateUtils';
 
 export async function GET(request, { params }) {
   try {
@@ -13,43 +14,77 @@ export async function GET(request, { params }) {
     if (!bike) return NextResponse.json({ error: 'Bike not found' }, { status: 404 });
 
     // Calculate the start date for the "off days" filter
-    let startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-    if (period === 'week') startDate.setDate(startDate.getDate() - 7);
-    else if (period === 'month') startDate.setMonth(startDate.getMonth() - 1);
-    else if (period === 'year') startDate.setFullYear(startDate.getFullYear() - 1);
+    let startDate = startOfTodayDhaka();
+    if (period === 'week') startDate.setUTCDate(startDate.getUTCDate() - 7);
+    else if (period === 'month') startDate.setUTCMonth(startDate.getUTCMonth() - 1);
+    else if (period === 'year') startDate.setUTCFullYear(startDate.getUTCFullYear() - 1);
     else startDate = new Date(0); // 'all'
 
-    // Off days count
-    const offDaysCount = await DailyCollection.countDocuments({
-      bikeId: id,
-      shift: 'Off Day',
-      date: { $gte: startDate }
+    const [collectionsAsc, expenses, driverDue, dueEntries] = await Promise.all([
+      DailyCollection.find({ bikeId: id }).sort({ date: 1 }), // ascending, needed to carry the running balance forward correctly
+      Expense.find({ bikeId: id }).sort({ date: -1 }),
+      DriverDue.findOne({ bikeId: id }),
+      DriverDueEntry.find({ bikeId: id }),
+    ]);
+
+    const totalEarning = collectionsAsc.reduce((sum, c) => sum + c.paidRent, 0);
+    const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalDue = driverDue?.balance || 0;
+
+    const offDaysCount = collectionsAsc.filter(
+      (c) => c.shift === 'Off Day' && c.date >= startDate
+    ).length;
+
+    // Map each DailyCollection -> the DriverDueEntry created from it (if any)
+    const entryByCollectionId = {};
+    dueEntries.forEach((e) => {
+      if (e.dailyCollectionId) entryByCollectionId[e.dailyCollectionId.toString()] = e;
     });
 
-    // Rent History (All time)
-    const collections = await DailyCollection.find({ bikeId: id }).sort({ date: -1 });
-    const totalEarning = collections.reduce((sum, c) => sum + c.paidRent, 0);
+    // Build the [Date | Credit | Due] rows: walk collections oldest-to-newest,
+    // carrying forward the running due balance so every day shows the
+    // balance as it stood right after that day, even on days where
+    // nothing changed (full payment, no shortfall or clearance).
+    let runningBalance = 0;
+    const earningDetailsAsc = collectionsAsc.map((c) => {
+      const matchingEntry = entryByCollectionId[c._id.toString()];
+      if (matchingEntry) runningBalance = matchingEntry.balanceAfter;
+      return {
+        _id: c._id,
+        date: c.date,
+        shift: c.shift,
+        credit: c.paidRent,
+        due: runningBalance,
+      };
+    });
+    const earningDetails = [...earningDetailsAsc].reverse(); // newest first for display
 
-    // Expenses (All time)
-    const expenses = await Expense.find({ bikeId: id }).sort({ date: -1 });
-    const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const offDays = collectionsAsc
+      .filter((c) => c.shift === 'Off Day')
+      .map((c) => ({ _id: c._id, date: c.date, reason: c.offDayReason }))
+      .reverse();
 
-    // Due History (Loans for this driver)
-    const dueHistory = await Loan.find({ person: bike.driverName }).sort({ date: -1 });
+    const expenseList = expenses.map((e) => ({
+      _id: e._id,
+      date: e.date,
+      amount: e.amount,
+      category: e.category,
+      note: e.note,
+      isCredit: e.isCredit,
+      payableToShop: e.payableToShop,
+    }));
 
     return NextResponse.json({
-      bike,
+      bike: { _id: bike._id, name: bike.name, driver: bike.driverName, dailyRent: bike.dailyRent },
       stats: {
         totalEarning,
         totalExpense,
-        offDaysCount
+        totalDue,
+        offDaysCount,
       },
-      history: {
-        collections,
-        expenses,
-        dueHistory
-      }
+      earningDetails,
+      offDays,
+      expenses: expenseList,
     });
 
   } catch (error) {

@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import DoubleCheckModal from '@/components/DoubleCheckModal';
 import EntryFlow from '@/components/EntryFlow';
 
-const WALLETS = ['Business', 'Pocket', 'Drawer'];
+const WALLETS = ['Pocket', 'Drawer'];
 
 export default function LoansPage() {
   const [loans, setLoans] = useState([]);

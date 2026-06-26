@@ -22,20 +22,20 @@ export async function DELETE(request, { params }) {
 
     let targetDoc;
     let operation;
-    let walletName = 'Business';
+    let walletName = 'Pocket';
 
     if (type === 'DailyCollection') {
       targetDoc = await DailyCollection.findById(id);
       operation = 'income';
-      walletName = 'Business'; // rent always goes to Business in this system
+      walletName = 'Pocket'; // bike rent income always credits Pocket in this system
     } else if (type === 'IncomeSource') {
       targetDoc = await IncomeSource.findById(id);
       operation = 'income';
-      walletName = targetDoc?.wallet || 'Business';
+      walletName = targetDoc?.wallet || 'Pocket';
     } else if (type === 'Expense') {
       targetDoc = await Expense.findById(id);
       operation = 'expense';
-      walletName = targetDoc?.wallet || 'Business';
+      walletName = targetDoc?.wallet || 'Pocket';
     } else {
       return NextResponse.json({ error: 'Unsupported transaction type' }, { status: 400 });
     }
