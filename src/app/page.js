@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-[#9CA3AF] font-medium text-sm">
+      <div className="min-h-screen flex items-center justify-center text-[#7D7156] font-medium text-sm">
         Loading your ledger…
       </div>
     );
@@ -82,10 +82,10 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-4">
         <span className="text-3xl">⚠️</span>
-        <p className="text-sm font-semibold text-[#1A1D29] max-w-xs">{loadError}</p>
+        <p className="text-sm font-semibold text-[#2B2620] max-w-xs">{loadError}</p>
         <button
           onClick={fetchDashboardData}
-          className="px-5 py-2.5 bg-[#1A1D29] text-white text-xs font-bold rounded-xl"
+          className="px-5 py-2.5 bg-[#2B2620] text-white text-xs font-bold rounded-xl"
         >
           Try Again
         </button>
@@ -101,16 +101,16 @@ export default function Dashboard() {
         onEntryComplete={fetchDashboardData}
       />
 
-      <header className="bg-[#F4F5F7]/95 backdrop-blur-md sticky top-0 z-20 px-5 py-5">
+      <header className="bg-[#F7F3EA]/95 backdrop-blur-md sticky top-0 z-20 px-5 py-5">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-[#1A1D29]">Amar Hishab</h1>
-            <p className="text-[11px] text-[#9CA3AF] font-semibold mt-0.5">আপনার দৈনিক হিসাব</p>
+            <h1 className="text-xl font-black tracking-tight text-[#2B2620]">Amar Hishab</h1>
+            <p className="text-[11px] text-[#7D7156] font-semibold mt-0.5">আপনার দৈনিক হিসাব</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-[#9CA3AF] font-semibold">Total Wallet Balance</p>
-            <p className="text-sm font-black text-[#1A1D29] leading-tight">৳{((wallets.Pocket || 0) + (wallets.Drawer || 0)).toLocaleString('en-IN')}</p>
-            <p className="text-[9px] text-[#9CA3AF] font-medium mt-0.5">Last Closing: ৳{latestClosingCash.toLocaleString('en-IN')}</p>
+            <p className="text-[10px] text-[#7D7156] font-semibold">Total Wallet Balance</p>
+            <p className="text-sm font-black text-[#2B2620] leading-tight">৳{((wallets.Pocket || 0) + (wallets.Drawer || 0)).toLocaleString('en-IN')}</p>
+            <p className="text-[9px] text-[#7D7156] font-medium mt-0.5">Last Closing: ৳{latestClosingCash.toLocaleString('en-IN')}</p>
           </div>
         </div>
       </header>

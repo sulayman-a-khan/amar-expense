@@ -90,7 +90,7 @@ export default function EntryFlow({ bikes = [], onSaved }) {
     <>
       {errorBanner && (
         <div className="fixed top-4 left-4 right-4 z-50 max-w-md mx-auto">
-          <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#B91C1C] text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg">
+          <div className="bg-[#F7E9E5] border border-[#E3C2B8] text-[#8C2D22] text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg">
             {errorBanner}
           </div>
         </div>

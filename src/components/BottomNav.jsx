@@ -11,9 +11,9 @@ const ACTIONS = [
 ];
 
 const COLOR_CLASSES = {
-  income: 'bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]',
-  expense: 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]',
-  loan: 'bg-[#EFF6FF] border-[#BFDBFE] text-[#2563EB]',
+  income: 'bg-[#E6F0E5] border-[#C5DCC2] text-[#1F7A4D]',
+  expense: 'bg-[#F7E9E5] border-[#E3C2B8] text-[#B33B2E]',
+  loan: 'bg-[#E7EEF4] border-[#C2D3E0] text-[#2E5C8A]',
 };
 
 export default function BottomNav({ onSelectAction }) {
@@ -22,14 +22,14 @@ export default function BottomNav({ onSelectAction }) {
 
   return (
     <div className="fixed bottom-5 left-4 right-4 z-30">
-      <nav className="max-w-md mx-auto bg-white border border-[#E8EAED] rounded-[22px] px-3 py-3 shadow-lg flex justify-between items-center gap-1">
+      <nav className="max-w-md mx-auto bg-[#FFFDF8] border border-[#E3D9C2] rounded-[22px] px-3 py-3 shadow-lg flex justify-between items-center gap-1">
         <NavButton icon="🏠" label="Home" active={pathname === '/'} onClick={() => router.push('/')} />
         <NavButton icon="📒" label="Ledger" active={pathname === '/ledger'} onClick={() => router.push('/ledger')} />
 
         <button
           onClick={() => onSelectAction()}
           aria-label="Add entry"
-          className="w-14 h-14 rounded-full bg-[#1A1D29] text-white text-2xl font-bold flex items-center justify-center shadow-md -mt-8 border-4 border-[#F4F5F7] active:scale-95 transition-transform"
+          className="w-14 h-14 rounded-full bg-[#2B2620] text-white text-2xl font-bold flex items-center justify-center shadow-md -mt-8 border-4 border-[#F7F3EA] active:scale-95 transition-transform"
         >
           +
         </button>
@@ -45,7 +45,7 @@ function NavButton({ icon, label, onClick, active }) {
   return (
     <button onClick={onClick} className="flex-1 flex flex-col items-center py-1 gap-0.5">
       <span className={`text-base ${active ? 'opacity-100' : 'opacity-50'}`}>{icon}</span>
-      <span className={`text-[9px] font-bold tracking-wide ${active ? 'text-[#1A1D29]' : 'text-[#9CA3AF]'}`}>
+      <span className={`text-[9px] font-bold tracking-wide ${active ? 'text-[#2B2620]' : 'text-[#7D7156]'}`}>
         {label}
       </span>
     </button>
@@ -58,10 +58,10 @@ export function ActionSheet({ isOpen, onClose, onSelect }) {
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white rounded-t-[28px] p-5 pb-8 shadow-2xl animate-slide-up"
+        className="w-full max-w-md bg-[#FFFDF8] rounded-t-[28px] p-5 pb-8 shadow-2xl animate-slide-up"
       >
-        <div className="w-10 h-1.5 bg-[#E8EAED] rounded-full mx-auto mb-5" />
-        <h3 className="text-sm font-bold text-[#1A1D29] mb-4 px-1">What would you like to log?</h3>
+        <div className="w-10 h-1.5 bg-[#E3D9C2] rounded-full mx-auto mb-5" />
+        <h3 className="text-sm font-bold text-[#2B2620] mb-4 px-1">What would you like to log?</h3>
         <div className="space-y-2.5">
           {ACTIONS.map((a) => (
             <button

@@ -45,11 +45,11 @@ export default function EntrySheet({ type, bikes, onClose, onReviewSubmit }) {
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white rounded-t-[28px] p-6 pb-8 shadow-2xl animate-slide-up max-h-[88vh] overflow-y-auto"
+        className="w-full max-w-md bg-[#FFFDF8] rounded-t-[28px] p-6 pb-8 shadow-2xl animate-slide-up max-h-[88vh] overflow-y-auto"
       >
-        <div className="flex justify-between items-center border-b border-[#E8EAED] pb-3 mb-4">
-          <h3 className="text-base font-bold text-[#1A1D29]">{TITLES[type]}</h3>
-          <button type="button" onClick={onClose} className="text-xs font-bold text-[#DC2626] px-2 py-1">
+        <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3 mb-4">
+          <h3 className="text-base font-bold text-[#2B2620]">{TITLES[type]}</h3>
+          <button type="button" onClick={onClose} className="text-xs font-bold text-[#B33B2E] px-2 py-1">
             Cancel
           </button>
         </div>
@@ -62,7 +62,7 @@ export default function EntrySheet({ type, bikes, onClose, onReviewSubmit }) {
 
         <button
           type="submit"
-          className="w-full mt-5 py-3.5 bg-[#1A1D29] text-white font-bold text-sm rounded-2xl active:scale-[0.98] transition-transform"
+          className="w-full mt-5 py-3.5 bg-[#2B2620] text-white font-bold text-sm rounded-2xl active:scale-[0.98] transition-transform"
         >
           Review Entry
         </button>
@@ -74,13 +74,13 @@ export default function EntrySheet({ type, bikes, onClose, onReviewSubmit }) {
 function Field({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-wide">{label}</label>
+      <label className="block text-[11px] font-bold text-[#6B5F4F] uppercase tracking-wide">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputCls = "w-full p-3 text-sm bg-[#F4F5F7] border border-[#E8EAED] rounded-xl focus:outline-none focus:border-[#1A1D29] text-[#1A1D29]";
+const inputCls = "w-full p-3 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]";
 
 function RentForm({ form, set, bikes }) {
   const shift = form.shift || 'Full Day';
@@ -105,14 +105,14 @@ function RentForm({ form, set, bikes }) {
       </Field>
 
       <Field label="Shift">
-        <div className="grid grid-cols-3 gap-1.5 bg-[#F4F5F7] p-1 rounded-xl">
+        <div className="grid grid-cols-3 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
           {['Full Day', 'Half Day', 'Off Day'].map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => set('shift', s)}
               className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
-                shift === s ? 'bg-[#16A34A] text-white' : 'text-[#6B7280]'
+                shift === s ? 'bg-[#1F7A4D] text-white' : 'text-[#6B5F4F]'
               }`}
             >
               {s}
@@ -146,12 +146,12 @@ function IncomeForm({ form, set }) {
   return (
     <div className="space-y-4">
       <Field label="Income Type">
-        <div className="grid grid-cols-3 gap-1.5 bg-[#F4F5F7] p-1 rounded-xl">
+        <div className="grid grid-cols-3 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
           {['ShopRent', 'Daily', 'Irregular'].map((t) => (
             <button
               key={t} type="button" onClick={() => set('type', t)}
               className={`py-2.5 text-[11px] font-bold rounded-lg transition-colors ${
-                form.type === t ? 'bg-[#16A34A] text-white' : 'text-[#6B7280]'
+                form.type === t ? 'bg-[#1F7A4D] text-white' : 'text-[#6B5F4F]'
               }`}
             >
               {t === 'ShopRent' ? 'Shop Rent' : t}
@@ -198,10 +198,10 @@ function ExpenseForm({ form, set, bikes }) {
         <input type="number" required min="0" value={form.amount || ''} onChange={(e) => set('amount', e.target.value)} className={inputCls} />
       </Field>
 
-      <div className="flex items-center justify-between bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-3.5">
+      <div className="flex items-center justify-between bg-[#F7E9E5] border border-[#E3C2B8] rounded-xl p-3.5">
         <div>
-          <span className="text-sm font-bold text-[#1A1D29] block">Is Credit / Due?</span>
-          <span className="text-[11px] text-[#6B7280]">Won&apos;t deduct cash now — logs as Payable</span>
+          <span className="text-sm font-bold text-[#2B2620] block">Is Credit / Due?</span>
+          <span className="text-[11px] text-[#6B5F4F]">Won&apos;t deduct cash now — logs as Payable</span>
         </div>
         <button
           type="button"
@@ -211,9 +211,9 @@ function ExpenseForm({ form, set, bikes }) {
             if (next) set('wallet', '');
             else set('payableToShop', '');
           }}
-          className={`w-12 h-7 rounded-full p-1 transition-colors ${isCredit ? 'bg-[#DC2626]' : 'bg-[#E8EAED]'}`}
+          className={`w-12 h-7 rounded-full p-1 transition-colors ${isCredit ? 'bg-[#B33B2E]' : 'bg-[#E3D9C2]'}`}
         >
-          <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform ${isCredit ? 'translate-x-5' : 'translate-x-0'}`} />
+          <span className={`block w-5 h-5 bg-[#FFFDF8] rounded-full shadow transition-transform ${isCredit ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
       </div>
 
@@ -276,16 +276,16 @@ function LoanForm({ form, set }) {
   return (
     <div className="space-y-4">
       <Field label="Loan Direction">
-        <div className="grid grid-cols-2 gap-1.5 bg-[#F4F5F7] p-1 rounded-xl">
+        <div className="grid grid-cols-2 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
           <button
             type="button" onClick={() => set('type', 'Receivable')}
-            className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${type === 'Receivable' ? 'bg-[#2563EB] text-white' : 'text-[#6B7280]'}`}
+            className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${type === 'Receivable' ? 'bg-[#2E5C8A] text-white' : 'text-[#6B5F4F]'}`}
           >
             Given (Receivable)
           </button>
           <button
             type="button" onClick={() => set('type', 'Payable')}
-            className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${type === 'Payable' ? 'bg-[#2563EB] text-white' : 'text-[#6B7280]'}`}
+            className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${type === 'Payable' ? 'bg-[#2E5C8A] text-white' : 'text-[#6B5F4F]'}`}
           >
             Taken (Payable)
           </button>

@@ -190,21 +190,21 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-md">
-      <div className="w-full max-w-md overflow-hidden bg-white rounded-3xl shadow-2xl dark:bg-zinc-900 border border-red-200 dark:border-red-950/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2B2620]/90 backdrop-blur-md">
+      <div className="w-full max-w-md overflow-hidden bg-[#FFFDF8] rounded-3xl shadow-2xl border border-[#E3C2B8]">
         
         {/* Header Alert */}
-        <div className="p-6 text-center bg-red-50 dark:bg-red-950/20 border-b border-red-100 dark:border-red-950/30">
-          <span className="inline-block px-3 py-1 text-xs font-bold text-red-600 bg-red-100 rounded-full dark:bg-red-950 dark:text-red-400 uppercase tracking-widest animate-pulse">
+        <div className="p-6 text-center bg-[#F7E9E5] border-b border-[#E3C2B8]">
+          <span className="inline-block px-3 py-1 text-xs font-bold text-[#B33B2E] bg-[#E3C2B8] rounded-full uppercase tracking-widest animate-pulse">
             Missing Entry Alert
           </span>
-          <h2 className="mt-3 text-xl font-black text-zinc-900 dark:text-zinc-50">
+          <h2 className="mt-3 text-xl font-black text-[#2B2620]">
             Yesterday&apos;s Records Incomplete!
           </h2>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#6B5F4F]">
             {missingReason || 'Please record yesterday\'s entries to unlock the dashboard.'}
           </p>
-          <div className="mt-2 inline-flex text-xs font-semibold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 px-3 py-1 rounded-lg">
+          <div className="mt-2 inline-flex text-xs font-semibold text-[#7D7156] bg-[#F0EADA] px-3 py-1 rounded-lg">
             Locked Date: {formattedYesterday}
           </div>
         </div>
@@ -212,8 +212,8 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
         {/* Message Panel */}
         {(errorMsg || successMsg) && (
           <div className="p-4 text-center text-sm font-semibold">
-            {errorMsg && <div className="text-red-600 dark:text-red-400">{errorMsg}</div>}
-            {successMsg && <div className="text-green-600 dark:text-green-400">{successMsg}</div>}
+            {errorMsg && <div className="text-[#B33B2E]">{errorMsg}</div>}
+            {successMsg && <div className="text-[#1F7A4D]">{successMsg}</div>}
           </div>
         )}
 
@@ -221,22 +221,22 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
           
           {/* Section 1: Yesterday's Bike Entry */}
           {actualPendingBikes.length > 0 && (
-            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-              <h3 className="font-bold text-zinc-800 dark:text-zinc-200 mb-3 text-sm flex items-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-[#F7F3EA] border border-[#E3D9C2]">
+              <h3 className="font-bold text-[#3D362B] mb-3 text-sm flex items-center gap-1.5">
                 🚲 Step 1: Yesterday&apos;s Bike Shift Rent
                 {totalBikes > 1 && (
-                  <span className="ml-auto text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950 dark:text-blue-400 px-2 py-0.5 rounded-lg">
+                  <span className="ml-auto text-xs font-semibold text-[#2E5C8A] bg-[#E7EEF4] px-2 py-0.5 rounded-lg">
                     {completedBikes}/{totalBikes} done
                   </span>
                 )}
               </h3>
               <form onSubmit={handleBikeSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1">Select Vehicle/Driver</label>
+                  <label className="block text-xs font-medium text-[#7D7156] mb-1">Select Vehicle/Driver</label>
                   <select
                     value={selectedBike}
                     onChange={(e) => setSelectedBike(e.target.value)}
-                    className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                    className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl"
                   >
                     {actualPendingBikes.map(b => (
                       <option key={b._id} value={b._id}>{b.name} - {b.driverName}</option>
@@ -244,7 +244,7 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
                   </select>
                 </div>
 
-                <div className="grid grid-cols-3 gap-1 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl">
+                <div className="grid grid-cols-3 gap-1 bg-[#F0EADA] p-1 rounded-xl">
                   {['Full Day', 'Half Day', 'Off Day'].map((s) => (
                     <button
                       key={s}
@@ -252,8 +252,8 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
                       onClick={() => setShift(s)}
                       className={`py-2 text-xs font-bold rounded-lg transition-colors ${
                         shift === s
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                          ? 'bg-[#2E5C8A] text-white shadow-sm'
+                          : 'text-[#6B5F4F] hover:bg-[#E3D9C2]'
                       }`}
                     >
                       {s}
@@ -263,11 +263,11 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
 
                 {shift === 'Off Day' ? (
                   <div>
-                    <label className="block text-xs font-medium text-zinc-500 mb-1">Reason for Off-Day</label>
+                    <label className="block text-xs font-medium text-[#7D7156] mb-1">Reason for Off-Day</label>
                     <select
                       value={offDayReason}
                       onChange={(e) => setOffDayReason(e.target.value)}
-                      className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                      className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl"
                     >
                       <option value="Driver Unavailable">Driver Unavailable</option>
                       <option value="Mechanical Issue">Mechanical Issue</option>
@@ -276,13 +276,13 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-medium text-zinc-500 mb-1">Rent Paid (৳)</label>
+                    <label className="block text-xs font-medium text-[#7D7156] mb-1">Rent Paid (৳)</label>
                     <input
                       type="number"
                       placeholder="Leave blank for expected rent"
                       value={paidRent}
                       onChange={(e) => setPaidRent(e.target.value)}
-                      className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                      className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl"
                     />
                   </div>
                 )}
@@ -290,7 +290,7 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl transition-colors"
+                  className="w-full py-2.5 text-xs font-bold text-white bg-[#2B2620] hover:bg-[#3D362B] rounded-xl transition-colors"
                 >
                   {loading ? 'Saving...' : `Submit Bike Entry (${actualPendingBikes.find(b => b._id === selectedBike)?.name || ''})`}
                 </button>
@@ -300,45 +300,45 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
 
           {/* Bikes completed indicator */}
           {allBikesDone && totalBikes > 0 && (
-            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-center">
-              <p className="text-sm font-bold text-green-700 dark:text-green-400">✅ All bike entries recorded!</p>
+            <div className="p-4 rounded-2xl bg-[#E6F0E5] border border-[#C5DCC2] text-center">
+              <p className="text-sm font-bold text-[#155C3A]">✅ All bike entries recorded!</p>
             </div>
           )}
 
           {/* Section 2: Yesterday's Cash Closing */}
           {needsClosing && (
-            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-              <h3 className="font-bold text-zinc-800 dark:text-zinc-200 mb-3 text-sm flex items-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-[#F7F3EA] border border-[#E3D9C2]">
+              <h3 className="font-bold text-[#3D362B] mb-3 text-sm flex items-center gap-1.5">
                 💵 Step 2: Yesterday&apos;s Closing Cash
               </h3>
               <form onSubmit={handleClosingSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1">Actual Cash in Hand / Drawer (৳)</label>
+                  <label className="block text-xs font-medium text-[#7D7156] mb-1">Actual Cash in Hand / Drawer (৳)</label>
                   <input
                     type="number"
                     required
                     placeholder="Counted cash balance"
                     value={closingCash}
                     onChange={(e) => setClosingCash(e.target.value)}
-                    className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                    className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1">Notes</label>
+                  <label className="block text-xs font-medium text-[#7D7156] mb-1">Notes</label>
                   <input
                     type="text"
                     placeholder="e.g. verified ok"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="w-full p-2.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                    className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all"
+                  className="w-full py-2.5 text-xs font-bold text-white bg-[#2E5C8A] hover:bg-[#234A6E] rounded-xl transition-all"
                 >
                   {loading ? 'Saving...' : 'Lock Daily Closing'}
                 </button>
@@ -348,18 +348,18 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
 
           {/* Closing completed indicator */}
           {closingSubmitted && (
-            <div className="p-4 rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-center">
-              <p className="text-sm font-bold text-green-700 dark:text-green-400">✅ Daily closing recorded!</p>
+            <div className="p-4 rounded-2xl bg-[#E6F0E5] border border-[#C5DCC2] text-center">
+              <p className="text-sm font-bold text-[#155C3A]">✅ Daily closing recorded!</p>
             </div>
           )}
 
         </div>
 
         {/* Skip button */}
-        <div className="px-6 pb-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="px-6 pb-5 pt-2 border-t border-[#E3D9C2]">
           <button
             onClick={handleSkip}
-            className="w-full py-2.5 text-xs font-semibold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+            className="w-full py-2.5 text-xs font-semibold text-[#7D7156] hover:text-[#3D362B] transition-colors"
           >
             Skip for Now →
           </button>

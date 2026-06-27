@@ -26,10 +26,10 @@ export default function TimelineLog({ activities, onActivityDeleted }) {
 
   return (
     <section className="space-y-2.5">
-      <h3 className="text-[11px] font-bold text-[#6B7280] tracking-widest uppercase px-1">
+      <h3 className="text-[11px] font-bold text-[#6B5F4F] tracking-widest uppercase px-1">
         Activity Log
       </h3>
-      <div className="bg-white border border-[#E8EAED] rounded-[24px] p-5 shadow-sm space-y-4">
+      <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm space-y-4">
         {activities.length > 0 ? activities.map((act) => {
           const canEditDelete = isWithin48Hours(act.createdAt);
           return (
@@ -37,14 +37,14 @@ export default function TimelineLog({ activities, onActivityDeleted }) {
               <div className="flex gap-3.5 items-start min-w-0">
                 <span
                   className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${
-                    act.type === 'expense' ? 'bg-[#DC2626]' : 'bg-[#16A34A]'
+                    act.type === 'expense' ? 'bg-[#B33B2E]' : 'bg-[#1F7A4D]'
                   }`}
                 />
                 <div className="space-y-0.5 min-w-0">
-                  <span className="text-[10px] font-bold text-[#9CA3AF] block">
+                  <span className="text-[10px] font-bold text-[#7D7156] block">
                     {formatGlobalDate(act.createdAt)} • {act.time}
                   </span>
-                  <p className="text-[13px] text-[#374151] font-medium leading-snug">{act.text}</p>
+                  <p className="text-[13px] text-[#3D362B] font-medium leading-snug">{act.text}</p>
                 </div>
               </div>
               
@@ -53,7 +53,7 @@ export default function TimelineLog({ activities, onActivityDeleted }) {
                   <button 
                     onClick={() => handleDelete(act)}
                     disabled={deletingId === act.id}
-                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                    className="p-1.5 text-[#B33B2E] hover:bg-[#F7E9E5] rounded-lg disabled:opacity-50"
                     title="Delete within 48h"
                   >
                     🗑️
@@ -63,7 +63,7 @@ export default function TimelineLog({ activities, onActivityDeleted }) {
             </div>
           );
         }) : (
-          <p className="text-xs text-[#9CA3AF] text-center py-2">No activity logged today yet.</p>
+          <p className="text-xs text-[#7D7156] text-center py-2">No activity logged today yet.</p>
         )}
       </div>
     </section>

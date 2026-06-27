@@ -84,7 +84,7 @@ export default function LoansPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3.5 py-2 rounded-full text-xs font-bold transition-colors ${
-                filter === f ? 'bg-[#1A1D29] text-white' : 'bg-white border border-[#E8EAED] text-[#6B7280]'
+                filter === f ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F]'
               }`}
             >
               {f}
@@ -95,36 +95,36 @@ export default function LoansPage() {
 
       <main className="max-w-md mx-auto px-5 space-y-2.5">
         {loading ? (
-          <p className="text-center text-sm text-[#9CA3AF] py-10">Loading…</p>
+          <p className="text-center text-sm text-[#7D7156] py-10">Loading…</p>
         ) : loadError ? (
           <div className="text-center py-10 space-y-3">
-            <p className="text-sm font-semibold text-[#DC2626]">{loadError}</p>
-            <button onClick={fetchLoans} className="px-4 py-2 bg-[#1A1D29] text-white text-xs font-bold rounded-xl">
+            <p className="text-sm font-semibold text-[#B33B2E]">{loadError}</p>
+            <button onClick={fetchLoans} className="px-4 py-2 bg-[#2B2620] text-white text-xs font-bold rounded-xl">
               Try Again
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-sm text-[#9CA3AF] py-10">No {filter.toLowerCase()} loans.</p>
+          <p className="text-center text-sm text-[#7D7156] py-10">No {filter.toLowerCase()} loans.</p>
         ) : (
           filtered.map((l) => (
-            <div key={l._id} className="bg-white border border-[#E8EAED] rounded-2xl p-4 shadow-sm">
+            <div key={l._id} className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 shadow-sm">
               <div className="flex justify-between items-start gap-2">
                 <div>
-                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] mb-1">
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E7EEF4] text-[#2E5C8A] mb-1">
                     {l.type === 'Receivable' ? 'Owed to you' : 'You owe'}
                   </span>
-                  <p className="font-bold text-sm text-[#1A1D29]">{l.person}</p>
-                  {l.note && <p className="text-[11px] text-[#6B7280] mt-0.5 max-w-[200px]">{l.note}</p>}
-                  <p className="text-[10px] text-[#9CA3AF] mt-1">{new Date(l.date).toLocaleDateString('en-GB')}</p>
+                  <p className="font-bold text-sm text-[#2B2620]">{l.person}</p>
+                  {l.note && <p className="text-[11px] text-[#6B5F4F] mt-0.5 max-w-[200px]">{l.note}</p>}
+                  <p className="text-[10px] text-[#7D7156] mt-1">{new Date(l.date).toLocaleDateString('en-GB')}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="font-extrabold text-base text-[#2563EB] block">৳{l.amount.toLocaleString('en-IN')}</span>
+                  <span className="font-extrabold text-base text-[#2E5C8A] block">৳{l.amount.toLocaleString('en-IN')}</span>
                   {l.resolved ? (
-                    <span className="text-[10px] font-bold text-[#16A34A] mt-1 block">Resolved ✓</span>
+                    <span className="text-[10px] font-bold text-[#1F7A4D] mt-1 block">Resolved ✓</span>
                   ) : (
                     <button
                       onClick={() => openResolve(l)}
-                      className="text-[11px] font-bold text-white bg-[#1A1D29] rounded-lg px-3 py-1.5 mt-1.5"
+                      className="text-[11px] font-bold text-white bg-[#2B2620] rounded-lg px-3 py-1.5 mt-1.5"
                     >
                       Resolve
                     </button>
@@ -138,30 +138,30 @@ export default function LoansPage() {
 
       {resolving && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40">
-          <form onSubmit={handleResolveSubmit} className="w-full max-w-md bg-white rounded-t-[28px] p-6 pb-8 shadow-2xl animate-slide-up">
-            <div className="flex justify-between items-center border-b border-[#E8EAED] pb-3 mb-4">
-              <h3 className="text-base font-bold text-[#1A1D29]">Resolve Loan</h3>
-              <button type="button" onClick={() => setResolving(null)} className="text-xs font-bold text-[#DC2626] px-2 py-1">
+          <form onSubmit={handleResolveSubmit} className="w-full max-w-md bg-[#FFFDF8] rounded-t-[28px] p-6 pb-8 shadow-2xl animate-slide-up">
+            <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3 mb-4">
+              <h3 className="text-base font-bold text-[#2B2620]">Resolve Loan</h3>
+              <button type="button" onClick={() => setResolving(null)} className="text-xs font-bold text-[#B33B2E] px-2 py-1">
                 Cancel
               </button>
             </div>
-            <p className="text-sm text-[#374151] mb-4">
+            <p className="text-sm text-[#3D362B] mb-4">
               {resolving.type === 'Receivable'
                 ? `${resolving.person} is paying back ৳${resolving.amount.toLocaleString('en-IN')}.`
                 : `You're paying back ৳${resolving.amount.toLocaleString('en-IN')} to ${resolving.person}.`}
             </p>
-            <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-wide mb-1.5">
+            <label className="block text-[11px] font-bold text-[#6B5F4F] uppercase tracking-wide mb-1.5">
               {resolving.type === 'Receivable' ? 'Receive Into Wallet' : 'Pay Out From Wallet'}
             </label>
             <select
               required value={resolveWallet} onChange={(e) => setResolveWallet(e.target.value)}
-              className="w-full p-3 text-sm bg-[#F4F5F7] border border-[#E8EAED] rounded-xl focus:outline-none mb-4"
+              className="w-full p-3 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none mb-4"
             >
               <option value="">Choose wallet</option>
               {WALLETS.map((w) => <option key={w} value={w}>{w}</option>)}
             </select>
-            {errorMsg && <p className="text-xs text-[#DC2626] font-semibold mb-3">{errorMsg}</p>}
-            <button type="submit" className="w-full py-3.5 bg-[#1A1D29] text-white font-bold text-sm rounded-2xl">
+            {errorMsg && <p className="text-xs text-[#B33B2E] font-semibold mb-3">{errorMsg}</p>}
+            <button type="submit" className="w-full py-3.5 bg-[#2B2620] text-white font-bold text-sm rounded-2xl">
               Review & Resolve
             </button>
           </form>

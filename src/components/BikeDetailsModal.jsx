@@ -51,15 +51,15 @@ export default function BikeDetailsModal({ bike, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#F4F5F7] w-full max-w-md rounded-[32px] overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-slide-up">
+      <div className="bg-[#F7F3EA] w-full max-w-md rounded-[32px] overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-slide-up">
 
         {/* Header */}
-        <div className="bg-white px-6 py-5 border-b border-[#E8EAED] shrink-0 flex justify-between items-center relative z-10">
+        <div className="bg-[#FFFDF8] px-6 py-5 border-b border-[#E3D9C2] shrink-0 flex justify-between items-center relative z-10">
           <div>
-            <h2 className="text-xl font-black text-[#1A1D29]">Bike {bike.name}</h2>
-            <p className="text-sm font-bold text-[#6B7280]">{bike.driver}</p>
+            <h2 className="text-xl font-black text-[#2B2620]">Bike {bike.name}</h2>
+            <p className="text-sm font-bold text-[#6B5F4F]">{bike.driver}</p>
           </div>
-          <button onClick={onClose} className="p-2 bg-[#F4F5F7] hover:bg-[#E8EAED] text-[#6B7280] rounded-full transition-colors font-bold">
+          <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold">
             ✕
           </button>
         </div>
@@ -67,20 +67,20 @@ export default function BikeDetailsModal({ bike, onClose }) {
         {/* Scrollable Content */}
         <div className="overflow-y-auto flex-1 p-6 space-y-4">
           {loading ? (
-            <div className="py-10 text-center text-sm font-bold text-[#9CA3AF] animate-pulse">Loading data...</div>
+            <div className="py-10 text-center text-sm font-bold text-[#7D7156] animate-pulse">Loading data...</div>
           ) : loadError ? (
-            <div className="py-10 text-center text-sm font-bold text-[#DC2626]">{loadError}</div>
+            <div className="py-10 text-center text-sm font-bold text-[#B33B2E]">{loadError}</div>
           ) : stats ? (
             <>
               {/* Box 1 & 2: Total Earning, Total Due */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white p-4 rounded-2xl border border-[#E8EAED] shadow-sm">
-                  <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">Total Earning</span>
-                  <span className="text-lg font-black text-[#16A34A] block mt-1">৳{stats.totalEarning.toLocaleString('en-IN')}</span>
+                <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm">
+                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Total Earning</span>
+                  <span className="text-lg font-black text-[#1F7A4D] block mt-1">৳{stats.totalEarning.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="bg-white p-4 rounded-2xl border border-[#E8EAED] shadow-sm">
-                  <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">Total Due</span>
-                  <span className="text-lg font-black text-[#2563EB] block mt-1">৳{stats.totalDue.toLocaleString('en-IN')}</span>
+                <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm">
+                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Total Due</span>
+                  <span className="text-lg font-black text-[#2E5C8A] block mt-1">৳{stats.totalDue.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -88,27 +88,27 @@ export default function BikeDetailsModal({ bike, onClose }) {
               <button
                 onClick={() => setActiveView(activeView === 'earning' ? null : 'earning')}
                 className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors ${
-                  activeView === 'earning' ? 'bg-[#1A1D29] text-white' : 'bg-white border border-[#E8EAED] text-[#1A1D29]'
+                  activeView === 'earning' ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#2B2620]'
                 }`}
               >
                 Earning & Expense Details {activeView === 'earning' ? '▲' : '▼'}
               </button>
 
               {activeView === 'earning' && (
-                <div className="bg-white rounded-2xl border border-[#E8EAED] overflow-hidden">
-                  <div className="grid grid-cols-3 px-4 py-2.5 bg-[#F4F5F7] text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
+                  <div className="grid grid-cols-3 px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
                     <span>Date</span>
                     <span className="text-right">Credit</span>
                     <span className="text-right">Due</span>
                   </div>
-                  <div className="divide-y divide-[#E8EAED] max-h-72 overflow-y-auto">
+                  <div className="divide-y divide-[#E3D9C2] max-h-72 overflow-y-auto">
                     {earningDetails.length === 0 ? (
-                      <p className="text-center text-xs text-[#9CA3AF] py-6">No collection records yet.</p>
+                      <p className="text-center text-xs text-[#7D7156] py-6">No collection records yet.</p>
                     ) : earningDetails.map((row) => (
                       <div key={row._id} className="grid grid-cols-3 px-4 py-3 text-xs items-center">
-                        <span className="text-[#1A1D29] font-semibold">{formatGlobalDate(row.date)}</span>
-                        <span className="text-right font-bold text-[#16A34A]">৳{row.credit.toLocaleString('en-IN')}</span>
-                        <span className="text-right font-bold text-[#2563EB]">৳{row.due.toLocaleString('en-IN')}</span>
+                        <span className="text-[#2B2620] font-semibold">{formatGlobalDate(row.date)}</span>
+                        <span className="text-right font-bold text-[#1F7A4D]">৳{row.credit.toLocaleString('en-IN')}</span>
+                        <span className="text-right font-bold text-[#2E5C8A]">৳{row.due.toLocaleString('en-IN')}</span>
                       </div>
                     ))}
                   </div>
@@ -120,44 +120,44 @@ export default function BikeDetailsModal({ bike, onClose }) {
                 <button
                   onClick={() => setActiveView(activeView === 'offdays' ? null : 'offdays')}
                   className={`p-4 rounded-2xl border shadow-sm text-left transition-colors ${
-                    activeView === 'offdays' ? 'bg-[#1A1D29] border-[#1A1D29]' : 'bg-white border-[#E8EAED]'
+                    activeView === 'offdays' ? 'bg-[#2B2620] border-[#2B2620]' : 'bg-[#FFFDF8] border-[#E3D9C2]'
                   }`}
                 >
-                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${activeView === 'offdays' ? 'text-[#9CA3AF]' : 'text-[#6B7280]'}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${activeView === 'offdays' ? 'text-[#7D7156]' : 'text-[#6B5F4F]'}`}>
                     Off Day
                   </span>
-                  <span className={`text-lg font-black block mt-1 ${activeView === 'offdays' ? 'text-white' : 'text-[#1A1D29]'}`}>
+                  <span className={`text-lg font-black block mt-1 ${activeView === 'offdays' ? 'text-white' : 'text-[#2B2620]'}`}>
                     {offDays.length}
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveView(activeView === 'expenses' ? null : 'expenses')}
                   className={`p-4 rounded-2xl border shadow-sm text-left transition-colors ${
-                    activeView === 'expenses' ? 'bg-[#1A1D29] border-[#1A1D29]' : 'bg-white border-[#E8EAED]'
+                    activeView === 'expenses' ? 'bg-[#2B2620] border-[#2B2620]' : 'bg-[#FFFDF8] border-[#E3D9C2]'
                   }`}
                 >
-                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${activeView === 'expenses' ? 'text-[#9CA3AF]' : 'text-[#6B7280]'}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${activeView === 'expenses' ? 'text-[#7D7156]' : 'text-[#6B5F4F]'}`}>
                     Expenses
                   </span>
-                  <span className={`text-lg font-black block mt-1 ${activeView === 'expenses' ? 'text-white' : 'text-[#DC2626]'}`}>
+                  <span className={`text-lg font-black block mt-1 ${activeView === 'expenses' ? 'text-white' : 'text-[#B33B2E]'}`}>
                     ৳{stats.totalExpense.toLocaleString('en-IN')}
                   </span>
                 </button>
               </div>
 
               {activeView === 'offdays' && (
-                <div className="bg-white rounded-2xl border border-[#E8EAED] overflow-hidden">
-                  <div className="grid grid-cols-2 px-4 py-2.5 bg-[#F4F5F7] text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
+                  <div className="grid grid-cols-2 px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
                     <span>Date</span>
                     <span>Reason</span>
                   </div>
-                  <div className="divide-y divide-[#E8EAED] max-h-72 overflow-y-auto">
+                  <div className="divide-y divide-[#E3D9C2] max-h-72 overflow-y-auto">
                     {offDays.length === 0 ? (
-                      <p className="text-center text-xs text-[#9CA3AF] py-6">No off days recorded.</p>
+                      <p className="text-center text-xs text-[#7D7156] py-6">No off days recorded.</p>
                     ) : offDays.map((d) => (
                       <div key={d._id} className="grid grid-cols-2 px-4 py-3 text-xs items-center">
-                        <span className="text-[#1A1D29] font-semibold">{formatGlobalDate(d.date)}</span>
-                        <span className="text-[#DC2626] font-bold">{d.reason}</span>
+                        <span className="text-[#2B2620] font-semibold">{formatGlobalDate(d.date)}</span>
+                        <span className="text-[#B33B2E] font-bold">{d.reason}</span>
                       </div>
                     ))}
                   </div>
@@ -165,23 +165,23 @@ export default function BikeDetailsModal({ bike, onClose }) {
               )}
 
               {activeView === 'expenses' && (
-                <div className="bg-white rounded-2xl border border-[#E8EAED] overflow-hidden">
-                  <div className="grid grid-cols-[1fr_1fr_auto] px-4 py-2.5 bg-[#F4F5F7] text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
+                  <div className="grid grid-cols-[1fr_1fr_auto] px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
                     <span>Date</span>
                     <span className="text-right">Amount</span>
                     <span className="text-right pr-1">Detail</span>
                   </div>
-                  <div className="divide-y divide-[#E8EAED] max-h-72 overflow-y-auto">
+                  <div className="divide-y divide-[#E3D9C2] max-h-72 overflow-y-auto">
                     {expenses.length === 0 ? (
-                      <p className="text-center text-xs text-[#9CA3AF] py-6">No expenses recorded for this bike.</p>
+                      <p className="text-center text-xs text-[#7D7156] py-6">No expenses recorded for this bike.</p>
                     ) : expenses.map((e) => (
                       <div key={e._id} className="grid grid-cols-[1fr_1fr_auto] px-4 py-3 text-xs items-center">
-                        <span className="text-[#1A1D29] font-semibold">{formatGlobalDate(e.date)}</span>
-                        <span className="text-right font-bold text-[#DC2626]">৳{e.amount.toLocaleString('en-IN')}</span>
+                        <span className="text-[#2B2620] font-semibold">{formatGlobalDate(e.date)}</span>
+                        <span className="text-right font-bold text-[#B33B2E]">৳{e.amount.toLocaleString('en-IN')}</span>
                         <button
                           onClick={() => setExpenseDetail(e)}
                           aria-label="View expense detail"
-                          className="justify-self-end w-7 h-7 rounded-full bg-[#F4F5F7] flex items-center justify-center text-[#6B7280] font-bold"
+                          className="justify-self-end w-7 h-7 rounded-full bg-[#F7F3EA] flex items-center justify-center text-[#6B5F4F] font-bold"
                         >
                           ⓘ
                         </button>
@@ -192,7 +192,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
               )}
             </>
           ) : (
-            <div className="py-10 text-center text-sm font-bold text-[#9CA3AF]">Failed to load data</div>
+            <div className="py-10 text-center text-sm font-bold text-[#7D7156]">Failed to load data</div>
           )}
         </div>
       </div>
@@ -200,13 +200,13 @@ export default function BikeDetailsModal({ bike, onClose }) {
       {/* Expense detail popup */}
       {expenseDetail && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-5" onClick={() => setExpenseDetail(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-scale-in">
-            <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">{expenseDetail.category}</span>
-            <p className="text-lg font-black text-[#DC2626] mt-1">৳{expenseDetail.amount.toLocaleString('en-IN')}</p>
-            <p className="text-[11px] text-[#9CA3AF] mt-0.5">{formatGlobalDate(expenseDetail.date)}</p>
-            <div className="mt-3 pt-3 border-t border-[#E8EAED]">
-              <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide block mb-1">Description</span>
-              <p className="text-sm text-[#1A1D29]">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#FFFDF8] w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-fade-scale-in">
+            <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">{expenseDetail.category}</span>
+            <p className="text-lg font-black text-[#B33B2E] mt-1">৳{expenseDetail.amount.toLocaleString('en-IN')}</p>
+            <p className="text-[11px] text-[#7D7156] mt-0.5">{formatGlobalDate(expenseDetail.date)}</p>
+            <div className="mt-3 pt-3 border-t border-[#E3D9C2]">
+              <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">Description</span>
+              <p className="text-sm text-[#2B2620]">
                 {expenseDetail.isCredit
                   ? `Credit / Due — Payable to: ${expenseDetail.payableToShop || 'N/A'}`
                   : (expenseDetail.note || 'No additional description.')}
@@ -214,7 +214,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
             </div>
             <button
               onClick={() => setExpenseDetail(null)}
-              className="w-full mt-4 py-2.5 bg-[#F4F5F7] text-[#6B7280] text-xs font-bold rounded-xl"
+              className="w-full mt-4 py-2.5 bg-[#F7F3EA] text-[#6B5F4F] text-xs font-bold rounded-xl"
             >
               Close
             </button>

@@ -43,13 +43,13 @@ export default function ImageUploader({ value, onChange }) {
 
   return (
     <div>
-      <label className="block text-[11px] font-bold text-[#6B7280] mb-1.5 uppercase tracking-wide">
+      <label className="block text-[11px] font-bold text-[#6B5F4F] mb-1.5 uppercase tracking-wide">
         Receipt Photo (optional)
       </label>
 
       {value ? (
         <div className="relative">
-          <img src={value} alt="Receipt" className="w-full h-32 object-cover rounded-xl border border-[#E8EAED]" />
+          <img src={value} alt="Receipt" className="w-full h-32 object-cover rounded-xl border border-[#E3D9C2]" />
           <button
             type="button"
             onClick={() => onChange('')}
@@ -59,13 +59,13 @@ export default function ImageUploader({ value, onChange }) {
           </button>
         </div>
       ) : (
-        <label className="flex items-center justify-center h-20 border-2 border-dashed border-[#E8EAED] rounded-xl cursor-pointer text-[#9CA3AF] text-xs font-semibold active:bg-[#F4F5F7]">
+        <label className="flex items-center justify-center h-20 border-2 border-dashed border-[#E3D9C2] rounded-xl cursor-pointer text-[#7D7156] text-xs font-semibold active:bg-[#F7F3EA]">
           {uploading ? 'Uploading…' : '📷 Tap to add photo'}
           <input type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" disabled={uploading} />
         </label>
       )}
 
-      {error && <p className="text-[11px] text-[#DC2626] mt-1 font-medium">{error}</p>}
+      {error && <p className="text-[11px] text-[#B33B2E] mt-1 font-medium">{error}</p>}
     </div>
   );
 }

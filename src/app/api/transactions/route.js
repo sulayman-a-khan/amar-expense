@@ -25,7 +25,7 @@ export async function GET() {
         amount: c.paidRent,
         note: `Expected: ৳${c.expectedRent} | Shift: ${c.shift} ${c.shift === 'Off Day' ? `| Reason: ${c.offDayReason}` : ''}`,
         title: `${c.bikeId?.name || 'Bike'} Collection`,
-        colorCode: 'text-emerald-500 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
+        colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
       });
     });
 
@@ -38,7 +38,7 @@ export async function GET() {
         amount: i.amount,
         note: `Received in ${i.wallet}`,
         title: i.name,
-        colorCode: 'text-emerald-500 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
+        colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
       });
     });
 
@@ -51,7 +51,7 @@ export async function GET() {
         amount: e.amount,
         note: e.isCredit ? `Payable to: ${e.payableToShop}` : `Paid from: ${e.wallet} | Note: ${e.note}`,
         title: e.category,
-        colorCode: 'text-rose-500 border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
+        colorCode: 'text-[#B33B2E] border-[#B33B2E] bg-[#F7E9E5]/50'
       });
     });
 
@@ -64,7 +64,7 @@ export async function GET() {
         amount: l.amount,
         note: `Person: ${l.person} | Status: ${l.resolved ? 'Resolved' : 'Due'} | ${l.note}`,
         title: `${l.type} Loan`,
-        colorCode: 'text-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20'
+        colorCode: 'text-[#2E5C8A] border-[#2E5C8A] bg-[#E7EEF4]/50'
       });
     });
 
@@ -77,7 +77,7 @@ export async function GET() {
         amount: t.amount,
         note: `From ${t.fromWallet} to ${t.toWallet}`,
         title: 'Wallet Transfer',
-        colorCode: 'text-blue-500 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20'
+        colorCode: 'text-[#2E5C8A] border-[#2E5C8A] bg-[#E7EEF4]/50'
       });
     });
 
@@ -90,7 +90,7 @@ export async function GET() {
         amount: c.closingCash,
         note: c.note || 'Verified Cash Drawer amount',
         title: 'Daily Closing Cash',
-        colorCode: 'text-zinc-500 border-zinc-500 bg-zinc-50/50 dark:bg-zinc-900/50'
+        colorCode: 'text-[#7D7156] border-[#7D7156] bg-[#F7F3EA]/50'
       });
     });
 

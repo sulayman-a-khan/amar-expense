@@ -17,12 +17,12 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${outfit.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-        <meta name="theme-color" content="#F4F5F7" />
+        <meta name="theme-color" content="#F7F3EA" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className="bg-[#F4F5F7] text-[#1A1D29] min-h-screen flex flex-col antialiased">
-        <main className="flex-1 w-full max-w-md mx-auto bg-[#F4F5F7] min-h-screen relative pb-28">
+      <body className="bg-[#F7F3EA] text-[#2B2620] min-h-screen flex flex-col antialiased">
+        <main className="flex-1 w-full max-w-md mx-auto bg-[#F7F3EA] min-h-screen relative pb-28">
           {children}
         </main>
       </body>
