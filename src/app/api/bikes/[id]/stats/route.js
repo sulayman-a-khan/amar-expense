@@ -13,12 +13,16 @@ export async function GET(request, { params }) {
     const bike = await Bike.findById(id);
     if (!bike) return NextResponse.json({ error: 'Bike not found' }, { status: 404 });
 
-    // Calculate the start date for the "off days" filter
     let startDate = startOfTodayDhaka();
-    if (period === 'week') startDate.setUTCDate(startDate.getUTCDate() - 7);
-    else if (period === 'month') startDate.setUTCMonth(startDate.getUTCMonth() - 1);
-    else if (period === 'year') startDate.setUTCFullYear(startDate.getUTCFullYear() - 1);
-    else startDate = new Date(0); // 'alltime' / 'all'
+    if (period === 'week') {
+      startDate.setUTCDate(startDate.getUTCDate() - 7);
+    } else if (period === 'month') {
+      startDate.setUTCDate(1); // 1st day of the current calendar month
+    } else if (period === 'year') {
+      startDate.setUTCFullYear(startDate.getUTCFullYear() - 1);
+    } else {
+      startDate = new Date(0); // 'alltime' / 'all'
+    }
 
     const [collectionsAsc, expenses, driverDue, dueEntries] = await Promise.all([
       DailyCollection.find({ bikeId: id }).sort({ date: 1 }), // ascending, needed to carry the running balance forward correctly
