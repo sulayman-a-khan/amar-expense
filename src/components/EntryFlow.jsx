@@ -27,6 +27,7 @@ export default function EntryFlow({ bikes = [], onSaved }) {
   const [saveError, setSaveError] = useState('');
   const [sheetInstanceKey, setSheetInstanceKey] = useState(0);
   const [bikeList, setBikeList] = useState(bikes);
+  const [walletBalances, setWalletBalances] = useState({});
 
   // If a page doesn't already have bikes loaded (e.g. Ledger, Loans), fetch
   // them lazily the first time the "Bike Rent" form is actually opened.
@@ -45,9 +46,18 @@ export default function EntryFlow({ bikes = [], onSaved }) {
     }
   }, [bikeList.length]);
 
+  const fetchWallets = useCallback(async () => {
+    try {
+      const res = await fetch('/api/dashboard');
+      const data = await res.json();
+      if (res.ok && data.wallets) setWalletBalances(data.wallets);
+    } catch { /* silent */ }
+  }, []);
+
   const handleSelectAction = (key) => {
     setSheetOpen(false);
     if (key === 'rent') ensureBikes();
+    if (key === 'transfer') fetchWallets();
     setActiveForm(key);
   };
 
@@ -115,6 +125,7 @@ export default function EntryFlow({ bikes = [], onSaved }) {
         key={`${activeForm}-${sheetInstanceKey}`}
         type={activeForm && !showDoubleCheck ? activeForm : null}
         bikes={bikeList}
+        walletBalances={walletBalances}
         onClose={() => { setActiveForm(null); setSheetInstanceKey((k) => k + 1); }}
         onReviewSubmit={handleReviewSubmit}
       />

@@ -15,7 +15,7 @@ const TITLES = {
   loan: 'Loan / Liability',
 };
 
-export default function EntrySheet({ type, bikes, onClose, onReviewSubmit }) {
+export default function EntrySheet({ type, bikes, walletBalances = {}, onClose, onReviewSubmit }) {
   const [form, setForm] = useState({ date: today() });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -57,7 +57,7 @@ export default function EntrySheet({ type, bikes, onClose, onReviewSubmit }) {
         {type === 'rent' && <RentForm form={form} set={set} bikes={bikes} />}
         {type === 'income' && <IncomeForm form={form} set={set} />}
         {type === 'expense' && <ExpenseForm form={form} set={set} bikes={bikes} />}
-        {type === 'transfer' && <TransferForm form={form} set={set} />}
+        {type === 'transfer' && <TransferForm form={form} set={set} walletBalances={walletBalances} />}
         {type === 'loan' && <LoanForm form={form} set={set} />}
 
         <button
@@ -259,9 +259,36 @@ function ExpenseForm({ form, set, bikes }) {
   );
 }
 
-function TransferForm({ form, set }) {
+function TransferForm({ form, set, walletBalances = {} }) {
+  const pocket = walletBalances.Pocket ?? 0;
+  const drawer = walletBalances.Drawer ?? 0;
+
   return (
     <div className="space-y-4">
+      {/* Wallet balances display */}
+      <div className="grid grid-cols-2 gap-2">
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #163524 0%, #0e2318 100%)',
+            border: '1px solid rgba(93,232,138,0.2)',
+          }}
+          className="rounded-2xl px-3.5 py-2.5"
+        >
+          <span style={{ color: 'rgba(93,232,138,0.6)', letterSpacing: '0.1em' }} className="text-[9px] font-bold uppercase block">Pocket</span>
+          <span style={{ color: '#fff' }} className="text-sm font-extrabold block mt-0.5">৳{pocket.toLocaleString('en-IN')}</span>
+        </div>
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #163524 0%, #0e2318 100%)',
+            border: '1px solid rgba(93,232,138,0.2)',
+          }}
+          className="rounded-2xl px-3.5 py-2.5"
+        >
+          <span style={{ color: 'rgba(93,232,138,0.6)', letterSpacing: '0.1em' }} className="text-[9px] font-bold uppercase block">Drawer</span>
+          <span style={{ color: '#fff' }} className="text-sm font-extrabold block mt-0.5">৳{drawer.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+
       <Field label="From Wallet">
         <select
           required value={form.fromWallet || ''}
