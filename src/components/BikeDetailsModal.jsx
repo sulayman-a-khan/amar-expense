@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { formatGlobalDate } from '@/lib/dateUtils';
+import { formatGlobalDate, todayDhakaDateString } from '@/lib/dateUtils';
 
 // Which sub-view is currently expanded below the boxes: null | 'earning' | 'offdays' | 'expenses'
 export default function BikeDetailsModal({ bike, onClose }) {
@@ -13,6 +13,43 @@ export default function BikeDetailsModal({ bike, onClose }) {
   const [loadError, setLoadError] = useState('');
   const [activeView, setActiveView] = useState(null);
   const [expenseDetail, setExpenseDetail] = useState(null); // the expense whose note popup is open
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const todayStr = todayDhakaDateString();
+  const todayColl = earningDetails?.find(
+    (c) => new Date(c.date).toISOString().split('T')[0] === todayStr
+  );
+
+  const handleKakaAction = async (shift, paidRent) => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/bikes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'collection',
+          bikeId: bike._id,
+          date: todayDhakaDateString(),
+          shift,
+          paidRent,
+          offDayReason: shift === 'Off Day' ? 'Driver Unavailable' : 'N/A',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setSubmitError(data.error || 'Failed to save entry');
+      } else {
+        setRefreshKey((k) => k + 1);
+      }
+    } catch {
+      setSubmitError('Network error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (!bike) return;
@@ -45,7 +82,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
 
     fetchStats();
     return () => { isMounted = false; };
-  }, [bike]);
+  }, [bike, refreshKey]);
 
   if (!bike) return null;
 
@@ -85,6 +122,45 @@ export default function BikeDetailsModal({ bike, onClose }) {
                   <span className="text-lg font-black text-[#2E5C8A] block mt-1">৳{stats.totalDue.toLocaleString('en-IN')}</span>
                 </div>
               </div>
+
+              {/* Shajahan Kaka Quick Actions Section */}
+              {bike.isShajahanKaka && (
+                <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
+                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today's Collection</span>
+                  
+                  {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
+                  
+                  {todayColl ? (
+                    <div className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 text-[#1F7A4D] bg-[#E6F0E5]/60 rounded-xl">
+                      <span>✓ Today's Status: {todayColl.shift === 'Off Day' ? 'Off Day (৳0)' : todayColl.credit > 0 ? `Given (৳100)` : 'Not Given (Due - ৳100)'}</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        disabled={submitting}
+                        onClick={() => handleKakaAction('Full Day', 100)}
+                        className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
+                      >
+                        {submitting ? '...' : 'Given'}
+                      </button>
+                      <button
+                        disabled={submitting}
+                        onClick={() => handleKakaAction('Full Day', 0)}
+                        className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
+                      >
+                        {submitting ? '...' : 'Not Given (Due)'}
+                      </button>
+                      <button
+                        disabled={submitting}
+                        onClick={() => handleKakaAction('Off Day', 0)}
+                        className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
+                      >
+                        {submitting ? '...' : 'Off Day'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Full-width button: Earning & Expense Details */}
               <button

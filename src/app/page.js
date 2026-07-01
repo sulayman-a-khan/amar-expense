@@ -146,7 +146,10 @@ export default function Dashboard() {
 
       <BikeDetailsModal
         bike={viewingBike}
-        onClose={() => setViewingBike(null)}
+        onClose={() => {
+          setViewingBike(null);
+          fetchDashboardData();
+        }}
       />
 
       <BikeDueListModal
