@@ -185,13 +185,44 @@ export default function BikeDetailsModal({ bike, onClose }) {
                   <div className="divide-y divide-[#E3D9C2] max-h-72 overflow-y-auto">
                     {earningDetails.length === 0 ? (
                       <p className="text-center text-xs text-[#7D7156] py-6">No collection records yet.</p>
-                    ) : earningDetails.map((row) => (
-                      <div key={row._id} className="grid grid-cols-3 px-4 py-3 text-xs items-center">
-                        <span className="text-[#2B2620] font-semibold">{formatGlobalDate(row.date)}</span>
-                        <span className="text-right font-bold text-[#1F7A4D]">৳{row.credit.toLocaleString('en-IN')}</span>
-                        <span className="text-right font-bold text-[#2E5C8A]">৳{row.due.toLocaleString('en-IN')}</span>
-                      </div>
-                    ))}
+                    ) : earningDetails.map((row) => {
+                      let badgeLabel = 'Full';
+                      let badgeColor = 'bg-[#E6F0E5] text-[#1F7A4D] border-[#C5DCC2]'; // Green
+
+                      const dailyRent = bike.dailyRent || 500;
+                      const expectedRent = row.shift === 'Full Day' ? dailyRent : row.shift === 'Half Day' ? dailyRent * 0.5 : 0;
+
+                      if (row.shift === 'Off Day') {
+                        badgeLabel = 'Off';
+                        badgeColor = 'bg-[#F0EFF1] text-[#7D7156] border-[#D4D2D5]'; // Grey
+                      } else if (row.shift === 'Half Day') {
+                        badgeLabel = 'Half';
+                        badgeColor = 'bg-[#FFF9E6] text-[#B27B00] border-[#FCE8B2]'; // Yellow
+                        if (row.credit < expectedRent) {
+                          badgeLabel = 'Due';
+                          badgeColor = 'bg-[#F7E9E5] text-[#B33B2E] border-[#E3C2B8]'; // Red
+                        }
+                      } else {
+                        // Full Day
+                        if (row.credit < expectedRent) {
+                          badgeLabel = 'Due';
+                          badgeColor = 'bg-[#F7E9E5] text-[#B33B2E] border-[#E3C2B8]'; // Red
+                        }
+                      }
+
+                      return (
+                        <div key={row._id} className="grid grid-cols-3 px-4 py-3 text-xs items-center">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-[#2B2620] font-semibold">{formatGlobalDate(row.date)}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none ${badgeColor}`}>
+                              {badgeLabel}
+                            </span>
+                          </div>
+                          <span className="text-right font-bold text-[#1F7A4D]">৳{row.credit.toLocaleString('en-IN')}</span>
+                          <span className="text-right font-bold text-[#2E5C8A]">৳{row.due.toLocaleString('en-IN')}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
