@@ -1,13 +1,57 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { Loan, Wallet, WalletTransfer } from '@/models/models';
+import { Loan, Wallet, WalletTransfer, DriverDue } from '@/models/models';
 import { toNoonUTC } from '@/lib/dateUtils';
 
 export async function GET() {
   try {
     await dbConnect();
-    const loans = await Loan.find({}).sort({ createdAt: -1 });
-    return NextResponse.json({ loans });
+    const [loans, driverDues] = await Promise.all([
+      Loan.find({}).sort({ createdAt: -1 }),
+      DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId')
+    ]);
+
+    let cashLoanReceivable = 0;
+    let totalPayable = 0;
+    const cashLoans = [];
+    loans.forEach((l) => {
+      if (!l.resolved) {
+        if (l.type === 'Receivable') {
+          cashLoanReceivable += l.amount;
+          cashLoans.push({ _id: l._id, person: l.person, amount: l.amount, date: l.date, note: l.note });
+        } else {
+          totalPayable += l.amount;
+        }
+      }
+    });
+
+    let bikeDueTotal = 0;
+    const bikeDues = driverDues.map((d) => {
+      bikeDueTotal += d.balance;
+      return {
+        bikeId: d.bikeId?._id,
+        bikeName: d.bikeId?.name || '?',
+        driverName: d.bikeId?.driverName || 'Unknown',
+        amount: d.balance,
+        isShajahanKaka: d.bikeId?.isShajahanKaka || false,
+      };
+    });
+
+    const totalReceivable = bikeDueTotal + cashLoanReceivable;
+
+    return NextResponse.json({
+      loans,
+      summary: {
+        totalReceivable,
+        totalPayable,
+        bikeDueTotal,
+        cashLoanReceivable
+      },
+      receivableBreakdown: {
+        bikeDues,
+        cashLoans
+      }
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

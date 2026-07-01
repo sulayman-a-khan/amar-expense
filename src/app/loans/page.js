@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import DoubleCheckModal from '@/components/DoubleCheckModal';
 import EntryFlow from '@/components/EntryFlow';
+import BikeDetailsModal from '@/components/BikeDetailsModal';
+import BikeDueListModal from '@/components/BikeDueListModal';
+import CashLoanListModal from '@/components/CashLoanListModal';
 
 const WALLETS = ['Pocket', 'Drawer'];
 
@@ -18,13 +21,25 @@ export default function LoansPage() {
   const [isResolving, setIsResolving] = useState(false);
   const [loadError, setLoadError] = useState('');
 
+  const [summary, setSummary] = useState(null);
+  const [receivableBreakdown, setReceivableBreakdown] = useState({ bikeDues: [], cashLoans: [] });
+  const [receivableExpanded, setReceivableExpanded] = useState(false);
+  const [showBikeDueList, setShowBikeDueList] = useState(false);
+  const [showCashLoanList, setShowCashLoanList] = useState(false);
+  const [viewingBike, setViewingBike] = useState(null);
+
   const fetchLoans = useCallback(() => {
     setLoadError('');
     fetch('/api/loans-transfers')
       .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
-        if (ok) setLoans(data.loans || []);
-        else setLoadError(data.error || 'Failed to load loans.');
+        if (ok) {
+          setLoans(data.loans || []);
+          setSummary(data.summary || null);
+          setReceivableBreakdown(data.receivableBreakdown || { bikeDues: [], cashLoans: [] });
+        } else {
+          setLoadError(data.error || 'Failed to load loans.');
+        }
       })
       .catch(() => setLoadError('Could not reach the server. Check your internet connection.'))
       .finally(() => setLoading(false));
@@ -76,6 +91,47 @@ export default function LoansPage() {
   return (
     <div>
       <PageHeader title="Loans & Liabilities" subtitle="Money given out, and money owed" />
+
+      {summary && (
+        <div className="max-w-md mx-auto px-5 mb-5">
+          <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setReceivableExpanded((v) => !v)}
+                className="text-left bg-[#E7EEF4] rounded-xl p-3 border border-[#C2D3E0]"
+              >
+                <span className="text-[#2E5C8A] text-[10px] font-bold uppercase tracking-wide block">
+                  Owed to you {receivableExpanded ? '▲' : '▼'}
+                </span>
+                <span className="font-extrabold text-lg text-[#234A6E] mt-0.5 block">৳{summary.totalReceivable.toLocaleString('en-IN')}</span>
+              </button>
+              <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl p-3">
+                <span className="text-[#6B5F4F] text-[10px] font-bold uppercase tracking-wide block">You owe</span>
+                <span className="font-extrabold text-lg text-[#2B2620] mt-0.5 block">৳{summary.totalPayable.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            {receivableExpanded && (
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#E3D9C2]">
+                <button
+                  onClick={() => setShowBikeDueList(true)}
+                  className="bg-[#FFFDF8] border border-[#C2D3E0] rounded-2xl p-3 text-left active:scale-[0.98] transition-transform"
+                >
+                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">জমা বাকি</span>
+                  <span className="font-extrabold text-base text-[#2E5C8A] mt-0.5 block">৳{summary.bikeDueTotal.toLocaleString('en-IN')}</span>
+                </button>
+                <button
+                  onClick={() => setShowCashLoanList(true)}
+                  className="bg-[#FFFDF8] border border-[#C2D3E0] rounded-2xl p-3 text-left active:scale-[0.98] transition-transform"
+                >
+                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">নগদ ধার</span>
+                  <span className="font-extrabold text-base text-[#2E5C8A] mt-0.5 block">৳{summary.cashLoanReceivable.toLocaleString('en-IN')}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-md mx-auto px-5 mb-4">
         <div className="flex gap-2">
@@ -175,6 +231,30 @@ export default function LoansPage() {
         data={resolving ? { person: resolving.person, type: resolving.type, amount: resolving.amount, wallet: resolveWallet } : {}}
         saving={isResolving}
         error={errorMsg}
+      />
+
+      <BikeDetailsModal
+        bike={viewingBike}
+        onClose={() => {
+          setViewingBike(null);
+          fetchLoans();
+        }}
+      />
+
+      <BikeDueListModal
+        isOpen={showBikeDueList}
+        onClose={() => setShowBikeDueList(false)}
+        bikeDues={receivableBreakdown.bikeDues}
+        onSelectBike={(d) => {
+          setShowBikeDueList(false);
+          setViewingBike({ _id: d.bikeId, name: d.bikeName, driver: d.driverName, isShajahanKaka: d.isShajahanKaka });
+        }}
+      />
+
+      <CashLoanListModal
+        isOpen={showCashLoanList}
+        onClose={() => setShowCashLoanList(false)}
+        cashLoans={receivableBreakdown.cashLoans}
       />
 
       <div className="h-24" />

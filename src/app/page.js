@@ -120,11 +120,9 @@ export default function Dashboard() {
       <main className="max-w-md mx-auto px-5 space-y-5">
         <SummaryCard 
           summary={summary} 
+          pocketBalance={wallets.Pocket || 0}
           selectedDate={selectedDate} 
           onDateChange={(e) => setSelectedDate(e.target.value)} 
-          onOpenBikeDue={() => setShowBikeDueList(true)}
-          onOpenCashLoan={() => setShowCashLoanList(true)}
-          onOpenLoansPage={() => router.push('/loans')}
         />
         <WalletRow wallets={wallets} />
         <ShajahanKakaCard
