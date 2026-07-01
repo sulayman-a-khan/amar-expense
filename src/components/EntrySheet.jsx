@@ -146,21 +146,21 @@ function IncomeForm({ form, set }) {
   return (
     <div className="space-y-4">
       <Field label="Income Type">
-        <div className="grid grid-cols-3 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
-          {['ShopRent', 'Daily', 'Irregular'].map((t) => (
+        <div className="grid grid-cols-2 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
+          {['Daily', 'Irregular'].map((t) => (
             <button
               key={t} type="button" onClick={() => set('type', t)}
               className={`py-2.5 text-[11px] font-bold rounded-lg transition-colors ${
                 form.type === t ? 'bg-[#1F7A4D] text-white' : 'text-[#6B5F4F]'
               }`}
             >
-              {t === 'ShopRent' ? 'Shop Rent' : t}
+              {t}
             </button>
           ))}
         </div>
       </Field>
       <Field label="Source Name">
-        <input type="text" required placeholder="e.g. Shop 1 Rent, Tea Stall Sale" value={form.name || ''} onChange={(e) => set('name', e.target.value)} className={inputCls} />
+        <input type="text" required placeholder="e.g. Tea Stall Sale, Extra Job" value={form.name || ''} onChange={(e) => set('name', e.target.value)} className={inputCls} />
       </Field>
       <Field label="Amount (৳)">
         <input type="number" required min="0" value={form.amount || ''} onChange={(e) => set('amount', e.target.value)} className={inputCls} />

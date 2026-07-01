@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
-import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue } from '@/models/models';
+import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal } from '@/models/models';
 import { startOfTodayDhaka, toNoonUTC } from '@/lib/dateUtils';
 
 const WALLET_NAMES = ['Pocket', 'Drawer'];
@@ -99,6 +99,7 @@ export async function GET(request) {
       yesterdayCollections,
       latestClosing,
       driverDues,
+      todayRentWithdrawals,
     ] = await Promise.all([
       ensureBikes(),
       ensureWallets(),
@@ -110,6 +111,7 @@ export async function GET(request) {
       DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
       DailyClosing.findOne().sort({ date: -1 }), // Get the latest closing cash
       DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId'),
+      RentWithdrawal.find({ createdAt: { $gte: startOfDay } }),
     ]);
 
     const walletsObj = {};
@@ -118,6 +120,7 @@ export async function GET(request) {
     let totalIncome = 0;
     todayCollections.forEach((c) => { totalIncome += c.paidRent; });
     todayIncomes.forEach((i) => { totalIncome += i.amount; });
+    todayRentWithdrawals.forEach((w) => { totalIncome += w.amount; });
 
     let totalExpense = 0;
     todayExpenses.forEach((e) => { if (!e.isCredit) totalExpense += e.amount; });
@@ -173,6 +176,16 @@ export async function GET(request) {
         type: 'income',
         sourceType: 'IncomeSource',
         text: `${i.name} [${i.type}]: ৳${i.amount} → ${i.wallet}`
+      });
+    });
+    todayRentWithdrawals.forEach((w) => {
+      activities.push({
+        id: w._id,
+        createdAt: w.createdAt,
+        time: new Date(w.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        type: 'income',
+        sourceType: null, // not deletable via the generic mechanism — see /shop-rent for management
+        text: `Shop Rent collected: ৳${w.amount}${w.note ? ` (${w.note})` : ''}`
       });
     });
     todayExpenses.forEach((e) => {

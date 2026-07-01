@@ -13,7 +13,9 @@ export async function GET() {
   }
 }
 
-// Module 5: Multiple Incomes — Shop Rent (monthly fixed), Daily, Irregular
+// Module 5: Multiple Incomes — Daily, Irregular (Shop Rent has its own
+// dedicated tracker at /api/shop-rent, since it needs running monthly
+// balances rather than a flat one-shot record).
 export async function POST(request) {
   try {
     await connectToDatabase();

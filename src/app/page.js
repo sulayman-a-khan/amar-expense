@@ -12,6 +12,7 @@ import EditBikeModal from '@/components/EditBikeModal';
 import BikeDetailsModal from '@/components/BikeDetailsModal';
 import BikeDueListModal from '@/components/BikeDueListModal';
 import CashLoanListModal from '@/components/CashLoanListModal';
+import ShopRentCard from '@/components/shop-rent/ShopRentCard';
 import { todayDhakaDateString } from '@/lib/dateUtils';
 
 export default function Dashboard() {
@@ -125,6 +126,7 @@ export default function Dashboard() {
           onOpenLoansPage={() => router.push('/loans')}
         />
         <WalletRow wallets={wallets} />
+        <ShopRentCard />
         <FleetCard bikes={bikes} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
         <TimelineLog activities={activities} onActivityDeleted={fetchDashboardData} />
       </main>

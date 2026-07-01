@@ -71,8 +71,8 @@ LoanSchema.index({ type: 1, resolved: 1 });
 
 // --- INCOME SOURCES ---
 const IncomeSourceSchema = new mongoose.Schema({
-  type: { type: String, enum: ['ShopRent', 'Daily', 'Irregular'], required: true },
-  name: { type: String, required: true }, // e.g. "Shop 1 Rent", "Daily Sales", etc.
+  type: { type: String, enum: ['Daily', 'Irregular'], required: true },
+  name: { type: String, required: true }, // e.g. "Tea Stall Sale", etc.
   amount: { type: Number, required: true },
   wallet: { type: String, enum: ['Pocket', 'Drawer'], default: 'Pocket' },
   note: { type: String, default: '' },
@@ -120,7 +120,51 @@ const DriverDueEntrySchema = new mongoose.Schema({
 });
 DriverDueEntrySchema.index({ bikeId: 1, createdAt: -1 });
 
-// Export Models (preventing rebuild compile errors in Next.js Hot Reload)
+// --- SHOP RENT TRACKER ---
+// A dedicated sub-system inside the Income module for fixed monthly shop
+// rent, which (unlike Daily/Irregular income) must track a running
+// month-to-month balance with carry-forward and advance handling.
+
+// Singleton-ish config: the rent source itself. monthlyRent is the current
+// editable default used when a brand-new month is auto-created; past
+// months keep their own snapshot so editing this later never rewrites
+// history.
+const RentSourceSchema = new mongoose.Schema({
+  name: { type: String, required: true, default: 'Shop Rent' },
+  monthlyRent: { type: Number, required: true, default: 8000 },
+  wallet: { type: String, enum: ['Pocket', 'Drawer'], default: 'Pocket' },
+  createdAt: { type: Date, default: Date.now },
+});
+
+// One document per calendar month. year/month together are unique so a
+// month can never be accidentally duplicated. totalReceived/remainingBalance
+// are denormalized (kept in sync on every withdrawal) so the dashboard can
+// read a month's state in a single query instead of summing withdrawals
+// every time.
+const MonthlyRentRecordSchema = new mongoose.Schema({
+  rentSourceId: { type: mongoose.Schema.Types.ObjectId, ref: 'RentSource', required: true },
+  year: { type: Number, required: true },
+  month: { type: Number, required: true }, // 1-12
+  monthlyRent: { type: Number, required: true }, // snapshot at time of month creation
+  carryForward: { type: Number, required: true, default: 0 }, // inherited unpaid amount from previous month
+  advanceBalance: { type: Number, required: true, default: 0 }, // inherited overpayment from previous month
+  totalExpected: { type: Number, required: true }, // monthlyRent + carryForward - advanceBalance
+  totalReceived: { type: Number, required: true, default: 0 }, // sum of this month's withdrawals
+  remainingBalance: { type: Number, required: true, default: 0 }, // totalExpected - totalReceived (can be negative = future advance)
+  status: { type: String, enum: ['Pending', 'Completed', 'Advance'], required: true, default: 'Pending' },
+  createdAt: { type: Date, default: Date.now },
+});
+MonthlyRentRecordSchema.index({ rentSourceId: 1, year: 1, month: 1 }, { unique: true });
+
+// Individual collection events within a month — the visible withdrawal history.
+const RentWithdrawalSchema = new mongoose.Schema({
+  monthlyRentRecordId: { type: mongoose.Schema.Types.ObjectId, ref: 'MonthlyRentRecord', required: true },
+  amount: { type: Number, required: true },
+  note: { type: String, default: '' },
+  date: { type: Date, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+RentWithdrawalSchema.index({ monthlyRentRecordId: 1, createdAt: -1 });
 export const Wallet = mongoose.models.Wallet || mongoose.model('Wallet', WalletSchema);
 export const Bike = mongoose.models.Bike || mongoose.model('Bike', BikeSchema);
 export const DailyCollection = mongoose.models.DailyCollection || mongoose.model('DailyCollection', DailyCollectionSchema);
@@ -131,3 +175,6 @@ export const DailyClosing = mongoose.models.DailyClosing || mongoose.model('Dail
 export const WalletTransfer = mongoose.models.WalletTransfer || mongoose.model('WalletTransfer', WalletTransferSchema);
 export const DriverDue = mongoose.models.DriverDue || mongoose.model('DriverDue', DriverDueSchema);
 export const DriverDueEntry = mongoose.models.DriverDueEntry || mongoose.model('DriverDueEntry', DriverDueEntrySchema);
+export const RentSource = mongoose.models.RentSource || mongoose.model('RentSource', RentSourceSchema);
+export const MonthlyRentRecord = mongoose.models.MonthlyRentRecord || mongoose.model('MonthlyRentRecord', MonthlyRentRecordSchema);
+export const RentWithdrawal = mongoose.models.RentWithdrawal || mongoose.model('RentWithdrawal', RentWithdrawalSchema);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, DailyClosing } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, DailyClosing, RentWithdrawal } from '@/models/models';
 
 export async function GET() {
   try {
@@ -13,6 +13,7 @@ export async function GET() {
     const loans = await Loan.find({}).sort({ date: -1 });
     const transfers = await WalletTransfer.find({}).sort({ date: -1 });
     const closings = await DailyClosing.find({}).sort({ date: -1 });
+    const rentWithdrawals = await RentWithdrawal.find({}).sort({ date: -1 });
 
     const allTransactions = [];
 
@@ -38,6 +39,19 @@ export async function GET() {
         amount: i.amount,
         note: `Received in ${i.wallet}`,
         title: i.name,
+        colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
+      });
+    });
+
+    rentWithdrawals.forEach(w => {
+      allTransactions.push({
+        _id: w._id,
+        date: w.date,
+        type: 'Income', // Color-coded (Green=Income)
+        subType: 'ShopRent',
+        amount: w.amount,
+        note: w.note || 'Shop rent collection',
+        title: 'Shop Rent',
         colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
       });
     });
