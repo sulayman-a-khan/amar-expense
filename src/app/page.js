@@ -111,26 +111,25 @@ export default function Dashboard() {
       />
 
       {isMissingMode && (
-        <div className="bg-[#F7E9E5] border-b border-[#E3C2B8] py-3.5 px-5 sticky top-[72px] z-10 shadow-sm">
+        <div className="bg-[#F7E9E5] border-b border-[#E3C2B8] py-3 px-5 sticky top-0 z-30 shadow-sm">
           <div className="max-w-md mx-auto flex items-center justify-between">
-            <span className="text-xs font-bold text-[#B33B2E] animate-pulse">
-              ⚠️ Record Missing Entries for {selectedDate}
+            <span className="text-xs font-bold text-[#B33B2E]">
+              ⚠️ Missing Entries — {selectedDate}
             </span>
             <button
               onClick={() => {
                 setIsMissingMode(false);
                 setSelectedDate(todayDhakaDateString());
-                setDismissedMissing(false);
               }}
-              className="px-4 py-1.5 bg-[#1F7A4D] hover:bg-[#155C3A] text-white text-xs font-bold rounded-full shadow transition-all active:scale-95"
+              className="px-5 py-1.5 bg-[#1F7A4D] hover:bg-[#155C3A] text-white text-xs font-bold rounded-full shadow transition-all active:scale-95"
             >
-              Done
+              Done ✓
             </button>
           </div>
         </div>
       )}
 
-      <header className="bg-[#F7F3EA]/95 backdrop-blur-md sticky top-0 z-20 px-5 py-5">
+      <header className={`bg-[#F7F3EA]/95 backdrop-blur-md sticky ${isMissingMode ? 'top-[42px]' : 'top-0'} z-20 px-5 py-5`}>
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-xl font-black tracking-tight text-[#2B2620]">Amar Hishab</h1>

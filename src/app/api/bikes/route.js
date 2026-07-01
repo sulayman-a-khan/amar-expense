@@ -66,6 +66,12 @@ export async function POST(request) {
 
       const collectionDate = toNoonUTC(date);
 
+      // Prevent duplicate entry for same bike on same date
+      const existing = await DailyCollection.findOne({ bikeId, date: collectionDate });
+      if (existing) {
+        return NextResponse.json({ error: 'Entry already exists for this bike on this date.' }, { status: 400 });
+      }
+
       const finalPaidRent = Number(paidRent || 0);
 
       const collection = await DailyCollection.create({
