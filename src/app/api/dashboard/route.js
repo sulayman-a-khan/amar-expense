@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
 import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal } from '@/models/models';
-import { startOfTodayDhaka, toNoonUTC } from '@/lib/dateUtils';
+import { startOfTodayDhaka, toNoonUTC, toRealInstant } from '@/lib/dateUtils';
 import { backfillMissedDays } from '@/lib/driverDue';
 
 const WALLET_NAMES = ['Pocket', 'Drawer'];
@@ -92,6 +92,15 @@ export async function GET(request) {
     yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
     const yesterdayEnd = new Date(startOfDay);
 
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+    // `createdAt` fields store REAL timestamps (Date.now()), unlike `date`
+    // fields which are stored in the same fake-Dhaka space as startOfDay —
+    // convert before using it as a cutoff against createdAt.
+    const trueStartOfDay = toRealInstant(startOfDay);
+    const trueEndOfDay = toRealInstant(endOfDay);
+
     // One-time cleanup (safe to run on every request — becomes a no-op
     // once the old records are gone): remove legacy rent-shortfall Loan
     // documents before querying unresolvedLoans below, so they can never
@@ -121,13 +130,13 @@ export async function GET(request) {
       todayRentWithdrawals,
     ] = await Promise.all([
       ensureWallets(),
-      DailyCollection.find({ createdAt: { $gte: startOfDay } }).populate('bikeId'),
-      Expense.find({ createdAt: { $gte: startOfDay } }),
-      IncomeSource.find({ createdAt: { $gte: startOfDay } }),
+      DailyCollection.find({ createdAt: { $gte: trueStartOfDay, $lt: trueEndOfDay } }).populate('bikeId'),
+      Expense.find({ createdAt: { $gte: trueStartOfDay, $lt: trueEndOfDay } }),
+      IncomeSource.find({ createdAt: { $gte: trueStartOfDay, $lt: trueEndOfDay } }),
       Loan.find({ resolved: false }),
       DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
       DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId'),
-      RentWithdrawal.find({ createdAt: { $gte: startOfDay } }),
+      RentWithdrawal.find({ createdAt: { $gte: trueStartOfDay, $lt: trueEndOfDay } }),
     ]);
 
     const walletsObj = {};

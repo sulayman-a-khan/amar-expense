@@ -3,8 +3,13 @@
 import { useState } from 'react';
 import { formatGlobalDate, isWithin48Hours } from '@/lib/dateUtils';
 
-export default function TimelineLog({ activities, onActivityDeleted }) {
+export default function TimelineLog({ activities, selectedDate, onActivityDeleted }) {
   const [deletingId, setDeletingId] = useState(null);
+  // Every activity here already belongs to the same selected date (the
+  // backend filters by it) — show that date once per entry instead of
+  // act.createdAt, which is the real "entered at" timestamp and can read
+  // as "today" even while browsing a past day.
+  const selectedDateLabel = selectedDate ? formatGlobalDate(selectedDate) : '';
 
   const handleDelete = async (act) => {
     if (!confirm('Are you sure you want to delete this entry? This will reverse the amount from your wallet.')) return;
@@ -42,7 +47,7 @@ export default function TimelineLog({ activities, onActivityDeleted }) {
                 />
                 <div className="space-y-0.5 min-w-0">
                   <span className="text-[10px] font-bold text-[#7D7156] block">
-                    {formatGlobalDate(act.createdAt)} • {act.time}
+                    {selectedDateLabel} • {act.time}
                   </span>
                   <p className="text-[13px] text-[#3D362B] font-medium leading-snug">{act.text}</p>
                 </div>
@@ -63,7 +68,9 @@ export default function TimelineLog({ activities, onActivityDeleted }) {
             </div>
           );
         }) : (
-          <p className="text-xs text-[#7D7156] text-center py-2">No activity logged today yet.</p>
+          <p className="text-xs text-[#7D7156] text-center py-2">
+            {selectedDateLabel ? `No activity logged on ${selectedDateLabel} yet.` : 'No activity logged yet.'}
+          </p>
         )}
       </div>
     </section>

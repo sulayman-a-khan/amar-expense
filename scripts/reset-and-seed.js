@@ -114,7 +114,7 @@ const STARTING_DATA = {
       driverName: 'Rakib',
       dailyRent: 400,
       isShajahanKaka: false,
-      openingDue: 950,
+      openingDue: 0,
     },
     {
       name: 'Shajahan Kaka Bike', // placeholder name — edit in the app later

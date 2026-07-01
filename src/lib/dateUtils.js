@@ -137,6 +137,19 @@ export function formatRentCycleLabel(year, month) {
   return `${startStr} – ${endStr} ${lastDay.getUTCFullYear()}`;
 }
 
+// nowInDhaka()/startOfTodayDhaka() return "fake-UTC" Dates whose UTC-getter
+// fields are actually Dhaka wall-clock digits — convenient for reading
+// calendar components, but NOT a real timestamp. Fields like `date` are
+// stored via toNoonUTC() using this same fake convention, so comparing them
+// directly against startOfTodayDhaka() is fine. But `createdAt` fields
+// (default: Date.now()) are REAL timestamps — comparing those directly
+// against a fake-Dhaka Date is off by Dhaka's UTC+6 offset and silently
+// hides same-day entries for part of the day. Use this to convert first.
+const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
+export function toRealInstant(fakeDhakaDate) {
+  return new Date(fakeDhakaDate.getTime() - DHAKA_OFFSET_MS);
+}
+
 export function isWithin48Hours(dateStringOrObject) {
   if (!dateStringOrObject) return false;
   const date = new Date(dateStringOrObject);

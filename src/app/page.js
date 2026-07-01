@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import YesterdayCheckBlock from '@/components/YesterdayCheckBlock';
 import SummaryCard from '@/components/SummaryCard';
@@ -37,8 +37,14 @@ export default function Dashboard() {
   const [isMissingMode, setIsMissingMode] = useState(false);
   const [dismissedMissing, setDismissedMissing] = useState(false);
 
+  const latestRequestRef = useRef(0);
+
   const fetchDashboardData = useCallback(async () => {
     setLoadError('');
+    // Tag this call so that if a newer fetch (e.g. the user switched dates
+    // again) finishes first, this older response gets ignored instead of
+    // overwriting the screen with the wrong date's numbers.
+    const requestId = ++latestRequestRef.current;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 35000);
@@ -46,6 +52,8 @@ export default function Dashboard() {
       clearTimeout(timeout);
 
       const data = await res.json();
+      if (requestId !== latestRequestRef.current) return; // superseded by a newer request — discard
+
       if (res.ok) {
         setWallets(data.wallets || { Pocket: 0, Drawer: 0 });
         setSummary(data.summary || {});
@@ -58,13 +66,14 @@ export default function Dashboard() {
         setLoadError(data.error || 'The server returned an error while loading your data.');
       }
     } catch (error) {
+      if (requestId !== latestRequestRef.current) return; // superseded — ignore this error too
       if (error.name === 'AbortError') {
         setLoadError('This is taking too long. Your database connection may be slow or unreachable — check your internet connection and try again.');
       } else {
         setLoadError('Could not reach the server. Check your internet connection and try again.');
       }
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestRef.current) setLoading(false);
     }
   }, [selectedDate]);
 
@@ -164,7 +173,7 @@ export default function Dashboard() {
         />
         <ShopRentCard />
         <FleetCard bikes={bikes.filter((b) => !b.isShajahanKaka)} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
-        <TimelineLog activities={activities} onActivityDeleted={fetchDashboardData} />
+        <TimelineLog activities={activities} selectedDate={selectedDate} onActivityDeleted={fetchDashboardData} />
       </main>
 
       <EditBikeModal
