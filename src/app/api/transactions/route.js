@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, DailyClosing, RentWithdrawal } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, RentWithdrawal } from '@/models/models';
 
 export async function GET() {
   try {
@@ -12,7 +12,6 @@ export async function GET() {
     const incomes = await IncomeSource.find({}).sort({ date: -1 });
     const loans = await Loan.find({}).sort({ date: -1 });
     const transfers = await WalletTransfer.find({}).sort({ date: -1 });
-    const closings = await DailyClosing.find({}).sort({ date: -1 });
     const rentWithdrawals = await RentWithdrawal.find({}).sort({ date: -1 });
 
     const allTransactions = [];
@@ -92,19 +91,6 @@ export async function GET() {
         note: `From ${t.fromWallet} to ${t.toWallet}`,
         title: 'Wallet Transfer',
         colorCode: 'text-[#2E5C8A] border-[#2E5C8A] bg-[#E7EEF4]/50'
-      });
-    });
-
-    closings.forEach(c => {
-      allTransactions.push({
-        _id: c._id,
-        date: c.date,
-        type: 'Closing',
-        subType: 'Daily closing',
-        amount: c.closingCash,
-        note: c.note || 'Verified Cash Drawer amount',
-        title: 'Daily Closing Cash',
-        colorCode: 'text-[#7D7156] border-[#7D7156] bg-[#F7F3EA]/50'
       });
     });
 

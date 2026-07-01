@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { formatGlobalDate, todayDhakaDateString } from '@/lib/dateUtils';
 
 // Which sub-view is currently expanded below the boxes: null | 'earning' | 'offdays' | 'expenses'
-export default function BikeDetailsModal({ bike, onClose }) {
+export default function BikeDetailsModal({ bike, activeDate, onClose }) {
   const [stats, setStats] = useState(null);
   const [earningDetails, setEarningDetails] = useState([]);
   const [offDays, setOffDays] = useState([]);
@@ -18,7 +18,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
   const [submitError, setSubmitError] = useState('');
   const [period, setPeriod] = useState('month');
 
-  const todayStr = todayDhakaDateString();
+  const todayStr = activeDate || todayDhakaDateString();
   const todayColl = earningDetails?.find(
     (c) => new Date(c.date).toISOString().split('T')[0] === todayStr
   );
@@ -33,7 +33,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
         body: JSON.stringify({
           action: 'collection',
           bikeId: bike._id,
-          date: todayDhakaDateString(),
+          date: todayStr,
           shift,
           paidRent,
           offDayReason: shift === 'Off Day' ? 'Driver Unavailable' : 'N/A',

@@ -20,7 +20,6 @@ export default function Dashboard() {
   const router = useRouter();
   const [wallets, setWallets] = useState({ Pocket: 0, Drawer: 0 });
   const [selectedDate, setSelectedDate] = useState(todayDhakaDateString());
-  const [latestClosingCash, setLatestClosingCash] = useState(0);
   const [summary, setSummary] = useState({ netProfit: 0, totalIncome: 0, totalExpense: 0, totalReceivable: 0, totalPayable: 0, bikeDueTotal: 0, cashLoanReceivable: 0 });
   const [receivableBreakdown, setReceivableBreakdown] = useState({ bikeDues: [], cashLoans: [] });
   const [bikes, setBikes] = useState([]);
@@ -35,6 +34,8 @@ export default function Dashboard() {
 
   const [missingYesterday, setMissingYesterday] = useState(false);
   const [missingReason, setMissingReason] = useState('');
+  const [isMissingMode, setIsMissingMode] = useState(false);
+  const [dismissedMissing, setDismissedMissing] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     setLoadError('');
@@ -49,7 +50,6 @@ export default function Dashboard() {
         setWallets(data.wallets || { Pocket: 0, Drawer: 0 });
         setSummary(data.summary || {});
         setReceivableBreakdown(data.receivableBreakdown || { bikeDues: [], cashLoans: [] });
-        setLatestClosingCash(data.latestClosingCash || 0);
         setBikes(data.bikes || []);
         setActivities(data.activities || []);
         setMissingYesterday(data.missingYesterday || false);
@@ -98,10 +98,37 @@ export default function Dashboard() {
   return (
     <div className="relative">
       <YesterdayCheckBlock
-        missingYesterday={missingYesterday}
+        missingYesterday={missingYesterday && !dismissedMissing}
         missingReason={missingReason}
-        onEntryComplete={fetchDashboardData}
+        onOk={(date) => {
+          setDismissedMissing(true);
+          setSelectedDate(date);
+          setIsMissingMode(true);
+        }}
+        onSkip={() => {
+          setDismissedMissing(true);
+        }}
       />
+
+      {isMissingMode && (
+        <div className="bg-[#F7E9E5] border-b border-[#E3C2B8] py-3.5 px-5 sticky top-[72px] z-10 shadow-sm">
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <span className="text-xs font-bold text-[#B33B2E] animate-pulse">
+              ⚠️ Record Missing Entries for {selectedDate}
+            </span>
+            <button
+              onClick={() => {
+                setIsMissingMode(false);
+                setSelectedDate(todayDhakaDateString());
+                setDismissedMissing(false);
+              }}
+              className="px-4 py-1.5 bg-[#1F7A4D] hover:bg-[#155C3A] text-white text-xs font-bold rounded-full shadow transition-all active:scale-95"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
 
       <header className="bg-[#F7F3EA]/95 backdrop-blur-md sticky top-0 z-20 px-5 py-5">
         <div className="max-w-md mx-auto flex justify-between items-center">
@@ -149,6 +176,7 @@ export default function Dashboard() {
 
       <BikeDetailsModal
         bike={viewingBike}
+        activeDate={selectedDate}
         onClose={() => {
           setViewingBike(null);
           fetchDashboardData();
@@ -172,7 +200,11 @@ export default function Dashboard() {
         cashLoans={receivableBreakdown.cashLoans}
       />
 
-      <EntryFlow bikes={bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driver, dailyRent: b.dailyRent }))} onSaved={fetchDashboardData} />
+      <EntryFlow
+        bikes={bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driver, dailyRent: b.dailyRent }))}
+        selectedDate={selectedDate}
+        onSaved={fetchDashboardData}
+      />
     </div>
   );
 }

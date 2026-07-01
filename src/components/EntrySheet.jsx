@@ -15,8 +15,8 @@ const TITLES = {
   loan: 'Loan / Liability',
 };
 
-export default function EntrySheet({ type, bikes, walletBalances = {}, onClose, onReviewSubmit }) {
-  const [form, setForm] = useState({ date: today() });
+export default function EntrySheet({ type, bikes, walletBalances = {}, defaultDate, onClose, onReviewSubmit }) {
+  const [form, setForm] = useState({ date: defaultDate || today() });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   if (!type) return null;

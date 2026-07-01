@@ -4,14 +4,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import EntryFlow from '@/components/EntryFlow';
 
-const FILTERS = ['All', 'Income', 'Expense', 'Loan', 'Transfer', 'Closing'];
+const FILTERS = ['All', 'Income', 'Expense', 'Loan', 'Transfer'];
 
 const TYPE_DOT = {
   Income: 'bg-[#1F7A4D]',
   Expense: 'bg-[#B33B2E]',
   Loan: 'bg-[#2E5C8A]',
   Transfer: 'bg-[#2E5C8A]',
-  Closing: 'bg-[#7D7156]',
 };
 
 export default function LedgerPage() {

@@ -107,9 +107,7 @@ export async function GET(request) {
       todayExpenses,
       todayIncomes,
       unresolvedLoans,
-      yesterdayClosing,
       yesterdayCollections,
-      latestClosing,
       driverDues,
       todayRentWithdrawals,
     ] = await Promise.all([
@@ -119,9 +117,7 @@ export async function GET(request) {
       Expense.find({ createdAt: { $gte: startOfDay } }),
       IncomeSource.find({ createdAt: { $gte: startOfDay } }),
       Loan.find({ resolved: false }),
-      DailyClosing.findOne({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
       DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
-      DailyClosing.findOne().sort({ date: -1 }), // Get the latest closing cash
       DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId'),
       RentWithdrawal.find({ createdAt: { $gte: startOfDay } }),
     ]);
@@ -237,11 +233,6 @@ export async function GET(request) {
       missingParts.push(`Rent missing for: ${parts.join(' & ')}`);
     }
 
-    if (!yesterdayClosing) {
-      missingYesterday = true;
-      missingParts.push('Daily closing cash not yet locked');
-    }
-
     const missingReason = missingParts.join(' | ');
 
     return NextResponse.json({
@@ -263,7 +254,6 @@ export async function GET(request) {
       activities: activities.slice(0, 12),
       missingYesterday,
       missingReason,
-      latestClosingCash: latestClosing ? latestClosing.closingCash : 0
     });
 
   } catch (error) {
@@ -273,27 +263,6 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    await connectToDatabase();
-    const body = await request.json();
-    const { action, date, closingCash, note } = body;
-
-    if (action === 'dailyClosing') {
-      const closingDate = toNoonUTC(date);
-
-      const existingClosing = await DailyClosing.findOne({ date: closingDate });
-      if (existingClosing) {
-        return NextResponse.json({ error: 'Daily closing already locked for this date' }, { status: 400 });
-      }
-
-      const closing = await DailyClosing.create({
-        date: closingDate,
-        closingCash: Number(closingCash),
-        note: note || ''
-      });
-
-      return NextResponse.json({ success: true, closing });
-    }
-
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

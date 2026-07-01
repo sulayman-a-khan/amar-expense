@@ -16,7 +16,7 @@ const ENDPOINTS = {
 
 // Drop-in: renders the bottom nav + FAB + the full create-entry flow
 // (action sheet -> form -> Double-Check Guard -> save). Mount once per page.
-export default function EntryFlow({ bikes = [], onSaved }) {
+export default function EntryFlow({ bikes = [], selectedDate, onSaved }) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeForm, setActiveForm] = useState(null);
@@ -126,6 +126,7 @@ export default function EntryFlow({ bikes = [], onSaved }) {
         type={activeForm && !showDoubleCheck ? activeForm : null}
         bikes={bikeList}
         walletBalances={walletBalances}
+        defaultDate={selectedDate}
         onClose={() => { setActiveForm(null); setSheetInstanceKey((k) => k + 1); }}
         onReviewSubmit={handleReviewSubmit}
       />
