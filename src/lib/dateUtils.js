@@ -94,6 +94,49 @@ export function formatGlobalDate(dateStringOrObject) {
   return `${weekday} - ${day} ${month} ${year}`;
 }
 
+// --- Shop Rent tracker: custom "month" cycle ---
+// The rent month is not the calendar month (1st-to-1st). It runs from
+// RENT_CYCLE_START_DAY of one calendar month to the same day of the next
+// (e.g. with day 10: 10 Jun through 9 Jul is one rent-cycle "month").
+export const RENT_CYCLE_START_DAY = 10;
+
+// Given a Dhaka-time Date, returns the {year, month} label of the rent
+// cycle it falls into. Days before RENT_CYCLE_START_DAY still belong to
+// the PREVIOUS calendar month's cycle (started on that day last month).
+export function getRentCycleLabel(date = nowInDhaka()) {
+  const day = date.getUTCDate();
+  let year = date.getUTCFullYear();
+  let month = date.getUTCMonth() + 1; // 1-12
+  if (day < RENT_CYCLE_START_DAY) {
+    month -= 1;
+    if (month === 0) { month = 12; year -= 1; }
+  }
+  return { year, month };
+}
+
+// Returns the actual start (inclusive) / end (exclusive) Date of a rent
+// cycle labeled (year, month): starts RENT_CYCLE_START_DAY of `month`,
+// ends RENT_CYCLE_START_DAY of the following month.
+export function getRentCycleRange(year, month) {
+  const start = new Date(Date.UTC(year, month - 1, RENT_CYCLE_START_DAY, 12, 0, 0));
+  const endMonth = month === 12 ? 1 : month + 1;
+  const endYear = month === 12 ? year + 1 : year;
+  const end = new Date(Date.UTC(endYear, endMonth - 1, RENT_CYCLE_START_DAY, 12, 0, 0));
+  return { start, end };
+}
+
+const RENT_CYCLE_SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Display label for a rent cycle, e.g. "10 Jun – 9 Jul 2026".
+export function formatRentCycleLabel(year, month) {
+  const { start, end } = getRentCycleRange(year, month);
+  const lastDay = new Date(end);
+  lastDay.setUTCDate(lastDay.getUTCDate() - 1);
+  const startStr = `${RENT_CYCLE_START_DAY} ${RENT_CYCLE_SHORT_MONTHS[start.getUTCMonth()]}`;
+  const endStr = `${lastDay.getUTCDate()} ${RENT_CYCLE_SHORT_MONTHS[lastDay.getUTCMonth()]}`;
+  return `${startStr} – ${endStr} ${lastDay.getUTCFullYear()}`;
+}
+
 export function isWithin48Hours(dateStringOrObject) {
   if (!dateStringOrObject) return false;
   const date = new Date(dateStringOrObject);

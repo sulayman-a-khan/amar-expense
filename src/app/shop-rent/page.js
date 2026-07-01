@@ -8,12 +8,12 @@ import RentStatsCard from '@/components/shop-rent/RentStatsCard';
 import WithdrawalHistory from '@/components/shop-rent/WithdrawalHistory';
 import QuickCollectionForm from '@/components/shop-rent/QuickCollectionForm';
 import RentReports from '@/components/shop-rent/RentReports';
-import { nowInDhaka } from '@/lib/dateUtils';
+import { nowInDhaka, getRentCycleLabel } from '@/lib/dateUtils';
 
 export default function ShopRentPage() {
-  const now = nowInDhaka();
-  const [year, setYear] = useState(now.getUTCFullYear());
-  const [month, setMonth] = useState(now.getUTCMonth() + 1);
+  const initialCycle = getRentCycleLabel(nowInDhaka());
+  const [year, setYear] = useState(initialCycle.year);
+  const [month, setMonth] = useState(initialCycle.month);
 
   const [rentSource, setRentSource] = useState(null);
   const [record, setRecord] = useState(null);

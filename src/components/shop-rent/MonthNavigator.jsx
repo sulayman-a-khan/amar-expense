@@ -1,6 +1,6 @@
 'use client';
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { formatRentCycleLabel } from '@/lib/dateUtils';
 
 export default function MonthNavigator({ year, month, isCurrentMonth, onNavigate }) {
   const goPrev = () => {
@@ -23,7 +23,7 @@ export default function MonthNavigator({ year, month, isCurrentMonth, onNavigate
         ←
       </button>
       <span className="text-sm font-bold text-[#2B2620]">
-        {MONTH_NAMES[month - 1]} {year}
+        {formatRentCycleLabel(year, month)}
       </span>
       <button
         onClick={goNext}

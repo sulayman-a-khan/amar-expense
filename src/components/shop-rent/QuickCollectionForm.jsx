@@ -1,16 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { todayDhakaDateString } from '@/lib/dateUtils';
+import { todayDhakaDateString, getRentCycleRange } from '@/lib/dateUtils';
 
+// Rent "month" runs RENT_CYCLE_START_DAY -> RENT_CYCLE_START_DAY of the next
+// calendar month (not the 1st-to-1st calendar month) — see dateUtils.js.
 function monthDateBounds(year, month) {
   const pad = (n) => String(n).padStart(2, '0');
-  const min = `${year}-${pad(month)}-01`;
-  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate(); // day 0 of next month = last day of this month
+  const toDateStr = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+
+  const { start, end } = getRentCycleRange(year, month);
+  const min = toDateStr(start);
+
+  const lastDay = new Date(end);
+  lastDay.setUTCDate(lastDay.getUTCDate() - 1); // end is exclusive (start of next cycle)
+  const cycleEnd = toDateStr(lastDay);
+
   const todayStr = todayDhakaDateString();
-  const monthEnd = `${year}-${pad(month)}-${pad(lastDay)}`;
-  // Cap at today if this month's natural end would be in the future.
-  const max = monthEnd > todayStr ? todayStr : monthEnd;
+  // Cap at today if this cycle's natural end would be in the future.
+  const max = cycleEnd > todayStr ? todayStr : cycleEnd;
   return { min, max };
 }
 

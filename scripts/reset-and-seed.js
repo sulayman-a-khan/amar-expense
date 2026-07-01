@@ -97,29 +97,29 @@ const STARTING_DATA = {
   bikes: [
     {
       name: 'Bike 1',
-      driverName: 'Driver 1', // placeholder — edit in the app later
-      dailyRent: 500, // placeholder — edit in the app later
+      driverName: 'Kobir',
+      dailyRent: 450,
       isShajahanKaka: false,
       openingDue: 950,
     },
     {
       name: 'Bike 2',
-      driverName: 'Driver 2', // placeholder — edit in the app later
-      dailyRent: 500, // placeholder — edit in the app later
+      driverName: 'Lebu',
+      dailyRent: 450,
       isShajahanKaka: false,
       openingDue: 4000,
     },
     {
       name: 'Bike 3',
-      driverName: 'Driver 3', // placeholder — edit in the app later
-      dailyRent: 500, // placeholder — edit in the app later
+      driverName: 'Rakib',
+      dailyRent: 400,
       isShajahanKaka: false,
-      openingDue: 0,
+      openingDue: 950,
     },
     {
-      name: 'Shajahan Kaka Bike', // placeholder — edit in the app later
+      name: 'Shajahan Kaka Bike', // placeholder name — edit in the app later
       driverName: 'Shajahan Kaka',
-      dailyRent: 500, // placeholder — edit in the app later
+      dailyRent: 100,
       isShajahanKaka: true,
       openingDue: 300,
     },

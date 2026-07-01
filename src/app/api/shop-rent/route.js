@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { RentSource, MonthlyRentRecord, RentWithdrawal, Wallet } from '@/models/models';
 import { ensureMonthlyRecord, getOrCreateRentSource, monthKey } from '@/lib/shopRent';
-import { nowInDhaka, toNoonUTC } from '@/lib/dateUtils';
+import { nowInDhaka, toNoonUTC, getRentCycleLabel } from '@/lib/dateUtils';
 
+// The Shop Rent tracker's "month" is a custom cycle (see RENT_CYCLE_START_DAY
+// in dateUtils.js), not the calendar month.
 function currentDhakaMonth() {
-  const now = nowInDhaka();
-  return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
+  return getRentCycleLabel(nowInDhaka());
 }
 
 // GET /api/shop-rent?year=2026&month=6
