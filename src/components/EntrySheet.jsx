@@ -107,9 +107,9 @@ function RentForm({ form, set, bikes }) {
           className={inputCls}
         >
           <option value="">Choose bike</option>
-          {bikes?.map((b) => (
+          {bikes?.filter(b => !b.isShajahanKaka).map((b) => (
             <option key={b._id} value={b._id}>
-              {b.isShajahanKaka ? b.name : `Bike ${b.name} — ${b.driver}`}
+              {`Bike ${b.name} — ${b.driver}`}
             </option>
           ))}
         </select>

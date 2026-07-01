@@ -111,6 +111,48 @@ export default function BikeDetailsModal({ bike, onClose }) {
             <div className="py-10 text-center text-sm font-bold text-[#B33B2E]">{loadError}</div>
           ) : stats ? (
             <>
+              {/* Today's Collection (At the top of the card) */}
+              <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
+                {todayColl ? (
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="text-[11px] font-bold text-[#1F7A4D] uppercase tracking-wider flex items-center gap-1">
+                      <span>✓</span> Today&apos;s Collection Locked
+                    </span>
+                    <span className="text-xs font-black text-white bg-[#1F7A4D] px-2.5 py-1 rounded-lg">
+                      {todayColl.shift === 'Off Day' ? 'Off Day' : `${todayColl.shift} (৳${todayColl.credit})`}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today&apos;s Collection</span>
+                      <span className="text-[10px] font-bold text-[#7D7156]">{formatGlobalDate(todayStr)}</span>
+                    </div>
+
+                    {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
+
+                    {bike.isShajahanKaka ? (
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 100)}
+                          className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                          {submitting ? '...' : 'Given'}
+                        </button>
+                        <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 0)}
+                          className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                          {submitting ? '...' : 'Not Given'}
+                        </button>
+                        <button disabled={submitting} onClick={() => handleKakaAction('Off Day', 0)}
+                          className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                          {submitting ? '...' : 'Off Day'}
+                        </button>
+                      </div>
+                    ) : (
+                      <BikeCollectionForm bike={bike} submitting={submitting} onSubmit={handleKakaAction} />
+                    )}
+                  </>
+                )}
+              </div>
+
               {/* Box 1 & 2: Total Earning, Total Due */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm">
@@ -121,42 +163,6 @@ export default function BikeDetailsModal({ bike, onClose }) {
                   <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Total Due</span>
                   <span className="text-lg font-black text-[#2E5C8A] block mt-1">৳{stats.totalDue.toLocaleString('en-IN')}</span>
                 </div>
-              </div>
-
-              {/* Today's Collection Quick Actions */}
-              <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today&apos;s Collection</span>
-                  <span className="text-[10px] font-bold text-[#7D7156]">{formatGlobalDate(todayStr)}</span>
-                </div>
-
-                {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
-
-                {todayColl ? (
-                  <div className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 text-[#1F7A4D] bg-[#E6F0E5]/60 rounded-xl">
-                    <span>✓ {todayColl.shift === 'Off Day'
-                      ? 'Off Day (৳0)'
-                      : `${todayColl.shift} — ৳${todayColl.credit.toLocaleString('en-IN')} collected${todayColl.due > 0 ? `, ৳${todayColl.due.toLocaleString('en-IN')} due` : ''}`
-                    }</span>
-                  </div>
-                ) : bike.isShajahanKaka ? (
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 100)}
-                      className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                      {submitting ? '...' : 'Given'}
-                    </button>
-                    <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 0)}
-                      className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                      {submitting ? '...' : 'Not Given'}
-                    </button>
-                    <button disabled={submitting} onClick={() => handleKakaAction('Off Day', 0)}
-                      className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                      {submitting ? '...' : 'Off Day'}
-                    </button>
-                  </div>
-                ) : (
-                  <BikeCollectionForm bike={bike} submitting={submitting} onSubmit={handleKakaAction} />
-                )}
               </div>
 
               {/* Full-width button: Earning & Expense Details */}
