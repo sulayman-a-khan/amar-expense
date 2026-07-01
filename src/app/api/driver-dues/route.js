@@ -37,6 +37,7 @@ export async function GET(request) {
         bikeName: bike?.name || '?',
         driverName: bike?.driverName || 'Unknown',
         dailyRent: bike?.dailyRent || 0,
+        isShajahanKaka: bike?.isShajahanKaka || false,
       };
     });
 

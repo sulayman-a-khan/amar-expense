@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import YesterdayCheckBlock from '@/components/YesterdayCheckBlock';
 import SummaryCard from '@/components/SummaryCard';
 import WalletRow from '@/components/WalletRow';
+import ShajahanKakaCard from '@/components/ShajahanKakaCard';
 import FleetCard from '@/components/FleetCard';
 import TimelineLog from '@/components/TimelineLog';
 import EntryFlow from '@/components/EntryFlow';
@@ -126,8 +127,13 @@ export default function Dashboard() {
           onOpenLoansPage={() => router.push('/loans')}
         />
         <WalletRow wallets={wallets} />
+        <ShajahanKakaCard
+          bike={bikes.find((b) => b.isShajahanKaka)}
+          due={receivableBreakdown.bikeDues.find((d) => d.isShajahanKaka)}
+          onView={(bike) => setViewingBike(bike)}
+        />
         <ShopRentCard />
-        <FleetCard bikes={bikes} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
+        <FleetCard bikes={bikes.filter((b) => !b.isShajahanKaka)} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
         <TimelineLog activities={activities} onActivityDeleted={fetchDashboardData} />
       </main>
 

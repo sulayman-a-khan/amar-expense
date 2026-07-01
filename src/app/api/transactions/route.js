@@ -25,7 +25,7 @@ export async function GET() {
         subType: 'Bike Collection',
         amount: c.paidRent,
         note: `Expected: ৳${c.expectedRent} | Shift: ${c.shift} ${c.shift === 'Off Day' ? `| Reason: ${c.offDayReason}` : ''}`,
-        title: `${c.bikeId?.name || 'Bike'} Collection`,
+        title: c.bikeId?.isShajahanKaka ? `Shajahan Kaka Collection` : `${c.bikeId?.name || 'Bike'} Collection`,
         colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
       });
     });

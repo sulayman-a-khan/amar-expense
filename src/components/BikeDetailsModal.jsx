@@ -56,7 +56,9 @@ export default function BikeDetailsModal({ bike, onClose }) {
         {/* Header */}
         <div className="bg-[#FFFDF8] px-6 py-5 border-b border-[#E3D9C2] shrink-0 flex justify-between items-center relative z-10">
           <div>
-            <h2 className="text-xl font-black text-[#2B2620]">Bike {bike.name}</h2>
+            <h2 className="text-xl font-black text-[#2B2620]">
+              {bike.isShajahanKaka ? bike.name : `Bike ${bike.name}`}
+            </h2>
             <p className="text-sm font-bold text-[#6B5F4F]">{bike.driver}</p>
           </div>
           <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold">

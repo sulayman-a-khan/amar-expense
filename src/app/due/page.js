@@ -83,7 +83,11 @@ export default function DriverDuePage() {
               >
                 <div>
                   <p className="font-bold text-sm text-[#2B2620]">{d.driverName}</p>
-                  <p className="text-[11px] text-[#7D7156] mt-0.5">Bike {d.bikeName} · ৳{d.dailyRent}/day</p>
+                  {d.isShajahanKaka ? (
+                    <p className="text-[11px] text-[#7D7156] mt-0.5">Shajahan Kaka · ৳{d.dailyRent}/day</p>
+                  ) : (
+                    <p className="text-[11px] text-[#7D7156] mt-0.5">Bike {d.bikeName} · ৳{d.dailyRent}/day</p>
+                  )}
                 </div>
                 <span className="font-extrabold text-base text-[#2E5C8A]">৳{d.balance.toLocaleString('en-IN')}</span>
               </button>
@@ -101,7 +105,9 @@ export default function DriverDuePage() {
             <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3 mb-4">
               <div>
                 <h3 className="text-base font-bold text-[#2B2620]">{selectedBike.driverName}</h3>
-                <p className="text-[11px] text-[#7D7156]">Bike {selectedBike.bikeName} — Due history</p>
+                <p className="text-[11px] text-[#7D7156]">
+                  {selectedBike.isShajahanKaka ? 'Shajahan Kaka' : `Bike ${selectedBike.bikeName}`} — Due history
+                </p>
               </div>
               <button onClick={() => setSelectedBike(null)} className="text-xs font-bold text-[#B33B2E] px-2 py-1">
                 Close

@@ -20,6 +20,7 @@ const BikeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   driverName: { type: String, required: true },
   dailyRent: { type: Number, required: true },
+  isShajahanKaka: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

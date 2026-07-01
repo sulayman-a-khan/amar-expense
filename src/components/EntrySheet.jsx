@@ -85,6 +85,7 @@ const inputCls = "w-full p-3 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounde
 function RentForm({ form, set, bikes }) {
   const shift = form.shift || 'Full Day';
   const activeBike = bikes?.find((b) => b._id === form.bikeId);
+  const isShajahan = activeBike?.isShajahanKaka;
   const expected = activeBike
     ? shift === 'Half Day' ? activeBike.dailyRent * 0.5 : shift === 'Off Day' ? 0 : activeBike.dailyRent
     : 0;
@@ -92,10 +93,24 @@ function RentForm({ form, set, bikes }) {
   return (
     <div className="space-y-4">
       <Field label="Select Vehicle / Driver">
-        <select required value={form.bikeId || ''} onChange={(e) => set('bikeId', e.target.value)} className={inputCls}>
+        <select
+          required
+          value={form.bikeId || ''}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            set('bikeId', selectedId);
+            const selBike = bikes?.find(b => b._id === selectedId);
+            if (selBike?.isShajahanKaka && shift === 'Half Day') {
+              set('shift', 'Full Day');
+            }
+          }}
+          className={inputCls}
+        >
           <option value="">Choose bike</option>
           {bikes?.map((b) => (
-            <option key={b._id} value={b._id}>Bike {b.name} — {b.driver}</option>
+            <option key={b._id} value={b._id}>
+              {b.isShajahanKaka ? b.name : `Bike ${b.name} — ${b.driver}`}
+            </option>
           ))}
         </select>
       </Field>
@@ -105,19 +120,21 @@ function RentForm({ form, set, bikes }) {
       </Field>
 
       <Field label="Shift">
-        <div className="grid grid-cols-3 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
-          {['Full Day', 'Half Day', 'Off Day'].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => set('shift', s)}
-              className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
-                shift === s ? 'bg-[#1F7A4D] text-white' : 'text-[#6B5F4F]'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+        <div className={`grid ${isShajahan ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5 bg-[#F7F3EA] p-1 rounded-xl`}>
+          {['Full Day', 'Half Day', 'Off Day']
+            .filter((s) => !(isShajahan && s === 'Half Day'))
+            .map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => set('shift', s)}
+                className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
+                  shift === s ? 'bg-[#1F7A4D] text-white' : 'text-[#6B5F4F]'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
         </div>
       </Field>
 

@@ -37,13 +37,25 @@ async function ensureWallets() {
 }
 
 async function ensureBikes() {
-  const bikes = await Bike.find({});
+  let bikes = await Bike.find({});
   if (bikes.length === 0) {
-    return Bike.create([
+    bikes = await Bike.create([
       { name: '01', driverName: 'রহিম মিয়া', dailyRent: 500 },
       { name: '02', driverName: 'করিম আলী', dailyRent: 500 },
       { name: '03', driverName: 'সফিজ উদ্দিন', dailyRent: 500 },
+      { name: 'Shajahan Kaka', driverName: 'Shajahan Kaka', dailyRent: 100, isShajahanKaka: true }
     ]);
+  } else {
+    const shajahan = await Bike.findOne({ isShajahanKaka: true });
+    if (!shajahan) {
+      const newShajahan = await Bike.create({
+        name: 'Shajahan Kaka',
+        driverName: 'Shajahan Kaka',
+        dailyRent: 100,
+        isShajahanKaka: true
+      });
+      bikes.push(newShajahan);
+    }
   }
   return bikes;
 }
@@ -165,7 +177,9 @@ export async function GET(request) {
         time: new Date(c.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'rent',
         sourceType: 'DailyCollection',
-        text: `Bike ${c.bikeId?.name || ''} Rent In: ৳${c.paidRent} জমা হয়েছে।`
+        text: c.bikeId?.isShajahanKaka 
+          ? `Shajahan Kaka Rent In: ৳${c.paidRent} জমা হয়েছে।`
+          : `Bike ${c.bikeId?.name || ''} Rent In: ৳${c.paidRent} জমা হয়েছে।`
       });
     });
     todayIncomes.forEach((i) => {
@@ -205,14 +219,21 @@ export async function GET(request) {
     // sees everything that still needs to be done in a single view.
     let missingYesterday = false;
     const missingParts = [];
-    let missingBikeNames = [];
 
     const collectedBikeIds = yesterdayCollections.map((c) => c.bikeId.toString());
     const missingBikes = bikes.filter((b) => !collectedBikeIds.includes(b._id.toString()));
     if (missingBikes.length > 0) {
       missingYesterday = true;
-      missingBikeNames = missingBikes.map((b) => b.name);
-      missingParts.push(`Bike rent missing for: ${missingBikeNames.join(', ')}`);
+      const regularMissing = missingBikes.filter((b) => !b.isShajahanKaka).map((b) => b.name);
+      const shajahanMissing = missingBikes.some((b) => b.isShajahanKaka);
+      const parts = [];
+      if (regularMissing.length > 0) {
+        parts.push(`Bike ${regularMissing.join(', ')}`);
+      }
+      if (shajahanMissing) {
+        parts.push('Shajahan Kaka');
+      }
+      missingParts.push(`Rent missing for: ${parts.join(' & ')}`);
     }
 
     if (!yesterdayClosing) {
@@ -226,7 +247,7 @@ export async function GET(request) {
       wallets: walletsObj,
       summary: { netProfit, totalIncome, totalExpense, totalReceivable, totalPayable, bikeDueTotal, cashLoanReceivable },
       receivableBreakdown: { bikeDues, cashLoans },
-      bikes: bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent })),
+      bikes: bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent, isShajahanKaka: b.isShajahanKaka })),
       activities: activities.slice(0, 12),
       missingYesterday,
       missingReason,
