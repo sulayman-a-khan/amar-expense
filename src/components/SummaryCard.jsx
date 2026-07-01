@@ -6,6 +6,9 @@ export default function SummaryCard({ summary, pocketBalance = 0, selectedDate, 
     totalIncome = 0, totalExpense = 0,
   } = summary;
 
+  const todayNet = totalIncome - totalExpense;
+  const previousBalance = pocketBalance - todayNet;
+
   return (
     <section className="ledger-rule bg-[#FFFDF8] border border-[#E3D9C2] rounded-[20px] p-6 pl-8 shadow-sm">
       <div className="flex justify-between items-center">
@@ -24,9 +27,20 @@ export default function SummaryCard({ summary, pocketBalance = 0, selectedDate, 
           />
         </div>
       </div>
-      <h2 className="text-[40px] font-black mt-1.5 tracking-tight leading-none text-[#1F7A4D]">
-        ৳{pocketBalance.toLocaleString('en-IN')}
-      </h2>
+
+      <div className="flex items-end gap-3 mt-1.5">
+        <h2 className="text-[40px] font-black tracking-tight leading-none text-[#1F7A4D]">
+          ৳{pocketBalance.toLocaleString('en-IN')}
+        </h2>
+        <div className="flex flex-col pb-1 gap-0.5">
+          <span className={`text-[11px] font-bold leading-none ${todayNet >= 0 ? 'text-[#1F7A4D]' : 'text-[#B33B2E]'}`}>
+            {todayNet >= 0 ? '+' : '−'}৳{Math.abs(todayNet).toLocaleString('en-IN')} today
+          </span>
+          <span className="text-[11px] font-semibold text-[#7D7156] leading-none">
+            was ৳{previousBalance.toLocaleString('en-IN')}
+          </span>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 mt-5">
         <div className="bg-[#E6F0E5] border border-[#C5DCC2] rounded-2xl p-3">
