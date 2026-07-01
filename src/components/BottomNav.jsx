@@ -3,7 +3,6 @@
 import { useRouter, usePathname } from 'next/navigation';
 
 const ACTIONS = [
-  { key: 'rent', label: 'Bike Rent', sub: 'Shift collection', color: 'income' },
   { key: 'income', label: 'Income', sub: 'Shop / Daily / Other', color: 'income' },
   { key: 'expense', label: 'Expense', sub: 'Spending or credit', color: 'expense' },
   { key: 'transfer', label: 'Transfer', sub: 'Between wallets', color: 'loan' },

@@ -123,47 +123,41 @@ export default function BikeDetailsModal({ bike, onClose }) {
                 </div>
               </div>
 
-              {/* Shajahan Kaka Quick Actions Section */}
-              {bike.isShajahanKaka && (
-                <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today's Collection</span>
-                    <span className="text-[10px] font-bold text-[#7D7156]">{formatGlobalDate(todayStr)}</span>
-                  </div>
-                  
-                  {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
-                  
-                  {todayColl ? (
-                    <div className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 text-[#1F7A4D] bg-[#E6F0E5]/60 rounded-xl">
-                      <span>✓ Today's Status: {todayColl.shift === 'Off Day' ? 'Off Day (৳0)' : todayColl.credit > 0 ? `Given (৳100)` : 'Not Given (Due - ৳100)'}</span>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <button
-                        disabled={submitting}
-                        onClick={() => handleKakaAction('Full Day', 100)}
-                        className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
-                      >
-                        {submitting ? '...' : 'Given'}
-                      </button>
-                      <button
-                        disabled={submitting}
-                        onClick={() => handleKakaAction('Full Day', 0)}
-                        className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
-                      >
-                        {submitting ? '...' : 'Not Given (Due)'}
-                      </button>
-                      <button
-                        disabled={submitting}
-                        onClick={() => handleKakaAction('Off Day', 0)}
-                        className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
-                      >
-                        {submitting ? '...' : 'Off Day'}
-                      </button>
-                    </div>
-                  )}
+              {/* Today's Collection Quick Actions */}
+              <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today&apos;s Collection</span>
+                  <span className="text-[10px] font-bold text-[#7D7156]">{formatGlobalDate(todayStr)}</span>
                 </div>
-              )}
+
+                {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
+
+                {todayColl ? (
+                  <div className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 text-[#1F7A4D] bg-[#E6F0E5]/60 rounded-xl">
+                    <span>✓ {todayColl.shift === 'Off Day'
+                      ? 'Off Day (৳0)'
+                      : `${todayColl.shift} — ৳${todayColl.credit.toLocaleString('en-IN')} collected${todayColl.due > 0 ? `, ৳${todayColl.due.toLocaleString('en-IN')} due` : ''}`
+                    }</span>
+                  </div>
+                ) : bike.isShajahanKaka ? (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 100)}
+                      className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                      {submitting ? '...' : 'Given'}
+                    </button>
+                    <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 0)}
+                      className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                      {submitting ? '...' : 'Not Given'}
+                    </button>
+                    <button disabled={submitting} onClick={() => handleKakaAction('Off Day', 0)}
+                      className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                      {submitting ? '...' : 'Off Day'}
+                    </button>
+                  </div>
+                ) : (
+                  <BikeCollectionForm bike={bike} submitting={submitting} onSubmit={handleKakaAction} />
+                )}
+              </div>
 
               {/* Full-width button: Earning & Expense Details */}
               <button
@@ -303,5 +297,68 @@ export default function BikeDetailsModal({ bike, onClose }) {
         </div>
       )}
     </div>
+  );
+}
+
+function BikeCollectionForm({ bike, submitting, onSubmit }) {
+  const [shift, setShift] = useState('Full Day');
+  const [paidRent, setPaidRent] = useState('');
+
+  const expectedRent = shift === 'Full Day' ? bike.dailyRent : shift === 'Half Day' ? bike.dailyRent * 0.5 : 0;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const finalPaid = shift === 'Off Day' ? 0 : (paidRent === '' ? expectedRent : Number(paidRent));
+    onSubmit(shift, finalPaid);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">Shift</label>
+        <div className="grid grid-cols-3 gap-1 bg-[#F7F3EA] p-1 rounded-xl">
+          {['Full Day', 'Half Day', 'Off Day'].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => {
+                setShift(s);
+                if (s === 'Off Day') setPaidRent('0');
+                else setPaidRent('');
+              }}
+              className={`py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                shift === s ? 'bg-[#2B2620] text-white' : 'text-[#6B5F4F]'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {shift !== 'Off Day' && (
+        <div>
+          <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+            Paid Rent (৳) <span className="text-[#7D7156] font-normal">(Expected: ৳{expectedRent})</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            placeholder={expectedRent}
+            value={paidRent}
+            onChange={(e) => setPaidRent(e.target.value)}
+            className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+          />
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full py-2.5 bg-[#2B2620] text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
+      >
+        {submitting ? 'Saving...' : 'Save Collection'}
+      </button>
+    </form>
   );
 }
