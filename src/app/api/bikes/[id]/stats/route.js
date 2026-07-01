@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
     if (period === 'week') startDate.setUTCDate(startDate.getUTCDate() - 7);
     else if (period === 'month') startDate.setUTCMonth(startDate.getUTCMonth() - 1);
     else if (period === 'year') startDate.setUTCFullYear(startDate.getUTCFullYear() - 1);
-    else startDate = new Date(0); // 'all'
+    else startDate = new Date(0); // 'alltime' / 'all'
 
     const [collectionsAsc, expenses, driverDue, dueEntries] = await Promise.all([
       DailyCollection.find({ bikeId: id }).sort({ date: 1 }), // ascending, needed to carry the running balance forward correctly
@@ -27,12 +27,16 @@ export async function GET(request, { params }) {
       DriverDueEntry.find({ bikeId: id }),
     ]);
 
-    const totalEarning = collectionsAsc.reduce((sum, c) => sum + c.paidRent, 0);
-    const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalDue = driverDue?.balance || 0;
+    // Filter collections and expenses by startDate
+    const filteredCollections = collectionsAsc.filter((c) => c.date >= startDate);
+    const filteredExpenses = expenses.filter((e) => e.date >= startDate);
 
-    const offDaysCount = collectionsAsc.filter(
-      (c) => c.shift === 'Off Day' && c.date >= startDate
+    const totalEarning = filteredCollections.reduce((sum, c) => sum + c.paidRent, 0);
+    const totalExpense = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalDue = driverDue?.balance || 0; // Lifetime due amount (will not filter)
+
+    const offDaysCount = filteredCollections.filter(
+      (c) => c.shift === 'Off Day'
     ).length;
 
     // Map each DailyCollection -> the DriverDueEntry created from it (if any)
@@ -57,22 +61,28 @@ export async function GET(request, { params }) {
         due: runningBalance,
       };
     });
-    const earningDetails = [...earningDetailsAsc].reverse(); // newest first for display
+
+    // Filter list items by startDate
+    const earningDetails = [...earningDetailsAsc]
+      .filter((row) => row.date >= startDate)
+      .reverse(); // newest first for display
 
     const offDays = collectionsAsc
-      .filter((c) => c.shift === 'Off Day')
+      .filter((c) => c.shift === 'Off Day' && c.date >= startDate)
       .map((c) => ({ _id: c._id, date: c.date, reason: c.offDayReason }))
       .reverse();
 
-    const expenseList = expenses.map((e) => ({
-      _id: e._id,
-      date: e.date,
-      amount: e.amount,
-      category: e.category,
-      note: e.note,
-      isCredit: e.isCredit,
-      payableToShop: e.payableToShop,
-    }));
+    const expenseList = expenses
+      .filter((e) => e.date >= startDate)
+      .map((e) => ({
+        _id: e._id,
+        date: e.date,
+        amount: e.amount,
+        category: e.category,
+        note: e.note,
+        isCredit: e.isCredit,
+        payableToShop: e.payableToShop,
+      }));
 
     return NextResponse.json({
       bike: { _id: bike._id, name: bike.name, driver: bike.driverName, dailyRent: bike.dailyRent },

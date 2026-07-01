@@ -16,6 +16,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [period, setPeriod] = useState('month');
 
   const todayStr = todayDhakaDateString();
   const todayColl = earningDetails?.find(
@@ -62,7 +63,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
       setLoading(true);
       setLoadError('');
       try {
-        const res = await fetch(`/api/bikes/${bike._id}/stats?period=all`);
+        const res = await fetch(`/api/bikes/${bike._id}/stats?period=${period}`);
         const data = await res.json();
         if (!isMounted) return;
         if (res.ok) {
@@ -82,7 +83,7 @@ export default function BikeDetailsModal({ bike, onClose }) {
 
     fetchStats();
     return () => { isMounted = false; };
-  }, [bike, refreshKey]);
+  }, [bike, refreshKey, period]);
 
   if (!bike) return null;
 
@@ -101,6 +102,28 @@ export default function BikeDetailsModal({ bike, onClose }) {
           <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold">
             ✕
           </button>
+        </div>
+
+        {/* Time Period Filter */}
+        <div className="px-6 py-2.5 bg-[#FFFDF8] border-b border-[#E3D9C2] flex gap-1.5 justify-center shrink-0">
+          {[
+            { key: 'week', label: 'Week' },
+            { key: 'month', label: 'Month' },
+            { key: 'year', label: 'Year' },
+            { key: 'alltime', label: 'All Time' }
+          ].map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setPeriod(p.key)}
+              className={`px-3.5 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase transition-colors ${
+                period === p.key
+                  ? 'bg-[#2B2620] text-white'
+                  : 'bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2]'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
 
         {/* Scrollable Content */}
