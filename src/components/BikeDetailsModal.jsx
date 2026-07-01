@@ -212,8 +212,8 @@ export default function BikeDetailsModal({ bike, onClose }) {
 
                       return (
                         <div key={row._id} className="grid grid-cols-3 px-4 py-3 text-xs items-center">
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="text-[#2B2620] font-semibold">{formatGlobalDate(row.date)}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[#2B2620] font-semibold whitespace-nowrap">{formatGlobalDate(row.date)}</span>
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none ${badgeColor}`}>
                               {badgeLabel}
                             </span>
