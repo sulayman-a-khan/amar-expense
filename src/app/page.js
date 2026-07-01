@@ -110,9 +110,8 @@ export default function Dashboard() {
             <p className="text-[11px] text-[#7D7156] font-semibold mt-0.5">আপনার দৈনিক হিসাব</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-[#7D7156] font-semibold">Total Wallet Balance</p>
-            <p className="text-sm font-black text-[#2B2620] leading-tight">৳{((wallets.Pocket || 0) + (wallets.Drawer || 0)).toLocaleString('en-IN')}</p>
-            <p className="text-[9px] text-[#7D7156] font-medium mt-0.5">Last Closing: ৳{latestClosingCash.toLocaleString('en-IN')}</p>
+            <p className="text-[10px] text-[#7D7156] font-semibold">Drawer</p>
+            <p className="text-sm font-black text-[#2B2620] leading-tight">৳{(wallets.Drawer || 0).toLocaleString('en-IN')}</p>
           </div>
         </div>
       </header>
@@ -124,7 +123,6 @@ export default function Dashboard() {
           selectedDate={selectedDate} 
           onDateChange={(e) => setSelectedDate(e.target.value)} 
         />
-        <WalletRow wallets={wallets} />
         <ShajahanKakaCard
           bike={bikes.find((b) => b.isShajahanKaka)}
           due={receivableBreakdown.bikeDues.find((d) => d.isShajahanKaka)}
