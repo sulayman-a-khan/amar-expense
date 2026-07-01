@@ -247,7 +247,18 @@ export async function GET(request) {
       wallets: walletsObj,
       summary: { netProfit, totalIncome, totalExpense, totalReceivable, totalPayable, bikeDueTotal, cashLoanReceivable },
       receivableBreakdown: { bikeDues, cashLoans },
-      bikes: bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent, isShajahanKaka: b.isShajahanKaka })),
+      bikes: bikes.map((b) => {
+        const todayColl = todayCollections.find((c) => c.bikeId?._id?.toString() === b._id.toString());
+        return {
+          _id: b._id,
+          name: b.name,
+          driver: b.driverName,
+          dailyRent: b.dailyRent,
+          isShajahanKaka: b.isShajahanKaka,
+          collectedToday: todayColl ? todayColl.shift : null,
+          paidToday: todayColl ? todayColl.paidRent : null,
+        };
+      }),
       activities: activities.slice(0, 12),
       missingYesterday,
       missingReason,

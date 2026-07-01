@@ -131,6 +131,7 @@ export default function Dashboard() {
           bike={bikes.find((b) => b.isShajahanKaka)}
           due={receivableBreakdown.bikeDues.find((d) => d.isShajahanKaka)}
           onView={(bike) => setViewingBike(bike)}
+          onSaved={fetchDashboardData}
         />
         <ShopRentCard />
         <FleetCard bikes={bikes.filter((b) => !b.isShajahanKaka)} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
