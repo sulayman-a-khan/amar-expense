@@ -17,6 +17,8 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [period, setPeriod] = useState('month');
+  const [showKakaAmountInput, setShowKakaAmountInput] = useState(false);
+  const [kakaAmount, setKakaAmount] = useState('');
 
   const todayStr = activeDate || todayDhakaDateString();
   const todayColl = earningDetails?.find(
@@ -43,6 +45,8 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
       if (!res.ok || data.error) {
         setSubmitError(data.error || 'Failed to save entry');
       } else {
+        setShowKakaAmountInput(false);
+        setKakaAmount('');
         setRefreshKey((k) => k + 1);
       }
     } catch {
@@ -52,12 +56,38 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
     }
   };
 
+  // Shajahan Kaka's daily rent is always ৳100. If he already has an
+  // outstanding due, tapping "Given" opens a manual amount field instead of
+  // instantly logging ৳100 — whatever he actually hands over that day, since
+  // any amount above ৳100 should adjust against (reduce) his existing due.
+  const handleKakaGivenClick = () => {
+    const hasDue = stats && stats.totalDue > 0;
+    if (hasDue) {
+      setShowKakaAmountInput(true);
+      setSubmitError('');
+    } else {
+      handleKakaAction('Full Day', 100);
+    }
+  };
+
+  const handleKakaManualSubmit = () => {
+    const amount = Number(kakaAmount);
+    if (kakaAmount === '' || Number.isNaN(amount) || amount < 0) {
+      setSubmitError('Enter a valid amount.');
+      return;
+    }
+    handleKakaAction('Full Day', amount);
+  };
+
   useEffect(() => {
     if (!bike) return;
 
     let isMounted = true;
     setActiveView(null);
     setExpenseDetail(null);
+    setShowKakaAmountInput(false);
+    setKakaAmount('');
+    setSubmitError('');
 
     const fetchStats = async () => {
       setLoading(true);
@@ -155,20 +185,43 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
                     {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
 
                     {bike.isShajahanKaka ? (
-                      <div className="grid grid-cols-3 gap-1.5">
-                        <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 100)}
-                          className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                          {submitting ? '...' : 'Given'}
-                        </button>
-                        <button disabled={submitting} onClick={() => handleKakaAction('Full Day', 0)}
-                          className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                          {submitting ? '...' : 'Not Given'}
-                        </button>
-                        <button disabled={submitting} onClick={() => handleKakaAction('Off Day', 0)}
-                          className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                          {submitting ? '...' : 'Off Day'}
-                        </button>
-                      </div>
+                      showKakaAmountInput ? (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">
+                            Amount received (৳) <span className="text-[#7D7156] font-normal">— extra over ৳100 clears his due</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            autoFocus
+                            placeholder="e.g. 150"
+                            value={kakaAmount}
+                            onChange={(e) => setKakaAmount(e.target.value)}
+                            className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+                          />
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button disabled={submitting} onClick={() => { setShowKakaAmountInput(false); setKakaAmount(''); setSubmitError(''); }}
+                              className="py-2.5 text-[11px] font-bold bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2] rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                              Cancel
+                            </button>
+                            <button disabled={submitting} onClick={handleKakaManualSubmit}
+                              className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                              {submitting ? '...' : 'Confirm'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button disabled={submitting} onClick={handleKakaGivenClick}
+                            className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                            {submitting ? '...' : 'Given'}
+                          </button>
+                          <button disabled={submitting} onClick={() => handleKakaAction('Off Day', 0)}
+                            className="py-2.5 text-[11px] font-bold bg-[#B33B2E] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                            {submitting ? '...' : 'Off Day'}
+                          </button>
+                        </div>
+                      )
                     ) : (
                       <BikeCollectionForm bike={bike} submitting={submitting} onSubmit={handleKakaAction} />
                     )}

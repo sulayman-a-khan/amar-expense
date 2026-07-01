@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { Bike, DailyCollection, Expense, DriverDue, DriverDueEntry } from '@/models/models';
 import { startOfTodayDhaka } from '@/lib/dateUtils';
+import { backfillMissedDays } from '@/lib/driverDue';
 
 export async function GET(request, { params }) {
   try {
@@ -12,6 +13,10 @@ export async function GET(request, { params }) {
 
     const bike = await Bike.findById(id);
     if (!bike) return NextResponse.json({ error: 'Bike not found' }, { status: 404 });
+
+    if (bike.isShajahanKaka) {
+      await backfillMissedDays(bike);
+    }
 
     let startDate = startOfTodayDhaka();
     if (period === 'week') {

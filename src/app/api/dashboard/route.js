@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
 import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal } from '@/models/models';
 import { startOfTodayDhaka, toNoonUTC } from '@/lib/dateUtils';
+import { backfillMissedDays } from '@/lib/driverDue';
 
 const WALLET_NAMES = ['Pocket', 'Drawer'];
 
@@ -97,11 +98,19 @@ export async function GET(request) {
     // appear on the Loans page or inflate its totals.
     await cleanupOldShortfallLoans();
 
+    // Bikes must be ensured first, and Shajahan Kaka's missed days backfilled
+    // (auto "Not Given" for any day with no entry) before the due-dependent
+    // queries below run, so driverDues/bikeDues reflect the up-to-date balance.
+    const bikes = await ensureBikes();
+    const shajahanBike = bikes.find((b) => b.isShajahanKaka);
+    if (shajahanBike) {
+      await backfillMissedDays(shajahanBike);
+    }
+
     // Run every independent query concurrently instead of one-by-one —
     // this is what was making the dashboard slow to load, especially
     // over a higher-latency connection to Atlas.
     const [
-      bikes,
       allWallets,
       todayCollections,
       todayExpenses,
@@ -111,7 +120,6 @@ export async function GET(request) {
       driverDues,
       todayRentWithdrawals,
     ] = await Promise.all([
-      ensureBikes(),
       ensureWallets(),
       DailyCollection.find({ createdAt: { $gte: startOfDay } }).populate('bikeId'),
       Expense.find({ createdAt: { $gte: startOfDay } }),

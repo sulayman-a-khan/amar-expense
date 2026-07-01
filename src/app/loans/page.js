@@ -7,6 +7,7 @@ import EntryFlow from '@/components/EntryFlow';
 import BikeDetailsModal from '@/components/BikeDetailsModal';
 import BikeDueListModal from '@/components/BikeDueListModal';
 import CashLoanListModal from '@/components/CashLoanListModal';
+import PayableListModal from '@/components/PayableListModal';
 
 const WALLETS = ['Pocket', 'Drawer'];
 
@@ -26,6 +27,7 @@ export default function LoansPage() {
   const [receivableExpanded, setReceivableExpanded] = useState(false);
   const [showBikeDueList, setShowBikeDueList] = useState(false);
   const [showCashLoanList, setShowCashLoanList] = useState(false);
+  const [showPayableList, setShowPayableList] = useState(false);
   const [viewingBike, setViewingBike] = useState(null);
 
   const fetchLoans = useCallback(() => {
@@ -46,6 +48,11 @@ export default function LoansPage() {
   }, []);
 
   useEffect(() => { fetchLoans(); }, [fetchLoans]);
+
+  const payableList = useMemo(
+    () => loans.filter((l) => l.type === 'Payable' && !l.resolved),
+    [loans]
+  );
 
   const filtered = useMemo(() => {
     if (filter === 'All') return loans;
@@ -105,10 +112,13 @@ export default function LoansPage() {
                 </span>
                 <span className="font-extrabold text-lg text-[#234A6E] mt-0.5 block">৳{summary.totalReceivable.toLocaleString('en-IN')}</span>
               </button>
-              <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl p-3">
+              <button
+                onClick={() => setShowPayableList(true)}
+                className="text-left bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl p-3 active:scale-[0.98] transition-transform"
+              >
                 <span className="text-[#6B5F4F] text-[10px] font-bold uppercase tracking-wide block">You owe</span>
                 <span className="font-extrabold text-lg text-[#2B2620] mt-0.5 block">৳{summary.totalPayable.toLocaleString('en-IN')}</span>
-              </div>
+              </button>
             </div>
 
             {receivableExpanded && (
@@ -255,6 +265,12 @@ export default function LoansPage() {
         isOpen={showCashLoanList}
         onClose={() => setShowCashLoanList(false)}
         cashLoans={receivableBreakdown.cashLoans}
+      />
+
+      <PayableListModal
+        isOpen={showPayableList}
+        onClose={() => setShowPayableList(false)}
+        payables={payableList}
       />
 
       <div className="h-24" />
