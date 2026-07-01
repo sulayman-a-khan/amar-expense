@@ -163,6 +163,7 @@ export async function GET(request) {
         bikeName: d.bikeId?.name || '?',
         driverName: d.bikeId?.driverName || 'Unknown',
         amount: d.balance,
+        isShajahanKaka: d.bikeId?.isShajahanKaka || false,
       };
     });
 
