@@ -22,14 +22,41 @@ export default function BottomNav({ onSelectAction }) {
 
   return (
     <div className="fixed bottom-5 left-4 right-4 z-30">
-      <nav className="max-w-md mx-auto bg-[#FFFDF8] border border-[#E3D9C2] rounded-[22px] px-3 py-3 shadow-lg flex justify-between items-center gap-1">
+      <nav className="max-w-md mx-auto rounded-[28px] px-3 py-3 flex justify-between items-center gap-1 relative z-30">
+        
+        {/* Background Layer with overflow-hidden for circles */}
+        <div 
+          style={{
+            background: 'linear-gradient(145deg, #0e2318 0%, #163524 45%, #0a1d10 100%)',
+            boxShadow: '0 20px 60px rgba(15, 40, 25, 0.45), 0 4px 16px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(93,232,138,0.25)'
+          }}
+          className="absolute inset-0 rounded-[28px] overflow-hidden -z-10"
+        >
+          {/* Decorative circles */}
+          <div
+            style={{
+              background: 'radial-gradient(circle, rgba(52,199,89,0.12) 0%, transparent 70%)',
+              width: 140, height: 140, top: -40, right: -40,
+            }}
+            className="absolute rounded-full pointer-events-none"
+          />
+          <div
+            style={{
+              background: 'radial-gradient(circle, rgba(52,199,89,0.06) 0%, transparent 70%)',
+              width: 100, height: 100, bottom: -40, left: -20,
+            }}
+            className="absolute rounded-full pointer-events-none"
+          />
+        </div>
+
         <NavButton icon="🏠" label="Home" active={pathname === '/'} onClick={() => router.push('/')} />
         <NavButton icon="📒" label="Ledger" active={pathname === '/ledger'} onClick={() => router.push('/ledger')} />
 
         <button
           onClick={() => onSelectAction()}
           aria-label="Add entry"
-          className="w-14 h-14 rounded-full bg-[#2B2620] text-white text-2xl font-bold flex items-center justify-center shadow-md -mt-8 border-4 border-[#F7F3EA] active:scale-95 transition-transform"
+          className="w-14 h-14 rounded-full bg-[#1F7A4D] text-white text-2xl font-bold flex items-center justify-center shadow-md -mt-8 border-4 border-[#F7F3EA] active:scale-95 transition-transform z-10"
         >
           +
         </button>
@@ -43,9 +70,9 @@ export default function BottomNav({ onSelectAction }) {
 
 function NavButton({ icon, label, onClick, active }) {
   return (
-    <button onClick={onClick} className="flex-1 flex flex-col items-center py-1 gap-0.5">
-      <span className={`text-base ${active ? 'opacity-100' : 'opacity-50'}`}>{icon}</span>
-      <span className={`text-[9px] font-bold tracking-wide ${active ? 'text-[#2B2620]' : 'text-[#7D7156]'}`}>
+    <button onClick={onClick} className="flex-1 flex flex-col items-center py-1 gap-0.5 z-10">
+      <span className={`text-base ${active ? 'opacity-100' : 'opacity-40 saturate-0'}`}>{icon}</span>
+      <span className={`text-[9px] font-bold tracking-wide ${active ? 'text-white' : 'text-white/40'}`}>
         {label}
       </span>
     </button>
