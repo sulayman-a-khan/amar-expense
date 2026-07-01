@@ -126,7 +126,10 @@ export default function BikeDetailsModal({ bike, onClose }) {
               {/* Shajahan Kaka Quick Actions Section */}
               {bike.isShajahanKaka && (
                 <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
-                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today's Collection</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider block">Today's Collection</span>
+                    <span className="text-[10px] font-bold text-[#7D7156]">{formatGlobalDate(todayStr)}</span>
+                  </div>
                   
                   {submitError && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{submitError}</p>}
                   
