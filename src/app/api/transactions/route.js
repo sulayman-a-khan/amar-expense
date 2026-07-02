@@ -25,7 +25,12 @@ export async function GET() {
         amount: c.paidRent,
         note: `Expected: ৳${c.expectedRent} | Shift: ${c.shift} ${c.shift === 'Off Day' ? `| Reason: ${c.offDayReason}` : ''}`,
         title: c.bikeId?.isShajahanKaka ? `Shajahan Kaka Collection` : `${c.bikeId?.driverName || 'Driver'} Collection`,
+        bikeName: c.bikeId?.isShajahanKaka
+          ? 'Bike 4'
+          : (c.bikeId?.name ? (/^bike/i.test(c.bikeId.name.trim()) ? c.bikeId.name : `Bike ${c.bikeId.name}`) : 'Bike'),
+        shift: c.shift,
         colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
+
       });
     });
 
@@ -63,6 +68,10 @@ export async function GET() {
         subType: e.category,
         amount: e.amount,
         note: e.isCredit ? `Payable to: ${e.payableToShop}` : `Paid from: ${e.wallet} | Note: ${e.note}`,
+        wallet: e.wallet,
+        isCredit: e.isCredit,
+        payableToShop: e.payableToShop,
+        noteText: e.note,
         title: e.category,
         colorCode: 'text-[#B33B2E] border-[#B33B2E] bg-[#F7E9E5]/50'
       });

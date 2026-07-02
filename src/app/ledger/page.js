@@ -71,23 +71,83 @@ export default function LedgerPage() {
         ) : filtered.length === 0 ? (
           <p className="text-center text-sm text-[#7D7156] py-10">No {filter !== 'All' ? filter.toLowerCase() : ''} entries yet.</p>
         ) : (
-          filtered.map((t) => (
-            <div key={t._id} className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-              <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${TYPE_DOT[t.type] || 'bg-[#7D7156]'}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline gap-2">
-                  <span className="font-bold text-sm text-[#2B2620] truncate">{t.title}</span>
-                  <span className={`font-extrabold text-sm whitespace-nowrap ${
-                    t.type === 'Income' ? 'text-[#1F7A4D]' : t.type === 'Expense' ? 'text-[#B33B2E]' : 'text-[#2E5C8A]'
-                  }`}>
-                    {t.type === 'Expense' ? '−' : t.type === 'Income' ? '+' : ''}৳{Number(t.amount).toLocaleString('en-IN')}
-                  </span>
+          filtered.map((t) => {
+            const isBikeCollection = t.subType === 'Bike Collection';
+            const isExpense = t.type === 'Expense';
+            const dateLabel = new Date(t.date).toLocaleDateString('en-GB');
+            return (
+              <div key={t._id} className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+                <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${TYPE_DOT[t.type] || 'bg-[#7D7156]'}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-baseline gap-2">
+                    <span className="font-bold text-sm text-[#2B2620] truncate">{t.title}</span>
+                    {isBikeCollection && t.shift === 'Off Day' ? (
+                      <span className="text-[10px] font-black uppercase tracking-wide text-white bg-[#B33B2E] px-2.5 py-1 rounded-lg whitespace-nowrap">
+                        No Income
+                      </span>
+                    ) : isBikeCollection && Number(t.amount) === 0 ? (
+                      <span className="text-[10px] font-black uppercase tracking-wide text-white bg-[#B8860B] px-2.5 py-1 rounded-lg whitespace-nowrap">
+                        Due
+                      </span>
+                    ) : (
+                      <span className={`font-extrabold text-sm whitespace-nowrap ${
+                        t.type === 'Income' ? 'text-[#1F7A4D]' : t.type === 'Expense' ? 'text-[#B33B2E]' : 'text-[#2E5C8A]'
+                      }`}>
+                        {t.type === 'Expense' ? '−' : t.type === 'Income' ? '+' : ''}৳{Number(t.amount).toLocaleString('en-IN')}
+                      </span>
+                    )}
+                  </div>
+
+                  {isBikeCollection ? (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#6B5F4F] bg-[#F0EAD9] border border-[#E3D9C2] px-2 py-0.5 rounded-md whitespace-nowrap">
+                        {t.bikeName}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
+                        t.shift === 'Off Day'
+                          ? 'text-white bg-[#B33B2E]'
+                          : t.shift === 'Half Day'
+                          ? 'text-[#6B5124] bg-[#F3E3B8]'
+                          : 'text-white bg-[#1F7A4D]'
+                      }`}>
+                        {t.shift}
+                      </span>
+                      <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
+                    </div>
+                  ) : isExpense ? (
+                    <>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {t.isCredit ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#B33B2E]">
+                            Credit
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-[#6B5124] bg-[#F3E3B8]">
+                            {t.wallet}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
+                      </div>
+                      {t.isCredit && t.payableToShop && (
+                        <p className="text-[11px] text-[#6B5F4F] mt-1">Payable to: {t.payableToShop}</p>
+                      )}
+                      {!t.isCredit && t.noteText && (
+                        <p className="text-[11px] text-[#6B5F4F] mt-1">{t.noteText}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[10px] font-bold text-[#6B5F4F] whitespace-nowrap">{t.subType}</span>
+                        <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
+                      </div>
+                      {t.note && <p className="text-[11px] text-[#6B5F4F] mt-1">{t.note}</p>}
+                    </>
+                  )}
                 </div>
-                <p className="text-[11px] text-[#7D7156] mt-0.5">{new Date(t.date).toLocaleDateString('en-GB')} · {t.subType}</p>
-                {t.note && <p className="text-[11px] text-[#6B5F4F] mt-1">{t.note}</p>}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
 
