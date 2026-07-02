@@ -86,17 +86,12 @@ export default function DriverDuePage() {
           </div>
         ) : (
           dues.map((d) => {
-            const initial = (d.driverName || '?').trim().charAt(0).toUpperCase();
             return (
               <div
                 key={d.bikeId}
                 className="ledger-rule bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 pl-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black text-sm bg-[#E7EEF4] text-[#2E5C8A]">
-                    {initial}
-                  </div>
-
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0">
@@ -139,9 +134,6 @@ export default function DriverDuePage() {
           >
             <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center font-black text-sm bg-[#E7EEF4] text-[#2E5C8A]">
-                  {(selectedBike.driverName || '?').trim().charAt(0).toUpperCase()}
-                </div>
                 <div>
                   <h3 className="text-base font-bold text-[#2B2620]">{selectedBike.driverName}</h3>
                   <p className="text-[11px] text-[#7D7156]">
