@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ImageUploader from './ImageUploader';
 import { todayDhakaDateString } from '@/lib/dateUtils';
 
@@ -195,21 +195,48 @@ function IncomeForm({ form, set }) {
   );
 }
 
+const EXPENSE_CATEGORIES = ['বাসার খরচ', 'আমার খরচ', 'মেডিসিন'];
+
 function ExpenseForm({ form, set, bikes }) {
   const isCredit = !!form.isCredit;
+  const selectedBike = bikes?.find((b) => b._id === form.bikeId);
+  const bikeLocked = !!selectedBike;
+
   return (
     <div className="space-y-4">
-      <Field label="Category">
-        <input type="text" required placeholder="e.g. Fuel, Parts, Food" value={form.category || ''} onChange={(e) => set('category', e.target.value)} className={inputCls} />
-      </Field>
-      
       <Field label="Related Bike (Optional)">
-        <select value={form.bikeId || ''} onChange={(e) => set('bikeId', e.target.value)} className={inputCls}>
+        <select
+          value={form.bikeId || ''}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            set('bikeId', selectedId);
+            const b = bikes?.find((bk) => bk._id === selectedId);
+            if (b) {
+              set('category', `Bike ${b.name}`);
+            } else if (EXPENSE_CATEGORIES.includes(form.category)) {
+              // keep an already-chosen preset category
+            } else {
+              set('category', '');
+            }
+          }}
+          className={inputCls}
+        >
           <option value="">None</option>
           {bikes?.map((b) => (
             <option key={b._id} value={b._id}>Bike {b.name}</option>
           ))}
         </select>
+      </Field>
+
+      <Field label="Category">
+        {bikeLocked ? (
+          <input type="text" readOnly disabled value={form.category || ''} className={`${inputCls} bg-[#EFE8D9] text-[#6B5F4F] cursor-not-allowed`} />
+        ) : (
+          <select required value={form.category || ''} onChange={(e) => set('category', e.target.value)} className={inputCls}>
+            <option value="">Choose category</option>
+            {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
       </Field>
       <Field label="Amount (৳)">
         <input type="number" required min="0" value={form.amount || ''} onChange={(e) => set('amount', e.target.value)} className={inputCls} />
@@ -317,18 +344,23 @@ function TransferForm({ form, set, walletBalances = {} }) {
 
 function LoanForm({ form, set }) {
   const type = form.type || 'Receivable';
+
+  useEffect(() => {
+    if (!form.type) set('type', 'Receivable');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="space-y-4">
       <Field label="Loan Direction">
         <div className="grid grid-cols-2 gap-1.5 bg-[#F7F3EA] p-1 rounded-xl">
           <button
-            type="button" onClick={() => set('type', 'Receivable')}
+            type="button" onClick={() => { set('type', 'Receivable'); }}
             className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${type === 'Receivable' ? 'bg-[#2E5C8A] text-white' : 'text-[#6B5F4F]'}`}
           >
             Given (Receivable)
           </button>
           <button
-            type="button" onClick={() => set('type', 'Payable')}
+            type="button" onClick={() => { set('type', 'Payable'); if (form.wallet === 'Other Fund') set('wallet', ''); }}
             className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${type === 'Payable' ? 'bg-[#2E5C8A] text-white' : 'text-[#6B5F4F]'}`}
           >
             Taken (Payable)
@@ -348,8 +380,12 @@ function LoanForm({ form, set }) {
         <select required value={form.wallet || ''} onChange={(e) => set('wallet', e.target.value)} className={inputCls}>
           <option value="">Choose wallet</option>
           {WALLETS.map((w) => <option key={w} value={w}>{w}</option>)}
+          {type === 'Receivable' && <option value="Other Fund">From Other Fund</option>}
         </select>
       </Field>
+      {type === 'Receivable' && form.wallet === 'Other Fund' && (
+        <p className="text-[11px] text-[#6B5F4F] -mt-2">Won&apos;t deduct cash from any wallet — logs as a returnable amount</p>
+      )}
       <Field label="Note (optional)">
         <input type="text" value={form.note || ''} onChange={(e) => set('note', e.target.value)} className={inputCls} />
       </Field>

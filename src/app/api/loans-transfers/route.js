@@ -72,14 +72,19 @@ export async function POST(req) {
       }
 
       const parsedAmount = Number(amount);
-      const targetWallet = await Wallet.findOne({ name: wallet });
-      if (!targetWallet) {
-        return NextResponse.json({ error: `Wallet ${wallet} not found.` }, { status: 400 });
-      }
+      const isOtherFund = type === 'Receivable' && wallet === 'Other Fund';
 
-      // Check balance if giving a receivable loan (we pay out cash)
-      if (type === 'Receivable' && targetWallet.balance < parsedAmount) {
-        return NextResponse.json({ error: `Insufficient funds in ${wallet} wallet.` }, { status: 400 });
+      let targetWallet = null;
+      if (!isOtherFund) {
+        targetWallet = await Wallet.findOne({ name: wallet });
+        if (!targetWallet) {
+          return NextResponse.json({ error: `Wallet ${wallet} not found.` }, { status: 400 });
+        }
+
+        // Check balance if giving a receivable loan (we pay out cash)
+        if (type === 'Receivable' && targetWallet.balance < parsedAmount) {
+          return NextResponse.json({ error: `Insufficient funds in ${wallet} wallet.` }, { status: 400 });
+        }
       }
 
       const loan = await Loan.create({
@@ -87,18 +92,23 @@ export async function POST(req) {
         person,
         amount: parsedAmount,
         note: note || '',
+        fromOtherFund: isOtherFund,
         date: parsedDate
       });
 
       // Update wallets:
       // Receivable (money given out) => deducts from wallet.
       // Payable (money received/owed) => adds to wallet (e.g. cash advance / borrowed).
-      if (type === 'Receivable') {
-        targetWallet.balance -= parsedAmount;
-      } else {
-        targetWallet.balance += parsedAmount;
+      // Other Fund (money given out, sourced outside our wallets) => no wallet deduction,
+      // just tracked as a returnable amount on the loan itself.
+      if (!isOtherFund) {
+        if (type === 'Receivable') {
+          targetWallet.balance -= parsedAmount;
+        } else {
+          targetWallet.balance += parsedAmount;
+        }
+        await targetWallet.save();
       }
-      await targetWallet.save();
 
       return NextResponse.json({ success: true, loan });
     }

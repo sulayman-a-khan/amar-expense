@@ -34,12 +34,12 @@ export default function TimelineLog({ activities, selectedDate, onActivityDelete
       <h3 className="text-[11px] font-bold text-[#6B5F4F] tracking-widest uppercase px-1">
         Activity Log
       </h3>
-      <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm space-y-4">
+      <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm divide-y divide-[#EFE8D9]">
         {activities.length > 0 ? activities.map((act) => {
           const canEditDelete = isWithin48Hours(act.createdAt);
           const isZero = act.amount === 0;
           return (
-            <div key={act.id} className="flex gap-3.5 items-start justify-between group">
+            <div key={act.id} className="flex gap-3.5 items-start justify-between group py-3 first:pt-0 last:pb-0">
               <div className="flex gap-3.5 items-start min-w-0">
                 <span
                   className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${

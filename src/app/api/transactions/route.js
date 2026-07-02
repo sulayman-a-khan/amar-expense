@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, RentWithdrawal } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, RentWithdrawal, DriverDueEntry } from '@/models/models';
 
 export async function GET() {
   try {
@@ -14,9 +14,19 @@ export async function GET() {
     const transfers = await WalletTransfer.find({}).sort({ date: -1 });
     const rentWithdrawals = await RentWithdrawal.find({}).sort({ date: -1 });
 
+    // Clearance entries record how much of an overpayment cleared existing
+    // driver due, and what the due balance was right after — used to tell
+    // "partially reduced the due" apart from "fully paid off the due".
+    const clearanceEntries = await DriverDueEntry.find({ type: 'clearance' });
+    const clearanceByCollectionId = {};
+    clearanceEntries.forEach((entry) => {
+      if (entry.dailyCollectionId) clearanceByCollectionId[entry.dailyCollectionId.toString()] = entry;
+    });
+
     const allTransactions = [];
 
     collections.forEach(c => {
+      const clearance = clearanceByCollectionId[c._id.toString()];
       allTransactions.push({
         _id: c._id,
         date: c.date,
@@ -29,6 +39,9 @@ export async function GET() {
           ? 'Bike 4'
           : (c.bikeId?.name ? (/^bike/i.test(c.bikeId.name.trim()) ? c.bikeId.name : `Bike ${c.bikeId.name}`) : 'Bike'),
         shift: c.shift,
+        expectedRent: c.expectedRent,
+        dueCleared: clearance ? clearance.amount : 0,
+        dueBalanceAfter: clearance ? clearance.balanceAfter : null,
         colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
 
       });

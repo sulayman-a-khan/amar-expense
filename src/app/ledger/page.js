@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import EntryFlow from '@/components/EntryFlow';
+import { todayDhakaDateString } from '@/lib/dateUtils';
 
 const FILTERS = ['All', 'Income', 'Expense', 'Loan', 'Transfer'];
 
@@ -13,10 +14,23 @@ const TYPE_DOT = {
   Transfer: 'bg-[#2E5C8A]',
 };
 
+// t.date is stored at noon UTC representing the Dhaka calendar day directly
+// (see dateUtils.toNoonUTC), so reading the UTC fields back out gives the
+// correct "YYYY-MM-DD" without any further timezone conversion.
+function dateKey(dateInput) {
+  const d = new Date(dateInput);
+  if (isNaN(d)) return '';
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export default function LedgerPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [selectedDate, setSelectedDate] = useState(''); // '' = all dates
   const [loadError, setLoadError] = useState('');
 
   const fetchTransactions = useCallback(() => {
@@ -34,21 +48,46 @@ export default function LedgerPage() {
   useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
   const filtered = useMemo(() => {
-    if (filter === 'All') return transactions;
-    return transactions.filter((t) => t.type === filter);
-  }, [transactions, filter]);
+    let result = transactions;
+    if (filter !== 'All') result = result.filter((t) => t.type === filter);
+    if (selectedDate) result = result.filter((t) => dateKey(t.date) === selectedDate);
+    return result;
+  }, [transactions, filter, selectedDate]);
 
   return (
     <div>
-      <PageHeader title="Full Ledger" subtitle="Every transaction, in one place" />
+      <PageHeader
+        title="Full Ledger"
+        subtitle="Every transaction, in one place"
+        right={
+          <div className="flex items-center gap-1.5">
+            {selectedDate && (
+              <button
+                onClick={() => setSelectedDate('')}
+                aria-label="Show all dates"
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#F1E9DC] text-[#6B5F4F] text-xs font-bold hover:bg-[#E3D9C2] transition-colors"
+              >
+                ✕
+              </button>
+            )}
+            <input
+              type="date"
+              value={selectedDate}
+              max={todayDhakaDateString()}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-[130px] p-2 text-xs bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
+            />
+          </div>
+        }
+      />
 
       <div className="max-w-md mx-auto px-5 mb-4">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex gap-2">
           {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+              className={`flex-1 px-2 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                 filter === f ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F]'
               }`}
             >
@@ -69,7 +108,9 @@ export default function LedgerPage() {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-sm text-[#7D7156] py-10">No {filter !== 'All' ? filter.toLowerCase() : ''} entries yet.</p>
+          <p className="text-center text-sm text-[#7D7156] py-10">
+            No {filter !== 'All' ? filter.toLowerCase() + ' ' : ''}entries{selectedDate ? ' on this date' : ' yet'}.
+          </p>
         ) : (
           filtered.map((t) => {
             const isBikeCollection = t.subType === 'Bike Collection';
@@ -99,7 +140,7 @@ export default function LedgerPage() {
                   </div>
 
                   {isBikeCollection ? (
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#6B5F4F] bg-[#F0EAD9] border border-[#E3D9C2] px-2 py-0.5 rounded-md whitespace-nowrap">
                         {t.bikeName}
                       </span>
@@ -112,6 +153,17 @@ export default function LedgerPage() {
                       }`}>
                         {t.shift}
                       </span>
+                      {t.dueCleared > 0 && (
+                        t.dueBalanceAfter === 0 ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#1F7A4D]">
+                            Due Paid
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#2E5C8A]">
+                            Due Reduce
+                          </span>
+                        )
+                      )}
                       <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
                     </div>
                   ) : isExpense ? (

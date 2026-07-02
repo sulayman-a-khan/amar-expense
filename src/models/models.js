@@ -65,6 +65,7 @@ const LoanSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   note: { type: String, default: '' },
   resolved: { type: Boolean, default: false },
+  fromOtherFund: { type: Boolean, default: false }, // Given loans funded from an outside source — not deducted from a wallet, tracked as a returnable amount
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });

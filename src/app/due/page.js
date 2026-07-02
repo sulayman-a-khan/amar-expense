@@ -52,16 +52,25 @@ export default function DriverDuePage() {
     <div>
       <PageHeader title="Driver Due" subtitle="Rent shortfalls owed by drivers" />
 
-      <main className="max-w-md mx-auto px-5 space-y-4">
-        <section className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm">
-          <span className="text-[11px] font-bold text-[#6B5F4F] tracking-widest uppercase">
-            Total Outstanding Due
-          </span>
-          <h2 className="text-[32px] font-black mt-1 text-[#2E5C8A] tracking-tight leading-none">
-            ৳{totalDue.toLocaleString('en-IN')}
-          </h2>
-        </section>
+      {!loading && !loadError && (
+        <div className="max-w-md mx-auto px-5 mb-6">
+          <div className="relative bg-gradient-to-br from-[#2B2620] to-[#1C1812] rounded-[28px] p-6 shadow-lg overflow-hidden">
+            {/* subtle decorative glow */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-14 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-2xl pointer-events-none" />
 
+            <div className="relative mb-5">
+              <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-[0.15em]">Total Outstanding Due</span>
+            </div>
+
+            <p className="relative text-4xl font-black tracking-tight text-[#8FC2E8]">
+              ৳{totalDue.toLocaleString('en-IN')}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <main className="max-w-md mx-auto px-5 space-y-3">
         {loading ? (
           <p className="text-center text-sm text-[#7D7156] py-10">Loading…</p>
         ) : loadError ? (
@@ -72,27 +81,53 @@ export default function DriverDuePage() {
             </button>
           </div>
         ) : dues.length === 0 ? (
-          <p className="text-center text-sm text-[#7D7156] py-10">No driver has any due right now. 🎉</p>
-        ) : (
-          <div className="space-y-2.5">
-            {dues.map((d) => (
-              <button
-                key={d.bikeId}
-                onClick={() => openHistory(d)}
-                className="w-full bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-center justify-between shadow-sm text-left active:scale-[0.98] transition-transform"
-              >
-                <div>
-                  <p className="font-bold text-sm text-[#2B2620]">{d.driverName}</p>
-                  {d.isShajahanKaka ? (
-                    <p className="text-[11px] text-[#7D7156] mt-0.5">Shajahan Kaka · ৳{d.dailyRent}/day</p>
-                  ) : (
-                    <p className="text-[11px] text-[#7D7156] mt-0.5">Bike {d.bikeName} · ৳{d.dailyRent}/day</p>
-                  )}
-                </div>
-                <span className="font-extrabold text-base text-[#2E5C8A]">৳{d.balance.toLocaleString('en-IN')}</span>
-              </button>
-            ))}
+          <div className="text-center py-14">
+            <p className="text-sm text-[#7D7156] font-semibold">No driver has any due right now. 🎉</p>
           </div>
+        ) : (
+          dues.map((d) => {
+            const initial = (d.driverName || '?').trim().charAt(0).toUpperCase();
+            return (
+              <div
+                key={d.bikeId}
+                className="ledger-rule bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 pl-5 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black text-sm bg-[#E7EEF4] text-[#2E5C8A]">
+                    {initial}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mb-1 uppercase tracking-wide bg-[#E7EEF4] text-[#2E5C8A]">
+                          {d.isShajahanKaka ? 'Shajahan Kaka' : `Bike ${d.bikeName}`}
+                        </span>
+                        <p className="font-bold text-sm text-[#2B2620] truncate">{d.driverName}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-extrabold text-base block text-[#2E5C8A]">
+                          ৳{d.balance.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-[#6B5F4F] mt-1 leading-snug">৳{d.dailyRent}/day rent</p>
+
+                    <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[#EFE8D9]">
+                      <p className="text-[10px] text-[#9A8F78] font-semibold">Tap to view full history</p>
+                      <button
+                        onClick={() => openHistory(d)}
+                        className="text-[11px] font-bold text-white bg-[#2B2620] hover:bg-[#3D362B] rounded-lg px-3 py-1.5 transition-colors active:scale-[0.97]"
+                      >
+                        History
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
       </main>
 
@@ -103,11 +138,16 @@ export default function DriverDuePage() {
             className="w-full max-w-md bg-[#FFFDF8] rounded-t-[28px] p-6 pb-8 shadow-2xl animate-slide-up max-h-[80vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3 mb-4">
-              <div>
-                <h3 className="text-base font-bold text-[#2B2620]">{selectedBike.driverName}</h3>
-                <p className="text-[11px] text-[#7D7156]">
-                  {selectedBike.isShajahanKaka ? 'Shajahan Kaka' : `Bike ${selectedBike.bikeName}`} — Due history
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center font-black text-sm bg-[#E7EEF4] text-[#2E5C8A]">
+                  {(selectedBike.driverName || '?').trim().charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#2B2620]">{selectedBike.driverName}</h3>
+                  <p className="text-[11px] text-[#7D7156]">
+                    {selectedBike.isShajahanKaka ? 'Shajahan Kaka' : `Bike ${selectedBike.bikeName}`} — Due history
+                  </p>
+                </div>
               </div>
               <button onClick={() => setSelectedBike(null)} className="text-xs font-bold text-[#B33B2E] px-2 py-1">
                 Close

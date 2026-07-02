@@ -1,6 +1,6 @@
 'use client';
 
-export default function PageHeader({ title, subtitle }) {
+export default function PageHeader({ title, subtitle, right }) {
   return (
     <header className="bg-[#F7F3EA]/95 backdrop-blur-md sticky top-0 z-20 px-5 py-5">
       <div className="max-w-md mx-auto flex items-center gap-3">
@@ -11,10 +11,11 @@ export default function PageHeader({ title, subtitle }) {
         >
           ←
         </a>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-lg font-black tracking-tight text-[#2B2620]">{title}</h1>
           {subtitle && <p className="text-[11px] text-[#7D7156] font-semibold">{subtitle}</p>}
         </div>
+        {right && <div className="shrink-0">{right}</div>}
       </div>
     </header>
   );

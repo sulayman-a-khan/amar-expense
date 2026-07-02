@@ -4,16 +4,14 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import DoubleCheckModal from '@/components/DoubleCheckModal';
 import EntryFlow from '@/components/EntryFlow';
-import BikeDetailsModal from '@/components/BikeDetailsModal';
-import BikeDueListModal from '@/components/BikeDueListModal';
-import CashLoanListModal from '@/components/CashLoanListModal';
 
 const WALLETS = ['Pocket', 'Drawer'];
 
 export default function LoansPage() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('Unresolved');
+  const [showResolved, setShowResolved] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('Payable'); // null | 'Receivable' | 'Payable'
   const [resolving, setResolving] = useState(null); // loan object pending resolve
   const [resolveWallet, setResolveWallet] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -22,11 +20,6 @@ export default function LoansPage() {
   const [loadError, setLoadError] = useState('');
 
   const [summary, setSummary] = useState(null);
-  const [receivableBreakdown, setReceivableBreakdown] = useState({ bikeDues: [], cashLoans: [] });
-  const [receivableExpanded, setReceivableExpanded] = useState(false);
-  const [showBikeDueList, setShowBikeDueList] = useState(false);
-  const [showCashLoanList, setShowCashLoanList] = useState(false);
-  const [viewingBike, setViewingBike] = useState(null);
 
   const fetchLoans = useCallback(() => {
     setLoadError('');
@@ -36,7 +29,6 @@ export default function LoansPage() {
         if (ok) {
           setLoans(data.loans || []);
           setSummary(data.summary || null);
-          setReceivableBreakdown(data.receivableBreakdown || { bikeDues: [], cashLoans: [] });
         } else {
           setLoadError(data.error || 'Failed to load loans.');
         }
@@ -48,10 +40,10 @@ export default function LoansPage() {
   useEffect(() => { fetchLoans(); }, [fetchLoans]);
 
   const filtered = useMemo(() => {
-    if (filter === 'All') return loans;
-    if (filter === 'Unresolved') return loans.filter((l) => !l.resolved);
-    return loans.filter((l) => l.resolved);
-  }, [loans, filter]);
+    let result = loans.filter((l) => l.resolved === showResolved);
+    if (typeFilter) result = result.filter((l) => l.type === typeFilter);
+    return result;
+  }, [loans, showResolved, typeFilter]);
 
   const openResolve = (loan) => {
     setResolving(loan);
@@ -99,71 +91,54 @@ export default function LoansPage() {
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5 blur-2xl pointer-events-none" />
             <div className="absolute -bottom-14 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-2xl pointer-events-none" />
 
-            <div className="relative flex items-center justify-between mb-5">
-              <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-[0.15em]">Net Position</span>
-              <span className="text-[9px] font-bold text-[#8A7F6A] uppercase tracking-wide bg-white/5 px-2.5 py-1 rounded-full">Live</span>
-            </div>
-
-            <p className={`relative text-4xl font-black tracking-tight mb-6 ${
-              summary.totalReceivable - summary.totalPayable >= 0 ? 'text-[#8FD9AE]' : 'text-[#E8A99A]'
-            }`}>
-              {summary.totalReceivable - summary.totalPayable >= 0 ? '+' : '−'}৳{Math.abs(summary.totalReceivable - summary.totalPayable).toLocaleString('en-IN')}
-            </p>
-
             <div className="relative grid grid-cols-2 gap-3">
               <button
-                onClick={() => setReceivableExpanded((v) => !v)}
-                className="text-left bg-white/[0.06] hover:bg-white/[0.09] rounded-2xl p-4 border border-white/10 transition-colors"
+                onClick={() => setTypeFilter((v) => (v === 'Receivable' ? null : 'Receivable'))}
+                className={`text-left rounded-2xl p-4 border transition-colors active:scale-[0.98] ${
+                  typeFilter === 'Receivable'
+                    ? 'bg-[#8FD9AE]/15 border-[#8FD9AE]/60'
+                    : 'bg-white/[0.06] hover:bg-white/[0.09] border-white/10'
+                }`}
               >
-                <span className="flex items-center justify-between text-[#8FD9AE] text-[10px] font-bold uppercase tracking-wide">
-                  Owed to you
-                  <span className="text-[8px]">{receivableExpanded ? '▲' : '▼'}</span>
-                </span>
-                <span className="font-extrabold text-xl text-white mt-1.5 block">৳{summary.totalReceivable.toLocaleString('en-IN')}</span>
+                <span className="text-[#8FD9AE] text-[10px] font-bold uppercase tracking-wide block">আমি পাবো</span>
+                <span className="font-extrabold text-xl text-white mt-1.5 block">৳{summary.cashLoanReceivable.toLocaleString('en-IN')}</span>
               </button>
-              <div className="bg-white/[0.06] rounded-2xl p-4 border border-white/10">
-                <span className="text-[#E8A99A] text-[10px] font-bold uppercase tracking-wide block">You owe</span>
+              <button
+                onClick={() => setTypeFilter((v) => (v === 'Payable' ? null : 'Payable'))}
+                className={`text-left rounded-2xl p-4 border transition-colors active:scale-[0.98] ${
+                  typeFilter === 'Payable'
+                    ? 'bg-[#E8A99A]/15 border-[#E8A99A]/60'
+                    : 'bg-white/[0.06] hover:bg-white/[0.09] border-white/10'
+                }`}
+              >
+                <span className="text-[#E8A99A] text-[10px] font-bold uppercase tracking-wide block">আমার কাছে পাবে</span>
                 <span className="font-extrabold text-xl text-white mt-1.5 block">৳{summary.totalPayable.toLocaleString('en-IN')}</span>
-              </div>
+              </button>
             </div>
-
-            {receivableExpanded && (
-              <div className="relative grid grid-cols-2 gap-3 mt-3 pt-4 border-t border-white/10 animate-fade-scale-in">
-                <button
-                  onClick={() => setShowBikeDueList(true)}
-                  className="bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl p-3.5 text-left active:scale-[0.98] transition-all"
-                >
-                  <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-wide block">জমা বাকি</span>
-                  <span className="font-extrabold text-base text-[#8FD9AE] mt-1 block">৳{summary.bikeDueTotal.toLocaleString('en-IN')}</span>
-                </button>
-                <button
-                  onClick={() => setShowCashLoanList(true)}
-                  className="bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl p-3.5 text-left active:scale-[0.98] transition-all"
-                >
-                  <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-wide block">নগদ ধার</span>
-                  <span className="font-extrabold text-base text-[#8FD9AE] mt-1 block">৳{summary.cashLoanReceivable.toLocaleString('en-IN')}</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
 
       <div className="max-w-md mx-auto px-5 mb-4">
-        <div className="flex gap-2">
-          {['Unresolved', 'Resolved', 'All'].map((f) => (
+        <div className="flex items-center justify-end gap-2">
+          {typeFilter && (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                filter === f
-                  ? 'bg-[#2B2620] text-white shadow-sm'
-                  : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F] hover:border-[#D8CDB8]'
-              }`}
+              onClick={() => setTypeFilter(null)}
+              className="px-3 py-2 rounded-full text-xs font-bold bg-[#F1E9DC] text-[#6B5F4F] hover:bg-[#E3D9C2] transition-all flex items-center gap-1"
             >
-              {f}
+              {typeFilter === 'Receivable' ? 'আমি পাবো' : 'আমার কাছে পাবে'} ✕
             </button>
-          ))}
+          )}
+          <button
+            onClick={() => setShowResolved((v) => !v)}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+              showResolved
+                ? 'bg-[#2B2620] text-white shadow-sm'
+                : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F] hover:border-[#D8CDB8]'
+            }`}
+          >
+            Resolved History
+          </button>
         </div>
       </div>
 
@@ -179,7 +154,9 @@ export default function LoansPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-14">
-            <p className="text-sm text-[#7D7156] font-semibold">No {filter.toLowerCase()} loans.</p>
+            <p className="text-sm text-[#7D7156] font-semibold">
+              No {showResolved ? 'resolved' : 'unresolved'}{typeFilter ? (typeFilter === 'Receivable' ? ' receivable' : ' payable') : ''} loans.
+            </p>
           </div>
         ) : (
           filtered.map((l) => {
@@ -278,30 +255,6 @@ export default function LoansPage() {
         data={resolving ? { person: resolving.person, type: resolving.type, amount: resolving.amount, wallet: resolveWallet } : {}}
         saving={isResolving}
         error={errorMsg}
-      />
-
-      <BikeDetailsModal
-        bike={viewingBike}
-        onClose={() => {
-          setViewingBike(null);
-          fetchLoans();
-        }}
-      />
-
-      <BikeDueListModal
-        isOpen={showBikeDueList}
-        onClose={() => setShowBikeDueList(false)}
-        bikeDues={receivableBreakdown.bikeDues}
-        onSelectBike={(d) => {
-          setShowBikeDueList(false);
-          setViewingBike({ _id: d.bikeId, name: d.bikeName, driver: d.driverName, isShajahanKaka: d.isShajahanKaka });
-        }}
-      />
-
-      <CashLoanListModal
-        isOpen={showCashLoanList}
-        onClose={() => setShowCashLoanList(false)}
-        cashLoans={receivableBreakdown.cashLoans}
       />
 
       <div className="h-24" />
