@@ -43,6 +43,7 @@ const DailyCollectionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 DailyCollectionSchema.index({ bikeId: 1, date: 1 });
+DailyCollectionSchema.index({ date: 1 });
 
 // --- EXPENSES (Credit & Payable Integration) ---
 const ExpenseSchema = new mongoose.Schema({
@@ -57,8 +58,7 @@ const ExpenseSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
-
-// --- LOANS & LIABILITIES (Two-way) ---
+ExpenseSchema.index({ date: 1 });
 const LoanSchema = new mongoose.Schema({
   type: { type: String, enum: ['Receivable', 'Payable'], required: true },
   person: { type: String, required: true }, // e.g. Driver name, or Mechanic
@@ -69,6 +69,7 @@ const LoanSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 LoanSchema.index({ type: 1, resolved: 1 });
+LoanSchema.index({ resolved: 1 });
 
 // --- INCOME SOURCES ---
 const IncomeSourceSchema = new mongoose.Schema({
@@ -80,8 +81,7 @@ const IncomeSourceSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
-
-// --- DAILY CLOSINGS ---
+IncomeSourceSchema.index({ date: 1 });
 const DailyClosingSchema = new mongoose.Schema({
   date: { type: Date, required: true, unique: true },
   closingCash: { type: Number, required: true }, // Verified Cash in Drawer / Safe
@@ -166,6 +166,7 @@ const RentWithdrawalSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 RentWithdrawalSchema.index({ monthlyRentRecordId: 1, createdAt: -1 });
+RentWithdrawalSchema.index({ date: 1 });
 export const Wallet = mongoose.models.Wallet || mongoose.model('Wallet', WalletSchema);
 export const Bike = mongoose.models.Bike || mongoose.model('Bike', BikeSchema);
 export const DailyCollection = mongoose.models.DailyCollection || mongoose.model('DailyCollection', DailyCollectionSchema);

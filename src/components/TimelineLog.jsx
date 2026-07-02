@@ -37,12 +37,13 @@ export default function TimelineLog({ activities, selectedDate, onActivityDelete
       <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm space-y-4">
         {activities.length > 0 ? activities.map((act) => {
           const canEditDelete = isWithin48Hours(act.createdAt);
+          const isZero = act.amount === 0;
           return (
             <div key={act.id} className="flex gap-3.5 items-start justify-between group">
               <div className="flex gap-3.5 items-start min-w-0">
                 <span
                   className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${
-                    act.type === 'expense' ? 'bg-[#B33B2E]' : 'bg-[#1F7A4D]'
+                    act.isOffDay ? 'bg-[#B33B2E]' : isZero ? 'bg-[#B8A88A]' : act.type === 'expense' ? 'bg-[#B33B2E]' : 'bg-[#1F7A4D]'
                   }`}
                 />
                 <div className="space-y-0.5 min-w-0">
@@ -52,19 +53,34 @@ export default function TimelineLog({ activities, selectedDate, onActivityDelete
                   <p className="text-[13px] text-[#3D362B] font-medium leading-snug">{act.text}</p>
                 </div>
               </div>
-              
-              {canEditDelete && act.sourceType && (
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <button 
-                    onClick={() => handleDelete(act)}
-                    disabled={deletingId === act.id}
-                    className="p-1.5 text-[#B33B2E] hover:bg-[#F7E9E5] rounded-lg disabled:opacity-50"
-                    title="Delete within 48h"
+
+              <div className="flex items-start gap-2 shrink-0">
+                {act.isOffDay ? (
+                  <span className="text-[10px] font-black uppercase tracking-wide text-white bg-[#B33B2E] px-2.5 py-1 rounded-lg whitespace-nowrap">
+                    Off Day
+                  </span>
+                ) : act.amount != null && (
+                  <span
+                    className={`text-[13px] font-extrabold whitespace-nowrap ${
+                      isZero ? 'text-[#9A8C6F]' : act.type === 'expense' ? 'text-[#B33B2E]' : 'text-[#1F7A4D]'
+                    }`}
                   >
-                    🗑️
-                  </button>
-                </div>
-              )}
+                    {isZero ? '' : act.type === 'expense' ? '-' : '+'}৳{act.amount.toLocaleString('en-IN')}
+                  </span>
+                )}
+                {canEditDelete && act.sourceType && (
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleDelete(act)}
+                      disabled={deletingId === act.id}
+                      className="p-1.5 text-[#B33B2E] hover:bg-[#F7E9E5] rounded-lg disabled:opacity-50"
+                      title="Delete within 48h"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           );
         }) : (

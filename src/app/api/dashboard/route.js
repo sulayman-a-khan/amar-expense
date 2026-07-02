@@ -185,9 +185,15 @@ export async function GET(request) {
         time: new Date(c.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'rent',
         sourceType: 'DailyCollection',
-        text: c.bikeId?.isShajahanKaka 
-          ? `Shajahan Kaka Rent In: ৳${c.paidRent} জমা হয়েছে।`
-          : `Bike ${c.bikeId?.name || ''} Rent In: ৳${c.paidRent} জমা হয়েছে।`
+        text: c.bikeId?.isShajahanKaka
+          ? (c.shift === 'Off Day' ? `Shajahan Kaka এর গাড়ি বন্ধ` : c.paidRent === 0 ? `Shajahan Kaka জমা দেয়নি` : `Shajahan Kaka জমা দিয়েছে`)
+          : (() => {
+              const who = c.bikeId?.driverName || 'Bike ' + (c.bikeId?.name || '');
+              if (c.shift === 'Off Day') return `${who} এর গাড়ি বন্ধ`;
+              return c.paidRent === 0 ? `${who} জমা দেয়নি` : `${who} জমা দিয়েছে`;
+            })(),
+        amount: c.paidRent,
+        isOffDay: c.shift === 'Off Day',
       });
     });
     todayIncomes.forEach((i) => {
@@ -197,7 +203,8 @@ export async function GET(request) {
         time: new Date(i.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'income',
         sourceType: 'IncomeSource',
-        text: `${i.name} [${i.type}]: ৳${i.amount} → ${i.wallet}`
+        text: `${i.name} [${i.type}] → ${i.wallet}`,
+        amount: i.amount,
       });
     });
     todayRentWithdrawals.forEach((w) => {
@@ -207,7 +214,8 @@ export async function GET(request) {
         time: new Date(w.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'income',
         sourceType: null, // not deletable via the generic mechanism — see /shop-rent for management
-        text: `Shop Rent collected: ৳${w.amount}${w.note ? ` (${w.note})` : ''}`
+        text: `Shop Rent collected${w.note ? ` (${w.note})` : ''}`,
+        amount: w.amount,
       });
     });
     todayExpenses.forEach((e) => {
@@ -217,7 +225,8 @@ export async function GET(request) {
         time: new Date(e.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         type: 'expense',
         sourceType: 'Expense',
-        text: `Expense [${e.category}]: ৳${e.amount} ${e.isCredit ? `(Credit → ${e.payableToShop})` : `(${e.wallet})`}. ${e.note ? `[${e.note}]` : ''}`
+        text: `Expense [${e.category}] ${e.isCredit ? `(Credit → ${e.payableToShop})` : `(${e.wallet})`}. ${e.note ? `[${e.note}]` : ''}`,
+        amount: e.amount,
       });
     });
     activities.sort((a, b) => b.time.localeCompare(a.time));
