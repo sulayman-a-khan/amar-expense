@@ -93,39 +93,55 @@ export default function LoansPage() {
       <PageHeader title="Loans & Liabilities" subtitle="Money given out, and money owed" />
 
       {summary && (
-        <div className="max-w-md mx-auto px-5 mb-5">
-          <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-[24px] p-5 shadow-sm space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+        <div className="max-w-md mx-auto px-5 mb-6">
+          <div className="relative bg-gradient-to-br from-[#2B2620] to-[#1C1812] rounded-[28px] p-6 shadow-lg overflow-hidden">
+            {/* subtle decorative glow */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-14 -left-10 w-40 h-40 rounded-full bg-white/[0.03] blur-2xl pointer-events-none" />
+
+            <div className="relative flex items-center justify-between mb-5">
+              <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-[0.15em]">Net Position</span>
+              <span className="text-[9px] font-bold text-[#8A7F6A] uppercase tracking-wide bg-white/5 px-2.5 py-1 rounded-full">Live</span>
+            </div>
+
+            <p className={`relative text-4xl font-black tracking-tight mb-6 ${
+              summary.totalReceivable - summary.totalPayable >= 0 ? 'text-[#8FD9AE]' : 'text-[#E8A99A]'
+            }`}>
+              {summary.totalReceivable - summary.totalPayable >= 0 ? '+' : '−'}৳{Math.abs(summary.totalReceivable - summary.totalPayable).toLocaleString('en-IN')}
+            </p>
+
+            <div className="relative grid grid-cols-2 gap-3">
               <button
                 onClick={() => setReceivableExpanded((v) => !v)}
-                className="text-left bg-[#E7EEF4] rounded-xl p-3 border border-[#C2D3E0]"
+                className="text-left bg-white/[0.06] hover:bg-white/[0.09] rounded-2xl p-4 border border-white/10 transition-colors"
               >
-                <span className="text-[#2E5C8A] text-[10px] font-bold uppercase tracking-wide block">
-                  Owed to you {receivableExpanded ? '▲' : '▼'}
+                <span className="flex items-center justify-between text-[#8FD9AE] text-[10px] font-bold uppercase tracking-wide">
+                  Owed to you
+                  <span className="text-[8px]">{receivableExpanded ? '▲' : '▼'}</span>
                 </span>
-                <span className="font-extrabold text-lg text-[#234A6E] mt-0.5 block">৳{summary.totalReceivable.toLocaleString('en-IN')}</span>
+                <span className="font-extrabold text-xl text-white mt-1.5 block">৳{summary.totalReceivable.toLocaleString('en-IN')}</span>
               </button>
-              <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl p-3">
-                <span className="text-[#6B5F4F] text-[10px] font-bold uppercase tracking-wide block">You owe</span>
-                <span className="font-extrabold text-lg text-[#2B2620] mt-0.5 block">৳{summary.totalPayable.toLocaleString('en-IN')}</span>
+              <div className="bg-white/[0.06] rounded-2xl p-4 border border-white/10">
+                <span className="text-[#E8A99A] text-[10px] font-bold uppercase tracking-wide block">You owe</span>
+                <span className="font-extrabold text-xl text-white mt-1.5 block">৳{summary.totalPayable.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
             {receivableExpanded && (
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#E3D9C2]">
+              <div className="relative grid grid-cols-2 gap-3 mt-3 pt-4 border-t border-white/10 animate-fade-scale-in">
                 <button
                   onClick={() => setShowBikeDueList(true)}
-                  className="bg-[#FFFDF8] border border-[#C2D3E0] rounded-2xl p-3 text-left active:scale-[0.98] transition-transform"
+                  className="bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl p-3.5 text-left active:scale-[0.98] transition-all"
                 >
-                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">জমা বাকি</span>
-                  <span className="font-extrabold text-base text-[#2E5C8A] mt-0.5 block">৳{summary.bikeDueTotal.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-wide block">জমা বাকি</span>
+                  <span className="font-extrabold text-base text-[#8FD9AE] mt-1 block">৳{summary.bikeDueTotal.toLocaleString('en-IN')}</span>
                 </button>
                 <button
                   onClick={() => setShowCashLoanList(true)}
-                  className="bg-[#FFFDF8] border border-[#C2D3E0] rounded-2xl p-3 text-left active:scale-[0.98] transition-transform"
+                  className="bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl p-3.5 text-left active:scale-[0.98] transition-all"
                 >
-                  <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">নগদ ধার</span>
-                  <span className="font-extrabold text-base text-[#2E5C8A] mt-0.5 block">৳{summary.cashLoanReceivable.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] font-bold text-[#D8CDB8] uppercase tracking-wide block">নগদ ধার</span>
+                  <span className="font-extrabold text-base text-[#8FD9AE] mt-1 block">৳{summary.cashLoanReceivable.toLocaleString('en-IN')}</span>
                 </button>
               </div>
             )}
@@ -139,8 +155,10 @@ export default function LoansPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3.5 py-2 rounded-full text-xs font-bold transition-colors ${
-                filter === f ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F]'
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                filter === f
+                  ? 'bg-[#2B2620] text-white shadow-sm'
+                  : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F] hover:border-[#D8CDB8]'
               }`}
             >
               {f}
@@ -149,7 +167,7 @@ export default function LoansPage() {
         </div>
       </div>
 
-      <main className="max-w-md mx-auto px-5 space-y-2.5">
+      <main className="max-w-md mx-auto px-5 space-y-3">
         {loading ? (
           <p className="text-center text-sm text-[#7D7156] py-10">Loading…</p>
         ) : loadError ? (
@@ -160,35 +178,64 @@ export default function LoansPage() {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-sm text-[#7D7156] py-10">No {filter.toLowerCase()} loans.</p>
+          <div className="text-center py-14">
+            <p className="text-sm text-[#7D7156] font-semibold">No {filter.toLowerCase()} loans.</p>
+          </div>
         ) : (
-          filtered.map((l) => (
-            <div key={l._id} className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 shadow-sm">
-              <div className="flex justify-between items-start gap-2">
-                <div>
-                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E7EEF4] text-[#2E5C8A] mb-1">
-                    {l.type === 'Receivable' ? 'Owed to you' : 'You owe'}
-                  </span>
-                  <p className="font-bold text-sm text-[#2B2620]">{l.person}</p>
-                  {l.note && <p className="text-[11px] text-[#6B5F4F] mt-0.5 max-w-[200px]">{l.note}</p>}
-                  <p className="text-[10px] text-[#7D7156] mt-1">{new Date(l.date).toLocaleDateString('en-GB')}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="font-extrabold text-base text-[#2E5C8A] block">৳{l.amount.toLocaleString('en-IN')}</span>
-                  {l.resolved ? (
-                    <span className="text-[10px] font-bold text-[#1F7A4D] mt-1 block">Resolved ✓</span>
-                  ) : (
-                    <button
-                      onClick={() => openResolve(l)}
-                      className="text-[11px] font-bold text-white bg-[#2B2620] rounded-lg px-3 py-1.5 mt-1.5"
-                    >
-                      Resolve
-                    </button>
-                  )}
+          filtered.map((l) => {
+            const isReceivable = l.type === 'Receivable';
+            const initial = (l.person || '?').trim().charAt(0).toUpperCase();
+            return (
+              <div
+                key={l._id}
+                className="ledger-rule bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 pl-5 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${
+                    isReceivable ? 'bg-[#E7EEF4] text-[#2E5C8A]' : 'bg-[#F1E9DC] text-[#6B5F4F]'
+                  }`}>
+                    {initial}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mb-1 uppercase tracking-wide ${
+                          isReceivable ? 'bg-[#E7EEF4] text-[#2E5C8A]' : 'bg-[#F1E9DC] text-[#6B5F4F]'
+                        }`}>
+                          {isReceivable ? 'Owed to you' : 'You owe'}
+                        </span>
+                        <p className="font-bold text-sm text-[#2B2620] truncate">{l.person}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className={`font-extrabold text-base block ${isReceivable ? 'text-[#2E5C8A]' : 'text-[#2B2620]'}`}>
+                          ৳{l.amount.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {l.note && <p className="text-[11px] text-[#6B5F4F] mt-1 leading-snug">{l.note}</p>}
+
+                    <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[#EFE8D9]">
+                      <p className="text-[10px] text-[#9A8F78] font-semibold">{new Date(l.date).toLocaleDateString('en-GB')}</p>
+                      {l.resolved ? (
+                        <span className="text-[10px] font-bold text-[#1F7A4D] flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#1F7A4D]" /> Resolved
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => openResolve(l)}
+                          className="text-[11px] font-bold text-white bg-[#2B2620] hover:bg-[#3D362B] rounded-lg px-3 py-1.5 transition-colors active:scale-[0.97]"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
 

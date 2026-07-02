@@ -123,37 +123,30 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
 
         {/* Header */}
         <div className="bg-[#FFFDF8] px-6 py-5 border-b border-[#E3D9C2] shrink-0 flex justify-between items-center relative z-10">
-          <div>
-            <h2 className="text-xl font-black text-[#2B2620]">
-              {bike.isShajahanKaka ? bike.name : `Bike ${bike.name}`}
-            </h2>
-            <p className="text-sm font-bold text-[#6B5F4F]">{bike.driver}</p>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-[#2B2620] truncate">
+                {bike.isShajahanKaka ? bike.name : `Bike ${bike.name}`}
+              </h2>
+              <p className="text-sm font-bold text-[#6B5F4F] truncate">{bike.driver}</p>
+            </div>
+            <div className="relative shrink-0">
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="appearance-none pl-3 pr-7 py-1.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-[#2B2620] text-white border border-[#2B2620] focus:outline-none cursor-pointer"
+              >
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="year">Year</option>
+                <option value="alltime">All Time</option>
+              </select>
+              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white text-[8px]">▼</span>
+            </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold">
+          <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold shrink-0">
             ✕
           </button>
-        </div>
-
-        {/* Time Period Filter */}
-        <div className="px-6 py-2.5 bg-[#FFFDF8] border-b border-[#E3D9C2] flex gap-1.5 justify-center shrink-0">
-          {[
-            { key: 'week', label: 'Week' },
-            { key: 'month', label: 'Month' },
-            { key: 'year', label: 'Year' },
-            { key: 'alltime', label: 'All Time' }
-          ].map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setPeriod(p.key)}
-              className={`px-3.5 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase transition-colors ${
-                period === p.key
-                  ? 'bg-[#2B2620] text-white'
-                  : 'bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2]'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
         </div>
 
         {/* Scrollable Content */}
