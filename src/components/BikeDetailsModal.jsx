@@ -25,7 +25,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
     (c) => new Date(c.date).toISOString().split('T')[0] === todayStr
   );
 
-  const handleKakaAction = async (shift, paidRent) => {
+  const handleKakaAction = async (shift, paidRent, offDayReason) => {
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -38,7 +38,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
           date: todayStr,
           shift,
           paidRent,
-          offDayReason: shift === 'Off Day' ? 'Driver Unavailable' : 'N/A',
+          offDayReason: shift === 'Off Day' ? (offDayReason || 'Driver Unavailable') : 'N/A',
         }),
       });
       const data = await res.json();
@@ -416,13 +416,15 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
 function BikeCollectionForm({ bike, submitting, onSubmit }) {
   const [shift, setShift] = useState('Full Day');
   const [paidRent, setPaidRent] = useState('');
+  const [offDayReason, setOffDayReason] = useState('');
 
   const expectedRent = shift === 'Full Day' ? bike.dailyRent : shift === 'Half Day' ? bike.dailyRent * 0.5 : 0;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (shift === 'Off Day' && !offDayReason) return; // guarded by disabling submit below too
     const finalPaid = shift === 'Off Day' ? 0 : (paidRent === '' ? expectedRent : Number(paidRent));
-    onSubmit(shift, finalPaid);
+    onSubmit(shift, finalPaid, shift === 'Off Day' ? offDayReason : undefined);
   };
 
   return (
@@ -436,8 +438,8 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
               type="button"
               onClick={() => {
                 setShift(s);
-                if (s === 'Off Day') setPaidRent('0');
-                else setPaidRent('');
+                if (s === 'Off Day') { setPaidRent('0'); setOffDayReason(''); }
+                else { setPaidRent(''); setOffDayReason(''); }
               }}
               className={`py-1.5 text-xs font-bold rounded-lg transition-colors ${
                 shift === s ? 'bg-[#2B2620] text-white' : 'text-[#6B5F4F]'
@@ -449,7 +451,30 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
         </div>
       </div>
 
-      {shift !== 'Off Day' && (
+      {shift === 'Off Day' ? (
+        <div>
+          <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">Reason</label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { label: 'No Driver', value: 'Driver Unavailable' },
+              { label: 'Mechanical Issue', value: 'Mechanical Issue' },
+            ].map((r) => (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => setOffDayReason(r.value)}
+                className={`py-2.5 text-xs font-bold rounded-xl border transition-colors ${
+                  offDayReason === r.value
+                    ? 'bg-[#B33B2E] text-white border-[#B33B2E]'
+                    : 'bg-[#FFFDF8] text-[#6B5F4F] border-[#E3D9C2]'
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
         <div>
           <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
             Paid Rent (৳) <span className="text-[#7D7156] font-normal">(Expected: ৳{expectedRent})</span>
@@ -467,7 +492,7 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || (shift === 'Off Day' && !offDayReason)}
         className="w-full py-2.5 bg-[#2B2620] text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
       >
         {submitting ? 'Saving...' : 'Save Collection'}

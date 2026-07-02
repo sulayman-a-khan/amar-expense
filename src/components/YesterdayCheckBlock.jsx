@@ -30,7 +30,14 @@ export default function YesterdayCheckBlock({ missingYesterday, missingReason, o
             Entry Missing!
           </h2>
           <p className="mt-2.5 text-xs font-bold text-[#B33B2E] bg-red-50 border border-red-200/50 rounded-xl py-2.5 px-3 leading-relaxed">
-            {formatGlobalDate(formattedYesterday)} has missing entries.<br />
+            {formatGlobalDate(formattedYesterday)} has missing entries.
+            {missingReason && (
+              <>
+                <br />
+                {missingReason}
+              </>
+            )}
+            <br />
             Please give entry first.
           </p>
         </div>

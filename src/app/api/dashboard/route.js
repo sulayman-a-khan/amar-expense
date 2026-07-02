@@ -88,9 +88,9 @@ export async function GET(request) {
           0, 0, 0
         ))
       : startOfTodayDhaka();
-    const yesterdayStart = new Date(startOfDay);
+    const yesterdayEnd = startOfTodayDhaka(); // real "today" start, regardless of which date is being viewed
+    const yesterdayStart = new Date(yesterdayEnd);
     yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
-    const yesterdayEnd = new Date(startOfDay);
 
     const endOfDay = new Date(startOfDay);
     endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
@@ -236,7 +236,7 @@ export async function GET(request) {
       const shajahanMissing = missingBikes.some((b) => b.isShajahanKaka);
       const parts = [];
       if (regularMissing.length > 0) {
-        parts.push(`Bike ${regularMissing.join(', ')}`);
+        parts.push(regularMissing.join(', '));
       }
       if (shajahanMissing) {
         parts.push('Shajahan Kaka');

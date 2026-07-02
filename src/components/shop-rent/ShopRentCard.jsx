@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getRentCycleRange, startOfTodayDhaka } from '@/lib/dateUtils';
 
 const STATUS_STYLE = {
   Completed: 'text-[#1F7A4D]',
   Pending: 'text-[#B33B2E]',
   Advance: 'text-[#2E5C8A]',
 };
+
+function daysRemainingInCycle(year, month) {
+  const { end } = getRentCycleRange(year, month);
+  const today = startOfTodayDhaka(); // both in the same fake-Dhaka space, safe to diff directly
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.round((end.getTime() - today.getTime()) / msPerDay));
+}
 
 export default function ShopRentCard() {
   const router = useRouter();
@@ -24,11 +32,26 @@ export default function ShopRentCard() {
 
   if (loading) return null;
 
+  const daysLeft = record ? daysRemainingInCycle(record.year, record.month) : null;
+
   return (
     <button
       onClick={() => router.push('/shop-rent')}
-      className="w-full bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform text-left"
+      className="w-full bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform text-left relative"
     >
+      {daysLeft !== null && (
+        <span
+          className={`absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${
+            daysLeft <= 1
+              ? 'bg-[#F7E9E5] text-[#B33B2E]'
+              : daysLeft <= 3
+              ? 'bg-[#FBF0DD] text-[#8A5A1F]'
+              : 'bg-[#E6F0E5] text-[#1F7A4D]'
+          }`}
+        >
+          {daysLeft === 0 ? 'Due today' : daysLeft === 1 ? '1 day left' : `${daysLeft} days left`}
+        </span>
+      )}
       <div>
         <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">Shop Rent — This Month</span>
         {record ? (
