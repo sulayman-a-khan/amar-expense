@@ -8,7 +8,7 @@ export async function GET() {
 
     // Fetch all logs
     const collections = await DailyCollection.find({}).populate('bikeId').sort({ date: -1 });
-    const expenses = await Expense.find({}).sort({ date: -1 });
+    const expenses = await Expense.find({}).populate('bikeId').sort({ date: -1 });
     const incomes = await IncomeSource.find({}).sort({ date: -1 });
     const loans = await Loan.find({}).sort({ date: -1 });
     const transfers = await WalletTransfer.find({}).sort({ date: -1 });
@@ -27,18 +27,28 @@ export async function GET() {
 
     collections.forEach(c => {
       const clearance = clearanceByCollectionId[c._id.toString()];
+      const activityText = c.bikeId?.isShajahanKaka
+        ? (c.shift === 'Off Day' ? `Shajahan Kaka এর গাড়ি বন্ধ` : c.paidRent === 0 ? `Shajahan Kaka জমা দেয়নি` : `Shajahan Kaka জমা দিয়েছে`)
+        : (() => {
+            const who = c.bikeId?.driverName || 'Bike ' + (c.bikeId?.name || '');
+            if (c.shift === 'Off Day') return `${who} এর গাড়ি বন্ধ`;
+            return c.paidRent === 0 ? `${who} জমা দেয়নি` : `${who} জমা দিয়েছে`;
+          })();
       allTransactions.push({
         _id: c._id,
         date: c.date,
+        createdAt: c.createdAt,
         type: 'Income', // Color-coded (Green=Income)
         subType: 'Bike Collection',
         amount: c.paidRent,
         note: `Expected: ৳${c.expectedRent} | Shift: ${c.shift} ${c.shift === 'Off Day' ? `| Reason: ${c.offDayReason}` : ''}`,
-        title: c.bikeId?.isShajahanKaka ? `Shajahan Kaka Collection` : `${c.bikeId?.driverName || 'Driver'} Collection`,
+        activityText,
+        title: c.bikeId?.isShajahanKaka ? `Shajahan Kaka` : `${c.bikeId?.driverName || 'Driver'}`,
         bikeName: c.bikeId?.isShajahanKaka
           ? 'Bike 4'
           : (c.bikeId?.name ? (/^bike/i.test(c.bikeId.name.trim()) ? c.bikeId.name : `Bike ${c.bikeId.name}`) : 'Bike'),
         shift: c.shift,
+        offDayReason: c.offDayReason,
         expectedRent: c.expectedRent,
         dueCleared: clearance ? clearance.amount : 0,
         dueBalanceAfter: clearance ? clearance.balanceAfter : null,
@@ -51,6 +61,7 @@ export async function GET() {
       allTransactions.push({
         _id: i._id,
         date: i.date,
+        createdAt: i.createdAt,
         type: 'Income', // Color-coded (Green=Income)
         subType: i.type,
         amount: i.amount,
@@ -64,6 +75,7 @@ export async function GET() {
       allTransactions.push({
         _id: w._id,
         date: w.date,
+        createdAt: w.createdAt,
         type: 'Income', // Color-coded (Green=Income)
         subType: 'ShopRent',
         amount: w.amount,
@@ -77,6 +89,7 @@ export async function GET() {
       allTransactions.push({
         _id: e._id,
         date: e.date,
+        createdAt: e.createdAt,
         type: 'Expense', // Color-coded (Red=Expense)
         subType: e.category,
         amount: e.amount,
@@ -86,6 +99,9 @@ export async function GET() {
         payableToShop: e.payableToShop,
         noteText: e.note,
         title: e.category,
+        bikeName: e.bikeId?.isShajahanKaka
+          ? 'Bike 4'
+          : (e.bikeId?.name ? (/^bike/i.test(e.bikeId.name.trim()) ? e.bikeId.name : `Bike ${e.bikeId.name}`) : null),
         colorCode: 'text-[#B33B2E] border-[#B33B2E] bg-[#F7E9E5]/50'
       });
     });
@@ -94,6 +110,7 @@ export async function GET() {
       allTransactions.push({
         _id: l._id,
         date: l.date,
+        createdAt: l.createdAt,
         type: 'Loan', // Color-coded (Blue=Loan)
         subType: l.type,
         amount: l.amount,
@@ -107,6 +124,7 @@ export async function GET() {
       allTransactions.push({
         _id: t._id,
         date: t.date,
+        createdAt: t.createdAt,
         type: 'Transfer', // Color-coded (Blue=Transfer)
         subType: 'Wallet Transfer',
         amount: t.amount,

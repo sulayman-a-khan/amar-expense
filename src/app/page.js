@@ -7,7 +7,7 @@ import SummaryCard from '@/components/SummaryCard';
 import WalletRow from '@/components/WalletRow';
 import ShajahanKakaCard from '@/components/ShajahanKakaCard';
 import FleetCard from '@/components/FleetCard';
-import TimelineLog from '@/components/TimelineLog';
+import TodayLedgerCard from '@/components/TodayLedgerCard';
 import EntryFlow from '@/components/EntryFlow';
 import EditBikeModal from '@/components/EditBikeModal';
 import BikeDetailsModal from '@/components/BikeDetailsModal';
@@ -173,7 +173,7 @@ export default function Dashboard() {
         />
         <ShopRentCard />
         <FleetCard bikes={bikes.filter((b) => !b.isShajahanKaka)} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
-        <TimelineLog activities={activities} selectedDate={selectedDate} onActivityDeleted={fetchDashboardData} />
+        <TodayLedgerCard activities={activities} selectedDate={selectedDate} onActivityDeleted={fetchDashboardData} />
       </main>
 
       <EditBikeModal

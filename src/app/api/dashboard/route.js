@@ -176,16 +176,21 @@ export async function GET(request) {
 
     const totalReceivable = bikeDueTotal + cashLoanReceivable;
 
-    // Activity timeline
+    // Today's ledger cards — same shape of detail as the Full Ledger page
+    // (bike/shift/wallet badges etc.), scoped to the selected day, so the
+    // dashboard can show real ledger entries in place of the old plain-text
+    // activity feed while still supporting tap-and-hold delete.
     const activities = [];
     todayCollections.forEach((c) => {
       activities.push({
         id: c._id,
         createdAt: c.createdAt,
-        time: new Date(c.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        type: 'rent',
+        time: new Date(c.createdAt).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }),
+        category: 'Income',
+        subType: 'Bike Collection',
         sourceType: 'DailyCollection',
-        text: c.bikeId?.isShajahanKaka
+        title: c.bikeId?.isShajahanKaka ? 'Shajahan Kaka' : (c.bikeId?.driverName || 'Driver'),
+        activityText: c.bikeId?.isShajahanKaka
           ? (c.shift === 'Off Day' ? `Shajahan Kaka এর গাড়ি বন্ধ` : c.paidRent === 0 ? `Shajahan Kaka জমা দেয়নি` : `Shajahan Kaka জমা দিয়েছে`)
           : (() => {
               const who = c.bikeId?.driverName || 'Bike ' + (c.bikeId?.name || '');
@@ -193,6 +198,11 @@ export async function GET(request) {
               return c.paidRent === 0 ? `${who} জমা দেয়নি` : `${who} জমা দিয়েছে`;
             })(),
         amount: c.paidRent,
+        bikeName: c.bikeId?.isShajahanKaka
+          ? 'Bike 4'
+          : (c.bikeId?.name ? (/^bike/i.test(c.bikeId.name.trim()) ? c.bikeId.name : `Bike ${c.bikeId.name}`) : 'Bike'),
+        shift: c.shift,
+        offDayReason: c.offDayReason,
         isOffDay: c.shift === 'Off Day',
       });
     });
@@ -200,21 +210,25 @@ export async function GET(request) {
       activities.push({
         id: i._id,
         createdAt: i.createdAt,
-        time: new Date(i.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        type: 'income',
+        time: new Date(i.createdAt).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }),
+        category: 'Income',
+        subType: i.type,
         sourceType: 'IncomeSource',
-        text: `${i.name} [${i.type}] → ${i.wallet}`,
+        title: i.name,
         amount: i.amount,
+        wallet: i.wallet,
       });
     });
     todayRentWithdrawals.forEach((w) => {
       activities.push({
         id: w._id,
         createdAt: w.createdAt,
-        time: new Date(w.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        type: 'income',
+        time: new Date(w.createdAt).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }),
+        category: 'Income',
+        subType: 'Shop Rent',
         sourceType: null, // not deletable via the generic mechanism — see /shop-rent for management
-        text: `Shop Rent collected${w.note ? ` (${w.note})` : ''}`,
+        title: 'Shop Rent',
+        activityText: w.note || '',
         amount: w.amount,
       });
     });
@@ -222,14 +236,19 @@ export async function GET(request) {
       activities.push({
         id: e._id,
         createdAt: e.createdAt,
-        time: new Date(e.createdAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        type: 'expense',
+        time: new Date(e.createdAt).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }),
+        category: 'Expense',
+        subType: e.category,
         sourceType: 'Expense',
-        text: `Expense [${e.category}] ${e.isCredit ? `(Credit → ${e.payableToShop})` : `(${e.wallet})`}. ${e.note ? `[${e.note}]` : ''}`,
+        title: e.category,
         amount: e.amount,
+        wallet: e.wallet,
+        isCredit: e.isCredit,
+        payableToShop: e.payableToShop,
+        noteText: e.note,
       });
     });
-    activities.sort((a, b) => b.time.localeCompare(a.time));
+    activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Missing-entry check (Module 9)
     // Check both closing AND bike collections independently so the user

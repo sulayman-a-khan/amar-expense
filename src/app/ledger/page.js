@@ -14,6 +14,12 @@ const TYPE_DOT = {
   Transfer: 'bg-[#2E5C8A]',
 };
 
+const OFF_DAY_REASON_LABEL = {
+  'Driver Unavailable': 'No DRV',
+  'Mechanical Issue': 'Fault',
+  'Police/Others': 'Police/Others',
+};
+
 // t.date is stored at noon UTC representing the Dhaka calendar day directly
 // (see dateUtils.toNoonUTC), so reading the UTC fields back out gives the
 // correct "YYYY-MM-DD" without any further timezone conversion.
@@ -116,6 +122,9 @@ export default function LedgerPage() {
             const isBikeCollection = t.subType === 'Bike Collection';
             const isExpense = t.type === 'Expense';
             const dateLabel = new Date(t.date).toLocaleDateString('en-GB');
+            const dayTimeLabel = t.createdAt
+              ? `${new Date(t.createdAt).toLocaleDateString('en-US', { weekday: 'short' })} • ${new Date(t.createdAt).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' })}`
+              : '';
             return (
               <div key={t._id} className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-start gap-3 shadow-sm">
                 <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${TYPE_DOT[t.type] || 'bg-[#7D7156]'}`} />
@@ -153,6 +162,11 @@ export default function LedgerPage() {
                       }`}>
                         {t.shift}
                       </span>
+                      {t.shift === 'Off Day' && t.offDayReason && t.offDayReason !== 'N/A' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-[#8A6D00] bg-[#FCEFC1] border border-[#E9D89A]">
+                          {OFF_DAY_REASON_LABEL[t.offDayReason] || t.offDayReason}
+                        </span>
+                      )}
                       {t.dueCleared > 0 && (
                         t.dueBalanceAfter === 0 ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#1F7A4D]">
@@ -164,11 +178,22 @@ export default function LedgerPage() {
                           </span>
                         )
                       )}
-                      <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
+                      <span className="ml-auto flex flex-col items-end leading-tight">
+                        <span className="text-[10px] text-[#9A8C6F]">{dateLabel}</span>
+                        {dayTimeLabel && <span className="text-[9px] text-[#B5A88A]">{dayTimeLabel}</span>}
+                      </span>
                     </div>
+                  ) : null}
+                  {isBikeCollection ? (
+                    t.activityText && <p className="text-[11px] text-[#6B5F4F] mt-1">{t.activityText}</p>
                   ) : isExpense ? (
                     <>
                       <div className="flex items-center gap-1.5 mt-1">
+                        {t.bikeName && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#6B5F4F] bg-[#F0EAD9] border border-[#E3D9C2] px-2 py-0.5 rounded-md whitespace-nowrap">
+                            {t.bikeName}
+                          </span>
+                        )}
                         {t.isCredit ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#B33B2E]">
                             Credit
@@ -178,7 +203,10 @@ export default function LedgerPage() {
                             {t.wallet}
                           </span>
                         )}
-                        <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
+                        <span className="ml-auto flex flex-col items-end leading-tight">
+                        <span className="text-[10px] text-[#9A8C6F]">{dateLabel}</span>
+                        {dayTimeLabel && <span className="text-[9px] text-[#B5A88A]">{dayTimeLabel}</span>}
+                      </span>
                       </div>
                       {t.isCredit && t.payableToShop && (
                         <p className="text-[11px] text-[#6B5F4F] mt-1">Payable to: {t.payableToShop}</p>
@@ -191,7 +219,10 @@ export default function LedgerPage() {
                     <>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[10px] font-bold text-[#6B5F4F] whitespace-nowrap">{t.subType}</span>
-                        <span className="text-[10px] text-[#9A8C6F] ml-auto">{dateLabel}</span>
+                        <span className="ml-auto flex flex-col items-end leading-tight">
+                        <span className="text-[10px] text-[#9A8C6F]">{dateLabel}</span>
+                        {dayTimeLabel && <span className="text-[9px] text-[#B5A88A]">{dayTimeLabel}</span>}
+                      </span>
                       </div>
                       {t.note && <p className="text-[11px] text-[#6B5F4F] mt-1">{t.note}</p>}
                     </>
