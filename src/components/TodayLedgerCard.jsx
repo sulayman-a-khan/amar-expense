@@ -132,7 +132,7 @@ export default function TodayLedgerCard({ activities, selectedDate, onActivityDe
                         ? 'text-[#6B5124] bg-[#F3E3B8]'
                         : 'text-white bg-[#1F7A4D]'
                       }`}>
-                      {act.shift}
+                      {act.shift === 'Half Day' && act.expectedRent != null ? `Half Day ${act.expectedRent}` : act.shift}
                     </span>
                     {act.shift === 'Off Day' && act.offDayReason && act.offDayReason !== 'N/A' && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-[#8A6D00] bg-[#FCEFC1] border border-[#E9D89A]">

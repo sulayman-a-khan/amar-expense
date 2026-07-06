@@ -67,6 +67,7 @@ export async function GET(request, { params }) {
         date: c.date,
         shift: c.shift,
         credit: c.paidRent,
+        expectedRent: c.expectedRent,
         due: runningBalance,
       };
     });

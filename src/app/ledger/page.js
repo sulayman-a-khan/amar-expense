@@ -160,7 +160,7 @@ export default function LedgerPage() {
                           ? 'text-[#6B5124] bg-[#F3E3B8]'
                           : 'text-white bg-[#1F7A4D]'
                       }`}>
-                        {t.shift}
+                        {t.shift === 'Half Day' && t.expectedRent != null ? `Half Day ${t.expectedRent}` : t.shift}
                       </span>
                       {t.shift === 'Off Day' && t.offDayReason && t.offDayReason !== 'N/A' && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-[#8A6D00] bg-[#FCEFC1] border border-[#E9D89A]">

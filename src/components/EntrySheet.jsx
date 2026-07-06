@@ -28,12 +28,13 @@ export default function EntrySheet({ type, bikes, walletBalances = {}, defaultDa
     if (type === 'rent') {
       const activeBike = bikes?.find((b) => b._id === form.bikeId);
       const shift = form.shift || 'Full Day';
-      const expected = activeBike
-        ? shift === 'Half Day' ? activeBike.dailyRent * 0.5 : shift === 'Off Day' ? 0 : activeBike.dailyRent
-        : 0;
+      const expected = shift === 'Half Day'
+        ? Number(form.expectedRent || 0)
+        : (activeBike ? (shift === 'Off Day' ? 0 : activeBike.dailyRent) : 0);
       payload = {
         ...form,
         shift,
+        expectedRent: shift === 'Half Day' ? expected : undefined,
         paidRent: shift === 'Off Day' ? 0 : (form.paidRent === '' || form.paidRent == null ? expected : form.paidRent),
       };
     }
@@ -86,9 +87,9 @@ function RentForm({ form, set, bikes }) {
   const shift = form.shift || 'Full Day';
   const activeBike = bikes?.find((b) => b._id === form.bikeId);
   const isShajahan = activeBike?.isShajahanKaka;
-  const expected = activeBike
-    ? shift === 'Half Day' ? activeBike.dailyRent * 0.5 : shift === 'Off Day' ? 0 : activeBike.dailyRent
-    : 0;
+  const expected = shift === 'Half Day'
+    ? Number(form.expectedRent || 0)
+    : (activeBike ? (shift === 'Off Day' ? 0 : activeBike.dailyRent) : 0);
 
   return (
     <div className="space-y-4">
@@ -127,7 +128,11 @@ function RentForm({ form, set, bikes }) {
               <button
                 key={s}
                 type="button"
-                onClick={() => set('shift', s)}
+                onClick={() => {
+                  set('shift', s);
+                  if (s !== 'Half Day') set('expectedRent', '');
+                  set('paidRent', '');
+                }}
                 className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
                   shift === s ? 'bg-[#1F7A4D] text-white' : 'text-[#6B5F4F]'
                 }`}
@@ -146,6 +151,23 @@ function RentForm({ form, set, bikes }) {
             <option value="Police/Others">Police/Others</option>
           </select>
         </Field>
+      ) : shift === 'Half Day' ? (
+        <>
+          <Field label="Expected Amount (৳)">
+            <input
+              type="number" required min="0" placeholder="e.g. 300"
+              value={form.expectedRent || ''} onChange={(e) => set('expectedRent', e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+          <Field label={`Given Amount (৳) — Expected: ৳${expected || 0}`}>
+            <input
+              type="number" min="0" placeholder={`Leave blank for ৳${expected || 0}`}
+              value={form.paidRent || ''} onChange={(e) => set('paidRent', e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+        </>
       ) : (
         <Field label={`Rent Paid (৳) — Expected: ৳${expected}`}>
           <input

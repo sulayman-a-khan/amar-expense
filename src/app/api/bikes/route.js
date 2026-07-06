@@ -52,7 +52,7 @@ export async function POST(request) {
   try {
     await connectToDatabase();
     const body = await request.json();
-    const { action, bikeId, date, shift, paidRent, offDayReason } = body;
+    const { action, bikeId, date, shift, paidRent, offDayReason, expectedRent: providedExpectedRent } = body;
 
     if (action === 'collection') {
       const bike = await Bike.findById(bikeId);
@@ -61,7 +61,15 @@ export async function POST(request) {
       }
 
       let expectedRent = bike.dailyRent;
-      if (shift === 'Half Day') expectedRent *= 0.5;
+      if (shift === 'Half Day') {
+        // Half Day no longer defaults to 50% of the base rent — the actual
+        // expected amount for that half-day is entered manually per entry.
+        const parsedExpected = Number(providedExpectedRent);
+        if (providedExpectedRent === undefined || providedExpectedRent === null || providedExpectedRent === '' || Number.isNaN(parsedExpected) || parsedExpected < 0) {
+          return NextResponse.json({ error: 'Expected amount is required for Half Day.' }, { status: 400 });
+        }
+        expectedRent = parsedExpected;
+      }
       if (shift === 'Off Day') expectedRent = 0;
 
       const collectionDate = toNoonUTC(date);

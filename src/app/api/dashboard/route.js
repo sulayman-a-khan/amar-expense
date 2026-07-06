@@ -202,6 +202,7 @@ export async function GET(request) {
           ? 'Bike 4'
           : (c.bikeId?.name ? (/^bike/i.test(c.bikeId.name.trim()) ? c.bikeId.name : `Bike ${c.bikeId.name}`) : 'Bike'),
         shift: c.shift,
+        expectedRent: c.expectedRent,
         offDayReason: c.offDayReason,
         isOffDay: c.shift === 'Off Day',
       });
@@ -288,6 +289,7 @@ export async function GET(request) {
           isShajahanKaka: b.isShajahanKaka,
           collectedToday: todayColl ? todayColl.shift : null,
           paidToday: todayColl ? todayColl.paidRent : null,
+          expectedToday: todayColl ? todayColl.expectedRent : null,
         };
       }),
       activities: activities.slice(0, 12),

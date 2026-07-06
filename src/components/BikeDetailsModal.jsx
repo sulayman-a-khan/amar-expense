@@ -25,7 +25,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
     (c) => new Date(c.date).toISOString().split('T')[0] === todayStr
   );
 
-  const handleKakaAction = async (shift, paidRent, offDayReason) => {
+  const handleKakaAction = async (shift, paidRent, offDayReason, expectedRent) => {
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -39,6 +39,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
           shift,
           paidRent,
           offDayReason: shift === 'Off Day' ? (offDayReason || 'Driver Unavailable') : 'N/A',
+          ...(shift === 'Half Day' ? { expectedRent } : {}),
         }),
       });
       const data = await res.json();
@@ -165,7 +166,11 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
                       <span>✓</span> Today&apos;s Collection Locked
                     </span>
                     <span className="text-xs font-black text-white bg-[#1F7A4D] px-2.5 py-1 rounded-lg">
-                      {todayColl.shift === 'Off Day' ? 'Off Day' : `${todayColl.shift} (৳${todayColl.credit})`}
+                      {todayColl.shift === 'Off Day'
+                        ? 'Off Day'
+                        : todayColl.shift === 'Half Day'
+                          ? `Half Day ${todayColl.expectedRent} (৳${todayColl.credit})`
+                          : `${todayColl.shift} (৳${todayColl.credit})`}
                     </span>
                   </div>
                 ) : (
@@ -259,13 +264,13 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
                       let badgeColor = 'bg-[#E6F0E5] text-[#1F7A4D] border-[#C5DCC2]'; // Green
 
                       const dailyRent = bike.dailyRent || 500;
-                      const expectedRent = row.shift === 'Full Day' ? dailyRent : row.shift === 'Half Day' ? dailyRent * 0.5 : 0;
+                      const expectedRent = row.shift === 'Full Day' ? dailyRent : row.shift === 'Half Day' ? (row.expectedRent ?? 0) : 0;
 
                       if (row.shift === 'Off Day') {
                         badgeLabel = 'Off';
                         badgeColor = 'bg-[#F0EFF1] text-[#7D7156] border-[#D4D2D5]'; // Grey
                       } else if (row.shift === 'Half Day') {
-                        badgeLabel = 'Half';
+                        badgeLabel = `Half ${expectedRent}`;
                         badgeColor = 'bg-[#FFF9E6] text-[#B27B00] border-[#FCE8B2]'; // Yellow
                         if (row.credit < expectedRent) {
                           badgeLabel = 'Due';
@@ -409,15 +414,19 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
 function BikeCollectionForm({ bike, submitting, onSubmit }) {
   const [shift, setShift] = useState('Full Day');
   const [paidRent, setPaidRent] = useState('');
+  const [halfDayExpected, setHalfDayExpected] = useState('');
   const [offDayReason, setOffDayReason] = useState('');
 
-  const expectedRent = shift === 'Full Day' ? bike.dailyRent : shift === 'Half Day' ? bike.dailyRent * 0.5 : 0;
+  const expectedRent = shift === 'Full Day'
+    ? bike.dailyRent
+    : shift === 'Half Day' ? Number(halfDayExpected || 0) : 0;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (shift === 'Off Day' && !offDayReason) return; // guarded by disabling submit below too
+    if (shift === 'Half Day' && halfDayExpected === '') return; // expected amount required
     const finalPaid = shift === 'Off Day' ? 0 : (paidRent === '' ? expectedRent : Number(paidRent));
-    onSubmit(shift, finalPaid, shift === 'Off Day' ? offDayReason : undefined);
+    onSubmit(shift, finalPaid, shift === 'Off Day' ? offDayReason : undefined, shift === 'Half Day' ? expectedRent : undefined);
   };
 
   return (
@@ -433,6 +442,7 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
                 setShift(s);
                 if (s === 'Off Day') { setPaidRent('0'); setOffDayReason(''); }
                 else { setPaidRent(''); setOffDayReason(''); }
+                if (s !== 'Half Day') setHalfDayExpected('');
               }}
               className={`py-1.5 text-xs font-bold rounded-lg transition-colors ${
                 shift === s ? 'bg-[#2B2620] text-white' : 'text-[#6B5F4F]'
@@ -467,6 +477,36 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
             ))}
           </div>
         </div>
+      ) : shift === 'Half Day' ? (
+        <>
+          <div>
+            <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+              Expected Amount (৳)
+            </label>
+            <input
+              type="number"
+              min="0"
+              required
+              placeholder="e.g. 300"
+              value={halfDayExpected}
+              onChange={(e) => setHalfDayExpected(e.target.value)}
+              className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+              Given Amount (৳) <span className="text-[#7D7156] font-normal">(Expected: ৳{expectedRent})</span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              placeholder={`Leave blank for ৳${expectedRent}`}
+              value={paidRent}
+              onChange={(e) => setPaidRent(e.target.value)}
+              className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+            />
+          </div>
+        </>
       ) : (
         <div>
           <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
@@ -485,7 +525,7 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
 
       <button
         type="submit"
-        disabled={submitting || (shift === 'Off Day' && !offDayReason)}
+        disabled={submitting || (shift === 'Off Day' && !offDayReason) || (shift === 'Half Day' && halfDayExpected === '')}
         className="w-full py-2.5 bg-[#2B2620] text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
       >
         {submitting ? 'Saving...' : 'Save Collection'}

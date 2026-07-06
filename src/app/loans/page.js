@@ -173,7 +173,7 @@ export default function LoansPage() {
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mb-1 uppercase tracking-wide ${
                           isReceivable ? 'bg-[#E7EEF4] text-[#2E5C8A]' : 'bg-[#F1E9DC] text-[#6B5F4F]'
                         }`}>
-                          {isReceivable ? 'Owed to you' : 'You owe'}
+                          {isReceivable ? 'আমি পাবো' : 'আমার কাছে পাবে'}
                         </span>
                         <p className="font-bold text-sm text-[#2B2620] truncate">{l.person}</p>
                       </div>

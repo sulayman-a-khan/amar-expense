@@ -13,7 +13,7 @@ export default function PayableListModal({ isOpen, onClose, payables }) {
       >
         <div className="bg-[#FFFDF8] px-6 py-5 border-b border-[#E3D9C2] shrink-0 flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-black text-[#2B2620]">You owe</h2>
+            <h2 className="text-lg font-black text-[#2B2620]">আমার কাছে পাবে</h2>
             <p className="text-[11px] font-bold text-[#6B5F4F]">Money you still need to pay back</p>
           </div>
           <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold">
