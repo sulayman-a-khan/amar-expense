@@ -76,13 +76,26 @@ export default function LedgerPage() {
                 ✕
               </button>
             )}
-            <input
-              type="date"
-              value={selectedDate}
-              max={todayDhakaDateString()}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-[130px] p-2 text-xs bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
-            />
+            <div className="relative w-8 h-8">
+              <input
+                type="date"
+                value={selectedDate}
+                max={todayDhakaDateString()}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                aria-label="Filter by date"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div
+                className={`w-8 h-8 flex items-center justify-center rounded-lg pointer-events-none transition-colors ${
+                  selectedDate ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F]'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
+              </div>
+            </div>
           </div>
         }
       />
