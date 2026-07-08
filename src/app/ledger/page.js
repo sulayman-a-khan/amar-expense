@@ -187,7 +187,7 @@ export default function LedgerPage() {
                           </span>
                         ) : (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#2E5C8A]">
-                            Due Reduce
+                            Due Reduce ৳{Number(t.dueCleared).toLocaleString('en-IN')}
                           </span>
                         )
                       )}

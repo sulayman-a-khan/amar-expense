@@ -62,6 +62,7 @@ export async function GET(request, { params }) {
     const earningDetailsAsc = collectionsAsc.map((c) => {
       const matchingEntry = entryByCollectionId[c._id.toString()];
       if (matchingEntry) runningBalance = matchingEntry.balanceAfter;
+      const isClearance = matchingEntry?.type === 'clearance';
       return {
         _id: c._id,
         date: c.date,
@@ -69,6 +70,8 @@ export async function GET(request, { params }) {
         credit: c.paidRent,
         expectedRent: c.expectedRent,
         due: runningBalance,
+        dueCleared: isClearance ? matchingEntry.amount : 0,
+        dueBalanceAfter: isClearance ? matchingEntry.balanceAfter : null,
       };
     });
 

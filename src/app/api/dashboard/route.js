@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
-import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal } from '@/models/models';
+import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal, DriverDueEntry } from '@/models/models';
 import { startOfTodayDhaka, toNoonUTC } from '@/lib/dateUtils';
 import { backfillMissedDays } from '@/lib/driverDue';
 
@@ -180,8 +180,23 @@ export async function GET(request) {
     // (bike/shift/wallet badges etc.), scoped to the selected day, so the
     // dashboard can show real ledger entries in place of the old plain-text
     // activity feed while still supporting tap-and-hold delete.
+    // Clearance entries record how much of an overpayment cleared existing
+    // driver due, and what the due balance was right after — used to tell
+    // "partially reduced the due" apart from "fully paid off the due"
+    // (same lookup as the Full Ledger page's /api/transactions route).
+    const todayCollectionIds = todayCollections.map((c) => c._id);
+    const clearanceEntries = await DriverDueEntry.find({
+      type: 'clearance',
+      dailyCollectionId: { $in: todayCollectionIds },
+    });
+    const clearanceByCollectionId = {};
+    clearanceEntries.forEach((entry) => {
+      if (entry.dailyCollectionId) clearanceByCollectionId[entry.dailyCollectionId.toString()] = entry;
+    });
+
     const activities = [];
     todayCollections.forEach((c) => {
+      const clearance = clearanceByCollectionId[c._id.toString()];
       activities.push({
         id: c._id,
         createdAt: c.createdAt,
@@ -205,6 +220,8 @@ export async function GET(request) {
         expectedRent: c.expectedRent,
         offDayReason: c.offDayReason,
         isOffDay: c.shift === 'Off Day',
+        dueCleared: clearance ? clearance.amount : 0,
+        dueBalanceAfter: clearance ? clearance.balanceAfter : null,
       });
     });
     todayIncomes.forEach((i) => {

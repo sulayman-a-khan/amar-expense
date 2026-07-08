@@ -286,11 +286,22 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
 
                       return (
                         <div key={row._id} className="grid grid-cols-3 px-4 py-3 text-xs items-center">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[#2B2620] font-semibold whitespace-nowrap">{formatGlobalDate(row.date)}</span>
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none ${badgeColor}`}>
                               {badgeLabel}
                             </span>
+                            {row.dueCleared > 0 && (
+                              row.dueBalanceAfter === 0 ? (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none text-white bg-[#1F7A4D] border-[#1F7A4D]">
+                                  Due Paid
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none text-white bg-[#2E5C8A] border-[#2E5C8A]">
+                                  Due Reduce ৳{Number(row.dueCleared).toLocaleString('en-IN')}
+                                </span>
+                              )
+                            )}
                           </div>
                           <span className="text-right font-bold text-[#1F7A4D]">৳{row.credit.toLocaleString('en-IN')}</span>
                           <span className="text-right font-bold text-[#2E5C8A]">৳{row.due.toLocaleString('en-IN')}</span>

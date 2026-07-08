@@ -139,6 +139,17 @@ export default function TodayLedgerCard({ activities, selectedDate, onActivityDe
                         {OFF_DAY_REASON_LABEL[act.offDayReason] || act.offDayReason}
                       </span>
                     )}
+                    {act.dueCleared > 0 && (
+                      act.dueBalanceAfter === 0 ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#1F7A4D]">
+                          Due Paid
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#2E5C8A]">
+                          Due Reduce ৳{Number(act.dueCleared).toLocaleString('en-IN')}
+                        </span>
+                      )
+                    )}
                     <span className="ml-auto flex flex-col items-end leading-tight">
                       <span className="text-[10px] text-[#9A8C6F]">{selectedDateLabel}</span>
                       {act.time && <span className="text-[9px] text-[#B5A88A]">{act.time}</span>}

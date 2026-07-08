@@ -2,6 +2,7 @@
   "name": "Amar Hishab — Daily Ledger",
   "short_name": "Amar Hishab",
   "description": "Ultra-reliable ledger designed for visual tracking and peace of mind.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

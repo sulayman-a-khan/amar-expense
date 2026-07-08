@@ -1,5 +1,6 @@
 import { Outfit } from 'next/font/google';
 import './globals.css';
+import RegisterSW from '@/components/RegisterSW';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="bg-[#F7F3EA] text-[#2B2620] min-h-screen flex flex-col antialiased">
+        <RegisterSW />
         <main className="flex-1 w-full max-w-md mx-auto bg-[#F7F3EA] min-h-screen relative pb-28">
           {children}
         </main>
