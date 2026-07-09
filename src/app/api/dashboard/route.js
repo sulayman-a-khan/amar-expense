@@ -6,6 +6,16 @@ import { backfillMissedDays } from '@/lib/driverDue';
 
 const WALLET_NAMES = ['Pocket', 'Drawer'];
 
+// These three functions are one-time migrations/setup checks (stale wallet
+// cleanup, seeding default bikes, removing legacy loan records). They only
+// ever need to actually do something once — after that they're a guaranteed
+// no-op query every single time the dashboard loads. On a warm serverless
+// instance (which handles many requests before recycling), that's 3+ wasted
+// round-trips to Atlas on every request, which is a big chunk of the load
+// time. This flag skips them once we've confirmed they're clean, and only
+// re-checks once per cold start — never once per request.
+let migrationsVerified = false;
+
 async function ensureWallets() {
   // One-time migration: an older version of this app had a 'Business'
   // wallet. If that document still exists in the database, fold its
@@ -70,6 +80,15 @@ async function cleanupOldShortfallLoans() {
   await Loan.deleteMany({ note: { $regex: '^Rent shortfall' } });
 }
 
+// Runs the three one-time migration/seed checks above, but only once per
+// warm server instance (see `migrationsVerified` above) and in parallel
+// with each other rather than one-by-one.
+async function runMigrationsIfNeeded() {
+  if (migrationsVerified) return;
+  await Promise.all([ensureWallets(), ensureBikes(), cleanupOldShortfallLoans()]);
+  migrationsVerified = true;
+}
+
 export async function GET(request) {
   try {
     await connectToDatabase();
@@ -95,16 +114,16 @@ export async function GET(request) {
     const endOfDay = new Date(startOfDay);
     endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
-    // One-time cleanup (safe to run on every request — becomes a no-op
-    // once the old records are gone): remove legacy rent-shortfall Loan
-    // documents before querying unresolvedLoans below, so they can never
-    // appear on the Loans page or inflate its totals.
-    await cleanupOldShortfallLoans();
+    // One-time migrations (stale wallet cleanup, seeding default bikes,
+    // legacy loan cleanup) — only actually hits the DB the first time this
+    // server instance handles a request; every request after that is just
+    // the plain queries below with zero migration overhead.
+    await runMigrationsIfNeeded();
 
     // Bikes must be ensured first, and Shajahan Kaka's missed days backfilled
     // (auto "Not Given" for any day with no entry) before the due-dependent
     // queries below run, so driverDues/bikeDues reflect the up-to-date balance.
-    const bikes = await ensureBikes();
+    const bikes = await Bike.find({}).lean();
     const shajahanBike = bikes.find((b) => b.isShajahanKaka);
     if (shajahanBike) {
       await backfillMissedDays(shajahanBike);
@@ -112,7 +131,10 @@ export async function GET(request) {
 
     // Run every independent query concurrently instead of one-by-one —
     // this is what was making the dashboard slow to load, especially
-    // over a higher-latency connection to Atlas.
+    // over a higher-latency connection to Atlas. .lean() skips Mongoose
+    // document hydration for these read-only results, which are only ever
+    // serialized straight to JSON anyway — meaningfully faster for larger
+    // result sets and avoids unnecessary CPU work per request.
     const [
       allWallets,
       todayCollections,
@@ -123,14 +145,14 @@ export async function GET(request) {
       driverDues,
       todayRentWithdrawals,
     ] = await Promise.all([
-      ensureWallets(),
-      DailyCollection.find({ date: { $gte: startOfDay, $lt: endOfDay } }).populate('bikeId'),
-      Expense.find({ date: { $gte: startOfDay, $lt: endOfDay } }),
-      IncomeSource.find({ date: { $gte: startOfDay, $lt: endOfDay } }),
-      Loan.find({ resolved: false }),
-      DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }),
-      DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId'),
-      RentWithdrawal.find({ date: { $gte: startOfDay, $lt: endOfDay } }),
+      Wallet.find({ name: { $in: WALLET_NAMES } }).lean(),
+      DailyCollection.find({ date: { $gte: startOfDay, $lt: endOfDay } }).populate('bikeId').lean(),
+      Expense.find({ date: { $gte: startOfDay, $lt: endOfDay } }).lean(),
+      IncomeSource.find({ date: { $gte: startOfDay, $lt: endOfDay } }).lean(),
+      Loan.find({ resolved: false }).lean(),
+      DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }).lean(),
+      DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId').lean(),
+      RentWithdrawal.find({ date: { $gte: startOfDay, $lt: endOfDay } }).lean(),
     ]);
 
     const walletsObj = {};
@@ -188,7 +210,7 @@ export async function GET(request) {
     const clearanceEntries = await DriverDueEntry.find({
       type: 'clearance',
       dailyCollectionId: { $in: todayCollectionIds },
-    });
+    }).lean();
     const clearanceByCollectionId = {};
     clearanceEntries.forEach((entry) => {
       if (entry.dailyCollectionId) clearanceByCollectionId[entry.dailyCollectionId.toString()] = entry;

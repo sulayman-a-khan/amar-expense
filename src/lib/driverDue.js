@@ -13,7 +13,7 @@ export async function backfillMissedDays(bike) {
 
   const todayStart = startOfTodayDhaka();
 
-  const lastCollection = await DailyCollection.findOne({ bikeId: bike._id }).sort({ date: -1 });
+  const lastCollection = await DailyCollection.findOne({ bikeId: bike._id }).sort({ date: -1 }).lean();
 
   let cursor;
   if (lastCollection) {
@@ -38,7 +38,7 @@ export async function backfillMissedDays(bike) {
   const alreadyExisting = await DailyCollection.find({
     bikeId: bike._id,
     date: { $gte: missingDates[0], $lte: missingDates[missingDates.length - 1] },
-  }).select('date');
+  }).select('date').lean();
   const existingDateKeys = new Set(alreadyExisting.map((c) => c.date.toISOString()));
   const datesToCreate = missingDates.filter((d) => !existingDateKeys.has(d.toISOString()));
   if (datesToCreate.length === 0) return;

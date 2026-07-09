@@ -1,23 +1,53 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, RentWithdrawal, DriverDueEntry } from '@/models/models';
+import { startOfTodayDhaka } from '@/lib/dateUtils';
 
-export async function GET() {
+export async function GET(request) {
   try {
     await dbConnect();
 
-    // Fetch all logs
-    const collections = await DailyCollection.find({}).populate('bikeId').sort({ date: -1 });
-    const expenses = await Expense.find({}).populate('bikeId').sort({ date: -1 });
-    const incomes = await IncomeSource.find({}).sort({ date: -1 });
-    const loans = await Loan.find({}).sort({ date: -1 });
-    const transfers = await WalletTransfer.find({}).sort({ date: -1 });
-    const rentWithdrawals = await RentWithdrawal.find({}).sort({ date: -1 });
+    // Defaults to just today's entries — loading the entire lifetime
+    // ledger on every visit gets slower as the data grows. Pass
+    // ?range=all to explicitly load everything (e.g. the "All Time"
+    // toggle on the Full Ledger page, or when browsing to a past date).
+    const { searchParams } = new URL(request.url);
+    const range = searchParams.get('range') === 'all' ? 'all' : 'today';
+
+    let dateFilter = {};
+    if (range === 'today') {
+      const startOfDay = startOfTodayDhaka();
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+      dateFilter = { date: { $gte: startOfDay, $lt: endOfDay } };
+    }
+
+    // These 6 queries are all independent — running them one-by-one (as
+    // before) meant the total wait was the SUM of every query's latency.
+    // Promise.all runs them concurrently instead, so the wait is only as
+    // long as the slowest one. .lean() also skips Mongoose document
+    // hydration, which matters here since every document ever created is
+    // being fetched (no date filtering) — meaningful CPU savings as the
+    // ledger grows over time.
+    const [collections, expenses, incomes, loans, transfers, rentWithdrawals] = await Promise.all([
+      DailyCollection.find(dateFilter).populate('bikeId').sort({ date: -1 }).lean(),
+      Expense.find(dateFilter).populate('bikeId').sort({ date: -1 }).lean(),
+      IncomeSource.find(dateFilter).sort({ date: -1 }).lean(),
+      Loan.find(dateFilter).sort({ date: -1 }).lean(),
+      WalletTransfer.find(dateFilter).sort({ date: -1 }).lean(),
+      RentWithdrawal.find(dateFilter).sort({ date: -1 }).lean(),
+    ]);
 
     // Clearance entries record how much of an overpayment cleared existing
     // driver due, and what the due balance was right after — used to tell
     // "partially reduced the due" apart from "fully paid off the due".
-    const clearanceEntries = await DriverDueEntry.find({ type: 'clearance' });
+    // Scoped to today's collection ids when range === 'today' so this
+    // lookup query doesn't itself have to scan the whole entry history.
+    const clearanceFilter =
+      range === 'today'
+        ? { type: 'clearance', dailyCollectionId: { $in: collections.map((c) => c._id) } }
+        : { type: 'clearance' };
+    const clearanceEntries = await DriverDueEntry.find(clearanceFilter).lean();
     const clearanceByCollectionId = {};
     clearanceEntries.forEach((entry) => {
       if (entry.dailyCollectionId) clearanceByCollectionId[entry.dailyCollectionId.toString()] = entry;

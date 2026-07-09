@@ -36,12 +36,17 @@ export default function LedgerPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
-  const [selectedDate, setSelectedDate] = useState(''); // '' = all dates
+  const [selectedDate, setSelectedDate] = useState(''); // '' = all dates within the loaded range
   const [loadError, setLoadError] = useState('');
+  // Defaults to just today's ledger — much faster to load, and the common
+  // case. Switch to 'all' manually (via the toggle below) to load the full
+  // history, e.g. to search or browse past days.
+  const [range, setRange] = useState('today');
 
-  const fetchTransactions = useCallback(() => {
+  const fetchTransactions = useCallback((rangeToUse) => {
     setLoadError('');
-    fetch('/api/transactions')
+    setLoading(true);
+    fetch(`/api/transactions?range=${rangeToUse}`)
       .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (ok) setTransactions(data.transactions || []);
@@ -51,7 +56,17 @@ export default function LedgerPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+  useEffect(() => { fetchTransactions(range); }, [fetchTransactions, range]);
+
+  // Picking a date other than today only makes sense against the full
+  // history — today-only data wouldn't contain it — so switch
+  // automatically rather than showing a confusing "no entries" result.
+  const handleDateChange = (value) => {
+    setSelectedDate(value);
+    if (value && value !== todayDhakaDateString() && range !== 'all') {
+      setRange('all');
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = transactions;
@@ -67,6 +82,14 @@ export default function LedgerPage() {
         subtitle="Every transaction, in one place"
         right={
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setRange(range === 'today' ? 'all' : 'today')}
+              className={`px-2.5 h-8 flex items-center justify-center rounded-lg text-[10px] font-bold whitespace-nowrap transition-colors ${
+                range === 'all' ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F]'
+              }`}
+            >
+              {range === 'all' ? 'All Time' : 'Today'}
+            </button>
             {selectedDate && (
               <button
                 onClick={() => setSelectedDate('')}
@@ -81,7 +104,7 @@ export default function LedgerPage() {
                 type="date"
                 value={selectedDate}
                 max={todayDhakaDateString()}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => handleDateChange(e.target.value)}
                 aria-label="Filter by date"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
@@ -99,6 +122,12 @@ export default function LedgerPage() {
           </div>
         }
       />
+
+      {range === 'today' && (
+        <div className="max-w-md mx-auto px-5 mb-1 -mt-2">
+          <p className="text-[10px] text-[#9A8F78] font-semibold">Showing today only — tap &quot;Today&quot; above to load all-time.</p>
+        </div>
+      )}
 
       <div className="max-w-md mx-auto px-5 mb-4">
         <div className="flex gap-2">
@@ -122,7 +151,7 @@ export default function LedgerPage() {
         ) : loadError ? (
           <div className="text-center py-10 space-y-3">
             <p className="text-sm font-semibold text-[#B33B2E]">{loadError}</p>
-            <button onClick={fetchTransactions} className="px-4 py-2 bg-[#2B2620] text-white text-xs font-bold rounded-xl">
+            <button onClick={() => fetchTransactions(range)} className="px-4 py-2 bg-[#2B2620] text-white text-xs font-bold rounded-xl">
               Try Again
             </button>
           </div>
@@ -248,7 +277,7 @@ export default function LedgerPage() {
       </main>
 
       <div className="h-24" />
-      <EntryFlow onSaved={fetchTransactions} />
+      <EntryFlow onSaved={() => fetchTransactions(range)} />
     </div>
   );
 }

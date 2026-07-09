@@ -109,6 +109,7 @@ const DriverDueSchema = new mongoose.Schema({
   balance: { type: Number, required: true, default: 0 }, // amount currently owed by the driver
   updatedAt: { type: Date, default: Date.now },
 });
+DriverDueSchema.index({ balance: 1 });
 
 const DriverDueEntrySchema = new mongoose.Schema({
   bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', required: true },

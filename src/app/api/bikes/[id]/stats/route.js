@@ -11,7 +11,7 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || 'month'; // 'week', 'month', 'year', 'all'
 
-    const bike = await Bike.findById(id);
+    const bike = await Bike.findById(id).lean();
     if (!bike) return NextResponse.json({ error: 'Bike not found' }, { status: 404 });
 
     if (bike.isShajahanKaka) {
@@ -29,16 +29,23 @@ export async function GET(request, { params }) {
       startDate = new Date(0); // 'alltime' / 'all'
     }
 
+    // Collections need the bike's FULL history regardless of period, since
+    // the running due balance can only be computed correctly by walking
+    // every entry from the start — filtering by date first would give a
+    // wrong starting balance for any period shorter than "all". Expenses
+    // have no such dependency, so those are filtered at the DB level
+    // instead of pulling every expense ever and filtering in JS — a much
+    // smaller transfer for bikes with a long history on 'week'/'month'.
     const [collectionsAsc, expenses, driverDue, dueEntries] = await Promise.all([
-      DailyCollection.find({ bikeId: id }).sort({ date: 1 }), // ascending, needed to carry the running balance forward correctly
-      Expense.find({ bikeId: id }).sort({ date: -1 }),
-      DriverDue.findOne({ bikeId: id }),
-      DriverDueEntry.find({ bikeId: id }),
+      DailyCollection.find({ bikeId: id }).sort({ date: 1 }).lean(), // ascending, needed to carry the running balance forward correctly
+      Expense.find({ bikeId: id, date: { $gte: startDate } }).sort({ date: -1 }).lean(),
+      DriverDue.findOne({ bikeId: id }).lean(),
+      DriverDueEntry.find({ bikeId: id }).lean(),
     ]);
 
-    // Filter collections and expenses by startDate
+    // Filter collections by startDate (expenses are already scoped by the query above)
     const filteredCollections = collectionsAsc.filter((c) => c.date >= startDate);
-    const filteredExpenses = expenses.filter((e) => e.date >= startDate);
+    const filteredExpenses = expenses;
 
     const totalEarning = filteredCollections.reduce((sum, c) => sum + c.paidRent, 0);
     const totalExpense = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -86,7 +93,6 @@ export async function GET(request, { params }) {
       .reverse();
 
     const expenseList = expenses
-      .filter((e) => e.date >= startDate)
       .map((e) => ({
         _id: e._id,
         date: e.date,
