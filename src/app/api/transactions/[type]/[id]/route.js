@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Wallet } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Wallet, DriverDueEntry } from '@/models/models';
 import { isWithin48Hours } from '@/lib/dateUtils';
+import { recalcDriverDue } from '@/lib/driverDueRecalc';
 
 // Helper to revert wallet balance
 async function revertWalletBalance(walletName, amount, operation) {
@@ -57,7 +58,20 @@ export async function DELETE(request, { params }) {
     }
 
     // Delete document
-    if (type === 'DailyCollection') await DailyCollection.findByIdAndDelete(id);
+    if (type === 'DailyCollection') {
+      await DailyCollection.findByIdAndDelete(id);
+
+      // A collection can have a linked shortfall (added to due) or
+      // clearance (paid down due) entry. If we don't remove it and
+      // recompute, the bike's due balance and history stay wrong forever —
+      // this was the bug where deleting an old entry with a due impact
+      // didn't update the amount shown in the bike details modal.
+      const linkedEntry = await DriverDueEntry.findOne({ dailyCollectionId: id });
+      if (linkedEntry) {
+        await DriverDueEntry.findByIdAndDelete(linkedEntry._id);
+        await recalcDriverDue(targetDoc.bikeId);
+      }
+    }
     else if (type === 'IncomeSource') await IncomeSource.findByIdAndDelete(id);
     else if (type === 'Expense') await Expense.findByIdAndDelete(id);
 

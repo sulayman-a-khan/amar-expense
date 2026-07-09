@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
+import { verifyAuthToken } from '@/lib/authToken';
 
 // Simple PIN lock so the live link can't be opened/modified by anyone who
 // just has the URL. Not meant to replace real auth — there's only one PIN,
 // shared with whoever the owner wants to have access — but it stops casual
 // or accidental visitors and search-engine crawlers from seeing or editing data.
 const COOKIE_NAME = 'amr_unlocked';
-// Only ever set by /api/auth/pin after it verifies the real PIN server-side.
-const COOKIE_VALUE = 'granted-2233';
+// Signs/verifies the same way /api/auth/pin issues it — see src/lib/authToken.js.
+// Must be set in the environment; without it, no cookie can ever verify,
+// so the app fails closed (locked) rather than falling back to a guessable default.
+const SECRET = process.env.PIN_COOKIE_SECRET;
 
 const PUBLIC_PATHS = ['/pin', '/api/auth/pin'];
 
@@ -19,13 +22,14 @@ function isPublic(pathname) {
   return false;
 }
 
-export function middleware(request) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   if (isPublic(pathname)) return NextResponse.next();
 
   const cookie = request.cookies.get(COOKIE_NAME)?.value;
-  if (cookie === COOKIE_VALUE) return NextResponse.next();
+  const isValid = await verifyAuthToken(SECRET, cookie);
+  if (isValid) return NextResponse.next();
 
   // API routes get a plain 401 instead of an HTML redirect, so fetch()
   // calls from any already-loaded page fail cleanly instead of getting a
@@ -43,3 +47,4 @@ export function middleware(request) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
+
