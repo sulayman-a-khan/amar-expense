@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Wallet, DriverDueEntry } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Wallet, DriverDueEntry, Bike } from '@/models/models';
 import { isWithin48Hours } from '@/lib/dateUtils';
 import { recalcDriverDue } from '@/lib/driverDueRecalc';
+import { markDateForManualReentry } from '@/lib/driverDue';
 
 // Helper to revert wallet balance
 async function revertWalletBalance(walletName, amount, operation) {
@@ -70,6 +71,14 @@ export async function DELETE(request, { params }) {
       if (linkedEntry) {
         await DriverDueEntry.findByIdAndDelete(linkedEntry._id);
         await recalcDriverDue(targetDoc.bikeId);
+
+        // Only Shajahan Kaka's bike auto-fills "Not Given" days — give this
+        // specific date a grace window so it doesn't get silently recreated
+        // before there's a chance to type in the real amount.
+        const bikeDoc = await Bike.findById(targetDoc.bikeId).lean();
+        if (bikeDoc?.isShajahanKaka) {
+          await markDateForManualReentry(targetDoc.bikeId, targetDoc.date);
+        }
       }
     }
     else if (type === 'IncomeSource') await IncomeSource.findByIdAndDelete(id);

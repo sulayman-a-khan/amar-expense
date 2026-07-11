@@ -107,6 +107,16 @@ const WalletTransferSchema = new mongoose.Schema({
 const DriverDueSchema = new mongoose.Schema({
   bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', required: true, unique: true },
   balance: { type: Number, required: true, default: 0 }, // amount currently owed by the driver
+  // When you delete an auto "Not Given" entry for a past day, that day's date
+  // goes in here — it's a signal "leave this day alone, I want to type the
+  // real amount in myself." backfillMissedDays skips these dates instead of
+  // instantly recreating them. The grace period lasts until the Dhaka
+  // calendar day changes (pendingSetDate holds which day it was set on); once
+  // you've moved on to a new day without filling it in yourself, the date
+  // falls out of this list and the normal auto-due safety net picks it back
+  // up on the next run.
+  pendingManualDates: { type: [Date], default: [] },
+  pendingSetDate: { type: Date, default: null },
   updatedAt: { type: Date, default: Date.now },
 });
 DriverDueSchema.index({ balance: 1 });
