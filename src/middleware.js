@@ -11,14 +11,24 @@ const COOKIE_NAME = 'amr_unlocked';
 // so the app fails closed (locked) rather than falling back to a guessable default.
 const SECRET = process.env.PIN_COOKIE_SECRET;
 
-const PUBLIC_PATHS = ['/pin', '/api/auth/pin'];
+const PUBLIC_PATHS = [
+  '/pin',
+  '/api/auth/pin',
+  // PWA installability requires these to be reachable without the PIN cookie.
+  // PWABuilder / Chrome probe them unauthenticated — if they redirect to /pin,
+  // the site is treated as "no manifest".
+  '/manifest.json',
+  '/sw.js',
+];
 
 function isPublic(pathname) {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   // Static assets / Next internals (also excluded via the matcher below,
   // this is just a second safety net).
   if (pathname.startsWith('/_next')) return true;
-  if (/\.(svg|png|jpg|jpeg|ico|webmanifest|css|js)$/.test(pathname)) return true;
+  // Include .json so /manifest.json is always public even if the path list
+  // above is edited later; same for common icon/asset extensions.
+  if (/\.(svg|png|jpg|jpeg|ico|webmanifest|json|css|js|woff2?|ttf|map)$/.test(pathname)) return true;
   return false;
 }
 
@@ -45,6 +55,10 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Skip middleware for Next internals and the most common static public assets.
+  // manifest.json / sw.js / icons are also allow-listed in isPublic() above.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icon-.*\\.png|apple-touch-icon\\.png|favicon-32\\.png).*)',
+  ],
 };
 

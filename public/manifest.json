@@ -8,7 +8,9 @@
   "display": "standalone",
   "background_color": "#F7F3EA",
   "theme_color": "#163524",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
       "src": "/icon-192.png",
