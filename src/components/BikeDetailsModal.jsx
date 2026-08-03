@@ -20,6 +20,12 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
   const [showKakaAmountInput, setShowKakaAmountInput] = useState(false);
   const [kakaAmount, setKakaAmount] = useState('');
   const [monthlyData, setMonthlyData] = useState(null);
+  const [manualDueEntries, setManualDueEntries] = useState([]);
+  const [showManualReduce, setShowManualReduce] = useState(false);
+  const [manualReduceAmount, setManualReduceAmount] = useState('');
+  const [manualReduceNote, setManualReduceNote] = useState('');
+  const [manualReduceSubmitting, setManualReduceSubmitting] = useState(false);
+  const [manualReduceError, setManualReduceError] = useState('');
 
   const todayStr = activeDate || todayDhakaDateString();
   const todayColl = earningDetails?.find(
@@ -81,6 +87,50 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
     handleKakaAction('Full Day', amount);
   };
 
+  // Lets you knock down Shajahan Kaka's outstanding due by hand (e.g. he
+  // paid off some due separately, in person, or you're adjusting it) —
+  // fully independent of today's collection entry. Every reduce is logged
+  // as its own history row (see manualDueEntries) so nothing is silently
+  // lost.
+  const handleManualReduceSubmit = async () => {
+    const amount = Number(manualReduceAmount);
+    if (manualReduceAmount === '' || Number.isNaN(amount) || amount <= 0) {
+      setManualReduceError('Enter a valid amount.');
+      return;
+    }
+    if (stats && amount > stats.totalDue) {
+      setManualReduceError(`Amount can't be more than the current due (৳${stats.totalDue.toLocaleString('en-IN')}).`);
+      return;
+    }
+    setManualReduceSubmitting(true);
+    setManualReduceError('');
+    try {
+      const res = await fetch('/api/bikes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'manual_due_reduce',
+          bikeId: bike._id,
+          amount,
+          note: manualReduceNote,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setManualReduceError(data.error || 'Failed to reduce due.');
+      } else {
+        setShowManualReduce(false);
+        setManualReduceAmount('');
+        setManualReduceNote('');
+        setRefreshKey((k) => k + 1);
+      }
+    } catch {
+      setManualReduceError('Network error');
+    } finally {
+      setManualReduceSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     if (!bike) return;
 
@@ -90,6 +140,10 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
     setShowKakaAmountInput(false);
     setKakaAmount('');
     setSubmitError('');
+    setShowManualReduce(false);
+    setManualReduceAmount('');
+    setManualReduceNote('');
+    setManualReduceError('');
 
     // MONTHLY bikes use a completely separate data source (see
     // /api/bike-monthly-rent) — the DAILY stats endpoint below is left
@@ -129,6 +183,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
           setEarningDetails(data.earningDetails || []);
           setOffDays(data.offDays || []);
           setExpenses(data.expenses || []);
+          setManualDueEntries(data.manualDueEntries || []);
         } else {
           setLoadError(data.error || 'Failed to load bike details.');
         }
@@ -285,6 +340,91 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
                   <span className="text-lg font-black text-[#2E5C8A] block mt-1">৳{stats.totalDue.toLocaleString('en-IN')}</span>
                 </div>
               </div>
+
+              {/* Manual Due Reduce — Shajahan Kaka only. Lets you reduce his
+                  outstanding due by hand (separate from a day's collection),
+                  while keeping a full history of every manual reduce. */}
+              {bike.isShajahanKaka && stats.totalDue > 0 && (
+                <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider">Manual Due Reduce</span>
+                    {!showManualReduce && (
+                      <button
+                        onClick={() => { setShowManualReduce(true); setManualReduceError(''); }}
+                        className="text-[10px] font-bold text-[#2E5C8A] bg-[#EAF1F8] px-2.5 py-1 rounded-lg active:scale-[0.98] transition-transform"
+                      >
+                        Reduce Due
+                      </button>
+                    )}
+                  </div>
+
+                  {showManualReduce && (
+                    <div className="space-y-2">
+                      {manualReduceError && <p className="text-[11px] font-bold text-[#B33B2E]">{manualReduceError}</p>}
+                      <div>
+                        <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+                          Amount (৳) <span className="text-[#7D7156] font-normal">— max ৳{stats.totalDue.toLocaleString('en-IN')}</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={stats.totalDue}
+                          autoFocus
+                          placeholder="e.g. 500"
+                          value={manualReduceAmount}
+                          onChange={(e) => setManualReduceAmount(e.target.value)}
+                          className="w-full p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+                          Reason / note <span className="text-[#7D7156] font-normal">(optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Paid in person on Eid"
+                          value={manualReduceNote}
+                          onChange={(e) => setManualReduceNote(e.target.value)}
+                          className="w-full p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          disabled={manualReduceSubmitting}
+                          onClick={() => { setShowManualReduce(false); setManualReduceAmount(''); setManualReduceNote(''); setManualReduceError(''); }}
+                          className="py-2.5 text-[11px] font-bold bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2] rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          disabled={manualReduceSubmitting}
+                          onClick={handleManualReduceSubmit}
+                          className="py-2.5 text-[11px] font-bold bg-[#2E5C8A] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
+                        >
+                          {manualReduceSubmitting ? '...' : 'Confirm Reduce'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {manualDueEntries.length > 0 && (
+                    <div className="pt-1 border-t border-[#E3D9C2] divide-y divide-[#E3D9C2]">
+                      {manualDueEntries.map((entry) => (
+                        <div key={entry._id} className="py-2 flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-[11px] font-semibold text-[#2B2620] block">{formatGlobalDate(entry.date)}</span>
+                            <span className="text-[10px] text-[#7D7156] block truncate">{entry.note}</span>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-black text-[#2E5C8A] block">-৳{Number(entry.amount).toLocaleString('en-IN')}</span>
+                            <span className="text-[9px] text-[#7D7156] block">Left: ৳{Number(entry.balanceAfter).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Full-width button: Earning & Expense Details */}
               <button

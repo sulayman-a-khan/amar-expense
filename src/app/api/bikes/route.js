@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { Bike, DailyCollection, Wallet, DriverDue, DriverDueEntry } from '@/models/models';
-import { toNoonUTC } from '@/lib/dateUtils';
+import { toNoonUTC, nowInDhaka } from '@/lib/dateUtils';
 
 export async function GET() {
   try {
@@ -171,6 +171,58 @@ export async function POST(request) {
         collection,
         dueBalance: dueDoc.balance,
         shortfall: diff > 0 ? diff : 0
+      });
+    }
+
+    // Manual due reduction — lets you knock down a driver's outstanding due
+    // by hand (e.g. Shajahan Kaka paid off some due in person, in a lump
+    // sum, or you're forgiving/adjusting part of it) without it being tied
+    // to a specific day's collection. Fully separate from the automatic
+    // over/under-payment clearance above, but logged the same way (as a
+    // DriverDueEntry with type 'clearance') so it shows up in due history —
+    // just with dailyCollectionId left null and a note explaining it was
+    // manual.
+    if (action === 'manual_due_reduce') {
+      const { amount, note } = body;
+
+      const bike = await Bike.findById(bikeId);
+      if (!bike) {
+        return NextResponse.json({ error: 'Bike not found' }, { status: 404 });
+      }
+
+      const parsedAmount = Number(amount);
+      if (amount === undefined || amount === null || amount === '' || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+        return NextResponse.json({ error: 'Enter a valid amount to reduce.' }, { status: 400 });
+      }
+
+      const dueDoc = await DriverDue.findOne({ bikeId });
+      if (!dueDoc || dueDoc.balance <= 0) {
+        return NextResponse.json({ error: 'There is no outstanding due to reduce.' }, { status: 400 });
+      }
+
+      // Never let a manual reduce push the balance below zero — cap it at
+      // whatever is actually owed.
+      const reduced = Math.min(parsedAmount, dueDoc.balance);
+      dueDoc.balance -= reduced;
+      dueDoc.updatedAt = new Date();
+      await dueDoc.save();
+
+      const trimmedNote = (note || '').trim();
+      const entry = await DriverDueEntry.create({
+        bikeId,
+        dailyCollectionId: null,
+        type: 'clearance',
+        amount: reduced,
+        balanceAfter: dueDoc.balance,
+        note: trimmedNote ? `Manual due reduce: ${trimmedNote}` : 'Manual due reduce',
+        date: nowInDhaka(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        dueBalance: dueDoc.balance,
+        reduced,
+        entry,
       });
     }
 

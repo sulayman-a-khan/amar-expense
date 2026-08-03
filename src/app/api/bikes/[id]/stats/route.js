@@ -92,6 +92,21 @@ export async function GET(request, { params }) {
       .map((c) => ({ _id: c._id, date: c.date, reason: c.offDayReason }))
       .reverse();
 
+    // Manual due reductions (see /api/bikes 'manual_due_reduce') are
+    // DriverDueEntry rows not tied to any DailyCollection — surface them
+    // separately, newest first, so they can be shown as their own history
+    // list rather than mixed into the day-by-day earning table above.
+    const manualDueEntries = dueEntries
+      .filter((e) => e.type === 'clearance' && !e.dailyCollectionId)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .map((e) => ({
+        _id: e._id,
+        date: e.date,
+        amount: e.amount,
+        balanceAfter: e.balanceAfter,
+        note: e.note,
+      }));
+
     const expenseList = expenses
       .map((e) => ({
         _id: e._id,
@@ -114,6 +129,7 @@ export async function GET(request, { params }) {
       earningDetails,
       offDays,
       expenses: expenseList,
+      manualDueEntries,
     });
 
   } catch (error) {
