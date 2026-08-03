@@ -8,6 +8,14 @@
 // - Locked in as Off Day: a muted/red locked card with an Off Day badge,
 //   since it's a confirmed entry but with no income.
 function lockState(bike) {
+  // MONTHLY bikes use their own Paid/Pending/Overdue status instead of the
+  // daily collected/off-day lock states — see the monthlyStatus display
+  // branch below in the card body.
+  if (bike.rentMode === 'MONTHLY') {
+    if (bike.monthlyStatus?.status === 'Paid') return 'lockedIn';
+    if (bike.monthlyStatus?.status === 'Overdue') return 'lockedOff';
+    return 'pending';
+  }
   if (!bike.collectedToday) return 'pending';
   if (bike.collectedToday === 'Off Day') return 'lockedOff';
   return 'lockedIn';
@@ -103,7 +111,18 @@ export default function FleetCard({ bikes, onEditBike, onViewBike }) {
                   {bike.driver}
                 </p>
 
-                {isLocked ? (
+                {bike.rentMode === 'MONTHLY' ? (
+                  <p
+                    style={{ color: state === 'pending' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)' }}
+                    className="relative text-[10px] font-bold mt-1"
+                  >
+                    {bike.monthlyStatus?.status === 'Paid'
+                      ? `Paid ✓ ৳${bike.monthlyRentAmount}`
+                      : bike.monthlyStatus?.status === 'Overdue'
+                        ? 'Overdue'
+                        : `Due in ${bike.monthlyStatus?.daysRemaining ?? '?'}d`}
+                  </p>
+                ) : isLocked ? (
                   <p
                     style={{ color: 'rgba(255,255,255,0.75)' }}
                     className="relative text-[10px] font-bold mt-1"

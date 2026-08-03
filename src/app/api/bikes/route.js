@@ -16,7 +16,7 @@ export async function GET() {
 export async function PUT(request) {
   try {
     await connectToDatabase();
-    const { id, name, driver, dailyRent } = await request.json();
+    const { id, name, driver, dailyRent, rentMode, monthlyRentAmount } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: 'Bike id is required.' }, { status: 400 });
@@ -31,6 +31,19 @@ export async function PUT(request) {
         return NextResponse.json({ error: 'Daily rent must be a valid positive number.' }, { status: 400 });
       }
       updates.dailyRent = parsedRent;
+    }
+    if (rentMode !== undefined && rentMode !== '') {
+      if (!['DAILY', 'MONTHLY'].includes(rentMode)) {
+        return NextResponse.json({ error: 'rentMode must be DAILY or MONTHLY.' }, { status: 400 });
+      }
+      updates.rentMode = rentMode;
+    }
+    if (monthlyRentAmount !== undefined && monthlyRentAmount !== '') {
+      const parsedMonthly = Number(monthlyRentAmount);
+      if (Number.isNaN(parsedMonthly) || parsedMonthly < 0) {
+        return NextResponse.json({ error: 'Monthly rent must be a valid positive number.' }, { status: 400 });
+      }
+      updates.monthlyRentAmount = parsedMonthly;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -58,6 +71,14 @@ export async function POST(request) {
       const bike = await Bike.findById(bikeId);
       if (!bike) {
         return NextResponse.json({ error: 'Bike not found' }, { status: 404 });
+      }
+
+      // The DAILY collection flow is intentionally kept fully intact (see
+      // models.js comment on Bike.rentMode) — it's just not valid for a bike
+      // currently on the MONTHLY agreement. Switch the bike back to DAILY
+      // mode via Edit Bike to use this again.
+      if (bike.rentMode === 'MONTHLY') {
+        return NextResponse.json({ error: 'This bike is on the monthly rent system — use the monthly rent payment instead of a daily collection.' }, { status: 400 });
       }
 
       let expectedRent = bike.dailyRent;

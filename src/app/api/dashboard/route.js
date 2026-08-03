@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
-import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal, DriverDueEntry } from '@/models/models';
-import { startOfTodayDhaka, toNoonUTC } from '@/lib/dateUtils';
+import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal, DriverDueEntry, DailyPocketSnapshot } from '@/models/models';
+import { startOfTodayDhaka, toNoonUTC, todayDhakaDateString } from '@/lib/dateUtils';
 import { backfillMissedDays } from '@/lib/driverDue';
+import { getCurrentMonthStatus } from '@/lib/bikeMonthlyRent';
 
 const WALLET_NAMES = ['Pocket', 'Drawer'];
 
@@ -168,6 +169,45 @@ export async function GET(request) {
 
     const netProfit = totalIncome - totalExpense;
 
+    // "was ৳X" on the dashboard needs to be a FIXED opening balance for the
+    // day, not something recalculated live — otherwise anything that touches
+    // Pocket without being part of todayIncome/todayExpense (e.g. a wallet
+    // transfer) makes it silently drift as the day goes on. So: take a
+    // snapshot of Pocket's balance the first time the dashboard is loaded on
+    // a given Dhaka day, and reuse that exact number for the rest of the day
+    // no matter what else happens to the balance afterwards.
+    //
+    // Only ever snapshot when viewing the REAL current day (dateParam
+    // absent) — the current wallet balance is only meaningful as "today's
+    // opening balance" input on the day it's actually being viewed live. If
+    // someone views a past day that never got a snapshot (e.g. viewed before
+    // this feature existed), fall back to the old derived estimate for that
+    // read-only view rather than fabricating a snapshot from today's balance.
+    const isViewingRealToday = !dateParam;
+    const snapshotDateKey = dateParam || todayDhakaDateString();
+    let openingPocketBalance;
+
+    if (isViewingRealToday) {
+      let snapshot = await DailyPocketSnapshot.findOne({ dateKey: snapshotDateKey }).lean();
+      if (!snapshot) {
+        // First load of the day — this is the one moment the derived
+        // formula is guaranteed correct, since nothing has had a chance to
+        // drift yet. Freeze it.
+        const openingNow = (walletsObj.Pocket || 0) - netProfit;
+        try {
+          const created = await DailyPocketSnapshot.create({ dateKey: snapshotDateKey, openingBalance: openingNow });
+          snapshot = created.toObject();
+        } catch (err) {
+          // Race: another concurrent request created it first — just read it.
+          snapshot = await DailyPocketSnapshot.findOne({ dateKey: snapshotDateKey }).lean();
+        }
+      }
+      openingPocketBalance = snapshot.openingBalance;
+    } else {
+      const snapshot = await DailyPocketSnapshot.findOne({ dateKey: snapshotDateKey }).lean();
+      openingPocketBalance = snapshot ? snapshot.openingBalance : (walletsObj.Pocket || 0) - netProfit;
+    }
+
     // Module 4: Liability snapshot. "Owed to Me" combines two distinct
     // sources — bike rent shortfalls (DriverDue) and cash given as loans
     // (Loan, type Receivable) — shown together as one total but broken
@@ -297,7 +337,11 @@ export async function GET(request) {
     const missingParts = [];
 
     const collectedBikeIds = yesterdayCollections.map((c) => c.bikeId.toString());
-    const missingBikes = bikes.filter((b) => !collectedBikeIds.includes(b._id.toString()));
+    // MONTHLY bikes don't have a daily collection concept, so they should
+    // never show up in this "missing yesterday's rent" nudge — their own
+    // deadline/overdue tracking is surfaced separately via monthlyStatus.
+    const dailyModeBikes = bikes.filter((b) => b.rentMode !== 'MONTHLY');
+    const missingBikes = dailyModeBikes.filter((b) => !collectedBikeIds.includes(b._id.toString()));
     if (missingBikes.length > 0) {
       missingYesterday = true;
       const regularMissing = missingBikes.filter((b) => !b.isShajahanKaka).map((b) => b.name);
@@ -316,21 +360,34 @@ export async function GET(request) {
 
     return NextResponse.json({
       wallets: walletsObj,
-      summary: { netProfit, totalIncome, totalExpense, totalReceivable, totalPayable, bikeDueTotal, cashLoanReceivable },
+      summary: { netProfit, totalIncome, totalExpense, totalReceivable, totalPayable, bikeDueTotal, cashLoanReceivable, openingPocketBalance },
       receivableBreakdown: { bikeDues, cashLoans },
-      bikes: bikes.map((b) => {
+      bikes: await Promise.all(bikes.map(async (b) => {
         const todayColl = todayCollections.find((c) => c.bikeId?._id?.toString() === b._id.toString());
+
+        // MONTHLY bikes don't have a "today's collection" concept — instead
+        // surface their current month's rent status (Pending/Paid/Overdue)
+        // so the fleet card can show that instead of the daily lock state.
+        let monthlyStatus = null;
+        if (b.rentMode === 'MONTHLY') {
+          const { record, daysRemaining, isOverdue } = await getCurrentMonthStatus(b);
+          monthlyStatus = { status: record.status, daysRemaining, isOverdue, deadlineDate: record.deadlineDate };
+        }
+
         return {
           _id: b._id,
           name: b.name,
           driver: b.driverName,
           dailyRent: b.dailyRent,
           isShajahanKaka: b.isShajahanKaka,
+          rentMode: b.rentMode || 'DAILY',
+          monthlyRentAmount: b.monthlyRentAmount,
+          monthlyStatus,
           collectedToday: todayColl ? todayColl.shift : null,
           paidToday: todayColl ? todayColl.paidRent : null,
           expectedToday: todayColl ? todayColl.expectedRent : null,
         };
-      }),
+      })),
       activities: activities.slice(0, 12),
       missingYesterday,
       missingReason,

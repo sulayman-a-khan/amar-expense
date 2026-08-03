@@ -15,6 +15,10 @@ import { toNoonUTC, startOfTodayDhaka } from './dateUtils';
 // period expires.
 export async function backfillMissedDays(bike) {
   if (!bike) return;
+  // MONTHLY-mode bikes don't have a per-day rent concept at all — nothing
+  // to backfill. (Not expected to apply to Shajahan Kaka's bike, but this
+  // guard keeps the two rent systems cleanly independent regardless.)
+  if (bike.rentMode === 'MONTHLY') return;
 
   const todayStart = startOfTodayDhaka();
 

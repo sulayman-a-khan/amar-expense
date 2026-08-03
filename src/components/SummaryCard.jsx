@@ -2,10 +2,13 @@
 import { formatGlobalDate } from '@/lib/dateUtils';
 
 export default function SummaryCard({ summary, pocketBalance = 0, selectedDate, onDateChange }) {
-  const { totalIncome = 0, totalExpense = 0 } = summary;
+  const { totalIncome = 0, totalExpense = 0, openingPocketBalance } = summary;
 
   const todayNet = totalIncome - totalExpense;
-  const previousBalance = pocketBalance - todayNet;
+  // Fixed for the whole day — snapshotted server-side the first time the
+  // dashboard loads each day, so it doesn't drift if something later touches
+  // Pocket outside of today's income/expense totals (e.g. a wallet transfer).
+  const previousBalance = typeof openingPocketBalance === 'number' ? openingPocketBalance : pocketBalance - todayNet;
   const isPositiveNet = todayNet >= 0;
 
   return (

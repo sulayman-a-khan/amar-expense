@@ -21,6 +21,15 @@ const BikeSchema = new mongoose.Schema({
   driverName: { type: String, required: true },
   dailyRent: { type: Number, required: true },
   isShajahanKaka: { type: Boolean, default: false },
+  // Rental agreement mode. 'DAILY' (default) is the original per-day rent
+  // system (dailyRent, DailyCollection, DriverDue/DriverDueEntry — all
+  // preserved and untouched below). 'MONTHLY' switches a bike to a fixed
+  // once-a-month rent instead (see BikeMonthlyRentRecord / BikeRentPayment).
+  // A bike is one or the other at a time, but can be switched back and
+  // forth freely — nothing about the DAILY system is deleted when a bike
+  // moves to MONTHLY, it's simply not used for that bike while inactive.
+  rentMode: { type: String, enum: ['DAILY', 'MONTHLY'], default: 'DAILY' },
+  monthlyRentAmount: { type: Number, default: 9000 }, // used only when rentMode === 'MONTHLY'
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -179,6 +188,55 @@ const RentWithdrawalSchema = new mongoose.Schema({
 });
 RentWithdrawalSchema.index({ monthlyRentRecordId: 1, createdAt: -1 });
 RentWithdrawalSchema.index({ date: 1 });
+// --- BIKE MONTHLY RENT (for bikes with rentMode === 'MONTHLY') ---
+// Deliberately a SEPARATE system from DailyCollection/DriverDue — nothing
+// here touches or migrates the daily-rent tables, so a bike's old daily
+// history stays intact if it's ever switched back to DAILY mode.
+//
+// One document per bike per calendar month. Payable only between the 1st
+// and 12th of that month; if still unpaid after the 12th it's "Overdue".
+// year/month are the CALENDAR month here (unlike Shop Rent's custom 10th-
+// to-10th cycle) since that's what "once per month, due by the 12th" means
+// in the plain everyday sense the driver agreement describes.
+const BikeMonthlyRentRecordSchema = new mongoose.Schema({
+  bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', required: true },
+  year: { type: Number, required: true },
+  month: { type: Number, required: true }, // 1-12
+  rentAmount: { type: Number, required: true }, // snapshot of bike.monthlyRentAmount at time of month creation
+  deadlineDate: { type: Date, required: true }, // the 12th of (year, month), noon UTC
+  totalReceived: { type: Number, required: true, default: 0 },
+  status: { type: String, enum: ['Pending', 'Paid', 'Overdue'], required: true, default: 'Pending' },
+  paidAt: { type: Date, default: null },
+  createdAt: { type: Date, default: Date.now },
+});
+BikeMonthlyRentRecordSchema.index({ bikeId: 1, year: 1, month: 1 }, { unique: true });
+
+// Individual payment events within a month — visible payment history.
+const BikeRentPaymentSchema = new mongoose.Schema({
+  bikeMonthlyRentRecordId: { type: mongoose.Schema.Types.ObjectId, ref: 'BikeMonthlyRentRecord', required: true },
+  bikeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bike', required: true },
+  amount: { type: Number, required: true },
+  note: { type: String, default: '' },
+  wallet: { type: String, enum: ['Pocket', 'Drawer'], default: 'Pocket' },
+  date: { type: Date, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+BikeRentPaymentSchema.index({ bikeMonthlyRentRecordId: 1, createdAt: -1 });
+BikeRentPaymentSchema.index({ bikeId: 1, date: 1 });
+
+
+// --- DAILY POCKET SNAPSHOT (fixed "was" balance) ---
+// The dashboard's "was ৳X" figure is a FIXED opening balance for the day,
+// snapshotted the first time the dashboard loads each Dhaka calendar day and
+// reused for the rest of that day — not recalculated live — so it doesn't
+// drift if something later touches Pocket outside of that day's tracked
+// income/expense (e.g. a wallet transfer).
+const DailyPocketSnapshotSchema = new mongoose.Schema({
+  dateKey: { type: String, required: true, unique: true }, // "YYYY-MM-DD" in Dhaka time
+  openingBalance: { type: Number, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
 export const Wallet = mongoose.models.Wallet || mongoose.model('Wallet', WalletSchema);
 export const Bike = mongoose.models.Bike || mongoose.model('Bike', BikeSchema);
 export const DailyCollection = mongoose.models.DailyCollection || mongoose.model('DailyCollection', DailyCollectionSchema);
@@ -192,3 +250,6 @@ export const DriverDueEntry = mongoose.models.DriverDueEntry || mongoose.model('
 export const RentSource = mongoose.models.RentSource || mongoose.model('RentSource', RentSourceSchema);
 export const MonthlyRentRecord = mongoose.models.MonthlyRentRecord || mongoose.model('MonthlyRentRecord', MonthlyRentRecordSchema);
 export const RentWithdrawal = mongoose.models.RentWithdrawal || mongoose.model('RentWithdrawal', RentWithdrawalSchema);
+export const BikeMonthlyRentRecord = mongoose.models.BikeMonthlyRentRecord || mongoose.model('BikeMonthlyRentRecord', BikeMonthlyRentRecordSchema);
+export const BikeRentPayment = mongoose.models.BikeRentPayment || mongoose.model('BikeRentPayment', BikeRentPaymentSchema);
+export const DailyPocketSnapshot = mongoose.models.DailyPocketSnapshot || mongoose.model('DailyPocketSnapshot', DailyPocketSnapshotSchema);

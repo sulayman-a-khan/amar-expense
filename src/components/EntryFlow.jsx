@@ -37,7 +37,14 @@ export default function EntryFlow({ bikes = [], selectedDate, onSaved }) {
       const res = await fetch('/api/bikes');
       const data = await res.json();
       if (res.ok) {
-        setBikeList(data.bikes?.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent, isShajahanKaka: b.isShajahanKaka })) || []);
+        // The quick "Bike Rent" entry sheet is DAILY-only — MONTHLY bikes
+        // use the dedicated monthly rent payment flow inside their own
+        // details card instead, so they're excluded here.
+        setBikeList(
+          data.bikes
+            ?.filter((b) => (b.rentMode || 'DAILY') === 'DAILY')
+            .map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent, isShajahanKaka: b.isShajahanKaka })) || []
+        );
       } else {
         setErrorBanner(data.error || 'Could not load your bikes.');
       }

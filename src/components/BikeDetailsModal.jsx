@@ -19,6 +19,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
   const [period, setPeriod] = useState('month');
   const [showKakaAmountInput, setShowKakaAmountInput] = useState(false);
   const [kakaAmount, setKakaAmount] = useState('');
+  const [monthlyData, setMonthlyData] = useState(null);
 
   const todayStr = activeDate || todayDhakaDateString();
   const todayColl = earningDetails?.find(
@@ -90,6 +91,32 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
     setKakaAmount('');
     setSubmitError('');
 
+    // MONTHLY bikes use a completely separate data source (see
+    // /api/bike-monthly-rent) — the DAILY stats endpoint below is left
+    // fully intact for when a bike is on/returns to the DAILY agreement.
+    if (bike.rentMode === 'MONTHLY') {
+      const fetchMonthly = async () => {
+        setLoading(true);
+        setLoadError('');
+        try {
+          const res = await fetch(`/api/bike-monthly-rent?bikeId=${bike._id}`);
+          const data = await res.json();
+          if (!isMounted) return;
+          if (res.ok) {
+            setMonthlyData(data);
+          } else {
+            setLoadError(data.error || 'Failed to load monthly rent status.');
+          }
+        } catch {
+          if (isMounted) setLoadError('Could not reach the server. Check your internet connection.');
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      };
+      fetchMonthly();
+      return () => { isMounted = false; };
+    }
+
     const fetchStats = async () => {
       setLoading(true);
       setLoadError('');
@@ -118,6 +145,8 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
 
   if (!bike) return null;
 
+  const isMonthly = bike.rentMode === 'MONTHLY';
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-[#F7F3EA] w-full max-w-md rounded-[32px] overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-slide-up">
@@ -131,19 +160,25 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
               </h2>
               <p className="text-sm font-bold text-[#6B5F4F] truncate">{bike.driver}</p>
             </div>
-            <div className="relative shrink-0">
-              <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                className="appearance-none pl-3 pr-7 py-1.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-[#2B2620] text-white border border-[#2B2620] focus:outline-none cursor-pointer"
-              >
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
-                <option value="alltime">All Time</option>
-              </select>
-              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white text-[8px]">▼</span>
-            </div>
+            {/* Week/Month/Year/All Time period selector is a DAILY-system
+                concept (it drives the earning-history stats query below) —
+                hidden for MONTHLY bikes since there's nothing to page
+                through there beyond the current + past months already shown. */}
+            {!isMonthly && (
+              <div className="relative shrink-0">
+                <select
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  className="appearance-none pl-3 pr-7 py-1.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-[#2B2620] text-white border border-[#2B2620] focus:outline-none cursor-pointer"
+                >
+                  <option value="week">Week</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                  <option value="alltime">All Time</option>
+                </select>
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white text-[8px]">▼</span>
+              </div>
+            )}
           </div>
           <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold shrink-0">
             ✕
@@ -156,6 +191,18 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
             <div className="py-10 text-center text-sm font-bold text-[#7D7156] animate-pulse">Loading data...</div>
           ) : loadError ? (
             <div className="py-10 text-center text-sm font-bold text-[#B33B2E]">{loadError}</div>
+          ) : isMonthly ? (
+            // --- MONTHLY rent UI ---
+            // Everything below this branch (down to the matching `) : stats ? (`
+            // for the DAILY branch) is the entire ORIGINAL daily-rent UI,
+            // preserved untouched and simply not rendered while this bike is
+            // in MONTHLY mode. Switch the bike back to DAILY in Edit Bike to
+            // see it again — nothing needs to be rebuilt.
+            <MonthlyRentPanel
+              bike={bike}
+              data={monthlyData}
+              onPaid={() => setRefreshKey((k) => k + 1)}
+            />
           ) : stats ? (
             <>
               {/* Today's Collection (At the top of the card) */}
@@ -419,6 +466,166 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
         </div>
       )}
     </div>
+  );
+}
+
+function MonthlyRentPanel({ bike, data, onPaid }) {
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+
+  if (!data) return <div className="py-10 text-center text-sm font-bold text-[#7D7156]">Failed to load data</div>;
+
+  const { currentMonth, history, payments } = data;
+  const isPaid = currentMonth.status === 'Paid';
+  const isOverdue = currentMonth.status === 'Overdue';
+
+  const handlePay = async () => {
+    const parsed = Number(amount);
+    if (amount === '' || Number.isNaN(parsed) || parsed <= 0) {
+      setError('Enter a valid amount.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/bike-monthly-rent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'payment', bikeId: bike._id, amount: parsed, note }),
+      });
+      const resData = await res.json();
+      if (!res.ok || resData.error) {
+        setError(resData.error || 'Failed to save payment.');
+      } else {
+        setAmount('');
+        setNote('');
+        setShowForm(false);
+        onPaid();
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const statusStyle = isPaid
+    ? { bg: 'bg-[#E6F0E5]', text: 'text-[#1F7A4D]', border: 'border-[#C5DCC2]', label: 'Paid' }
+    : isOverdue
+      ? { bg: 'bg-[#F7E9E5]', text: 'text-[#B33B2E]', border: 'border-[#E3C2B8]', label: 'Overdue' }
+      : { bg: 'bg-[#FFF9E6]', text: 'text-[#B27B00]', border: 'border-[#FCE8B2]', label: 'Pending' };
+
+  return (
+    <>
+      {/* Current month status card */}
+      <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider">
+            {new Date(Date.UTC(currentMonth.year, currentMonth.month - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
+          </span>
+          <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+            {statusStyle.label}
+          </span>
+        </div>
+
+        <div className="flex items-baseline justify-between">
+          <span className="text-2xl font-black text-[#2B2620]">৳{bike.monthlyRentAmount?.toLocaleString('en-IN')}</span>
+          <span className="text-[10px] font-bold text-[#7D7156]">Due by the 12th</span>
+        </div>
+
+        {!isPaid && (
+          <p className={`text-[11px] font-bold ${isOverdue ? 'text-[#B33B2E]' : 'text-[#6B5F4F]'}`}>
+            {isOverdue ? 'Payment is overdue.' : `${currentMonth.daysRemaining} day${currentMonth.daysRemaining === 1 ? '' : 's'} remaining to pay.`}
+          </p>
+        )}
+
+        {isPaid ? (
+          <div className="text-[11px] font-bold text-[#1F7A4D]">
+            ✓ Paid ৳{currentMonth.totalReceived?.toLocaleString('en-IN')} this month
+          </div>
+        ) : showForm ? (
+          <div className="space-y-2">
+            {error && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{error}</p>}
+            <input
+              type="number"
+              min="0"
+              autoFocus
+              placeholder={`e.g. ${bike.monthlyRentAmount}`}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+            />
+            <input
+              type="text"
+              placeholder="Note (optional)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+            />
+            <div className="grid grid-cols-2 gap-1.5">
+              <button disabled={submitting} onClick={() => { setShowForm(false); setError(''); }}
+                className="py-2.5 text-[11px] font-bold bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2] rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                Cancel
+              </button>
+              <button disabled={submitting} onClick={handlePay}
+                className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
+                {submitting ? '...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-full py-2.5 bg-[#2B2620] text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-transform"
+          >
+            Record Payment
+          </button>
+        )}
+      </div>
+
+      {/* Payment history */}
+      <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
+        <div className="grid grid-cols-2 px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
+          <span>Date</span>
+          <span className="text-right">Amount</span>
+        </div>
+        <div className="divide-y divide-[#E3D9C2] max-h-52 overflow-y-auto">
+          {!payments || payments.length === 0 ? (
+            <p className="text-center text-xs text-[#7D7156] py-6">No payments recorded yet.</p>
+          ) : payments.map((p) => (
+            <div key={p._id} className="grid grid-cols-2 px-4 py-3 text-xs items-center">
+              <span className="text-[#2B2620] font-semibold">{formatGlobalDate(p.date)}</span>
+              <span className="text-right font-bold text-[#1F7A4D]">৳{p.amount.toLocaleString('en-IN')}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Month-by-month history */}
+      <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
+        <div className="grid grid-cols-2 px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
+          <span>Month</span>
+          <span className="text-right">Status</span>
+        </div>
+        <div className="divide-y divide-[#E3D9C2] max-h-52 overflow-y-auto">
+          {!history || history.length === 0 ? (
+            <p className="text-center text-xs text-[#7D7156] py-6">No history yet.</p>
+          ) : history.map((r) => (
+            <div key={r._id} className="grid grid-cols-2 px-4 py-3 text-xs items-center">
+              <span className="text-[#2B2620] font-semibold">
+                {new Date(Date.UTC(r.year, r.month - 1, 1)).toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}
+              </span>
+              <span className={`text-right font-bold ${r.status === 'Paid' ? 'text-[#1F7A4D]' : r.status === 'Overdue' ? 'text-[#B33B2E]' : 'text-[#B27B00]'}`}>
+                {r.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
