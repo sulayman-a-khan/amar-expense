@@ -165,14 +165,45 @@ export default function Dashboard() {
           selectedDate={selectedDate} 
           onDateChange={(e) => setSelectedDate(e.target.value)} 
         />
-        <ShajahanKakaCard
-          bike={bikes.find((b) => b.isShajahanKaka)}
-          due={receivableBreakdown.bikeDues.find((d) => d.isShajahanKaka)}
-          onView={(bike) => setViewingBike(bike)}
-          onSaved={fetchDashboardData}
-        />
-        <ShopRentCard />
-        <FleetCard bikes={bikes.filter((b) => !b.isShajahanKaka)} onEditBike={(bike) => setEditingBike(bike)} onViewBike={(bike) => setViewingBike(bike)} />
+        {/* Monthly Income — Shop Rent + monthly-mode bikes (e.g. Bike 1, Bike 3) */}
+        <section className="space-y-2.5 border-t border-[#E3D9C2] pt-4">
+          <span
+            style={{ background: 'rgba(138,109,34,0.15)', color: '#8A6D22' }}
+            className="inline-block text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ml-1"
+          >
+            📅 Monthly Income
+          </span>
+          <ShopRentCard />
+          <FleetCard
+            title="Monthly Bikes"
+            bikes={bikes.filter((b) => !b.isShajahanKaka && (b.rentMode || 'DAILY') === 'MONTHLY')}
+            onEditBike={(bike) => setEditingBike(bike)}
+            onViewBike={(bike) => setViewingBike(bike)}
+          />
+        </section>
+
+        {/* Daily Income — Shajahan Kaka + daily-mode bikes (e.g. Bike 2) */}
+        <section className="space-y-2.5 border-t border-[#E3D9C2] pt-4">
+          <span
+            style={{ background: 'rgba(52,199,89,0.15)', color: '#1F7A4D' }}
+            className="inline-block text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ml-1"
+          >
+            ☀️ Daily Income
+          </span>
+          <ShajahanKakaCard
+            bike={bikes.find((b) => b.isShajahanKaka)}
+            due={receivableBreakdown.bikeDues.find((d) => d.isShajahanKaka)}
+            onView={(bike) => setViewingBike(bike)}
+            onSaved={fetchDashboardData}
+          />
+          <FleetCard
+            title="Daily Bikes"
+            bikes={bikes.filter((b) => !b.isShajahanKaka && (b.rentMode || 'DAILY') === 'DAILY')}
+            onEditBike={(bike) => setEditingBike(bike)}
+            onViewBike={(bike) => setViewingBike(bike)}
+          />
+        </section>
+
         <TodayLedgerCard activities={activities} selectedDate={selectedDate} onActivityDeleted={fetchDashboardData} />
       </main>
 

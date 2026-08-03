@@ -36,21 +36,24 @@ const CARD_STYLES = {
   },
 };
 
-export default function FleetCard({ bikes, onEditBike, onViewBike }) {
+export default function FleetCard({ bikes, onEditBike, onViewBike, title = 'Active Fleet' }) {
   if (!bikes || bikes.length === 0) return null;
 
   return (
     <section className="space-y-2.5">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-[11px] font-bold text-[#6B5F4F] tracking-widest uppercase">
-          Active Fleet
+          {title}
         </h3>
         <span className="text-[10px] font-semibold text-[#7D7156]">
           {bikes.length} bike{bikes.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div
+        className="grid gap-2.5"
+        style={{ gridTemplateColumns: `repeat(${Math.min(bikes.length, 3)}, minmax(0, 1fr))` }}
+      >
         {bikes.map((bike) => {
           const state = lockState(bike);
           const isLocked = state !== 'pending';
@@ -60,7 +63,7 @@ export default function FleetCard({ bikes, onEditBike, onViewBike }) {
               <button
                 onClick={() => onViewBike(bike)}
                 style={CARD_STYLES[state]}
-                className="w-full rounded-2xl py-3.5 px-2.5 text-center active:scale-[0.97] transition-transform"
+                className="w-full h-[104px] rounded-2xl py-3.5 px-2.5 text-center active:scale-[0.97] transition-transform flex flex-col items-center justify-center"
               >
                 {/* Decorative glow, echoes SummaryCard */}
                 <div
@@ -89,7 +92,7 @@ export default function FleetCard({ bikes, onEditBike, onViewBike }) {
                   </div>
                 )}
 
-                <div className="relative flex items-center justify-center gap-1 mb-1.5">
+                <div className="relative w-full flex items-center justify-center gap-1 mb-1.5">
                   <span
                     style={{
                       background: state === 'pending' ? '#5de88a' : '#ffffff',
@@ -107,7 +110,7 @@ export default function FleetCard({ bikes, onEditBike, onViewBike }) {
                   </span>
                 </div>
 
-                <p className="relative text-[12px] font-extrabold text-white leading-tight truncate">
+                <p className="relative w-full text-[12px] font-extrabold text-white leading-tight truncate">
                   {bike.driver}
                 </p>
 
