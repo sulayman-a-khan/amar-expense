@@ -209,6 +209,17 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
         {/* Header */}
         <div className="bg-[#FFFDF8] px-6 py-5 border-b border-[#E3D9C2] shrink-0 flex justify-between items-center relative z-10">
           <div className="flex items-center gap-2.5 min-w-0">
+            {bike.driverImage ? (
+              <img
+                src={bike.driverImage}
+                alt={bike.driver}
+                className="w-11 h-11 rounded-full object-cover border border-[#E3D9C2] shrink-0"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-full bg-[#F7F3EA] border border-[#E3D9C2] shrink-0 flex items-center justify-center text-[#6B5F4F] font-black text-sm">
+                {(bike.driver || '?').charAt(0)}
+              </div>
+            )}
             <div className="min-w-0">
               <h2 className="text-xl font-black text-[#2B2620] truncate">
                 {bike.isShajahanKaka ? bike.name : `Bike ${bike.name}`}

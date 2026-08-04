@@ -63,7 +63,9 @@ export default function FleetCard({ bikes, onEditBike, onViewBike, title = 'Acti
               <button
                 onClick={() => onViewBike(bike)}
                 style={CARD_STYLES[state]}
-                className="w-full h-[104px] rounded-2xl py-3.5 px-2.5 text-center active:scale-[0.97] transition-transform flex flex-col items-center justify-center"
+                className={`w-full h-[104px] rounded-2xl py-3 px-2.5 active:scale-[0.97] transition-transform flex ${
+                  bike.driverImage ? 'flex-row items-center justify-center text-left gap-2' : 'flex-col items-center justify-center text-center'
+                }`}
               >
                 {/* Decorative glow, echoes SummaryCard */}
                 <div
@@ -92,58 +94,78 @@ export default function FleetCard({ bikes, onEditBike, onViewBike, title = 'Acti
                   </div>
                 )}
 
-                <div className="relative w-full flex items-center justify-center gap-1 mb-1.5">
-                  <span
-                    style={{
-                      background: state === 'pending' ? '#5de88a' : '#ffffff',
-                      boxShadow: state === 'pending'
-                        ? '0 0 0 2px rgba(93,232,138,0.25)'
-                        : '0 0 0 2px rgba(255,255,255,0.25)',
-                    }}
-                    className="w-1.5 h-1.5 rounded-full"
+                {bike.driverImage ? (
+                  <img
+                    src={bike.driverImage}
+                    alt={bike.driver}
+                    className="relative w-11 h-11 rounded-full object-cover shrink-0"
+                    style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.3)' }}
                   />
-                  <span
-                    style={{ color: 'rgba(255,255,255,0.7)', letterSpacing: '0.1em' }}
-                    className="text-[9px] font-bold uppercase"
-                  >
-                    Bike {bike.name}
-                  </span>
-                </div>
-
-                <p className="relative w-full text-[12px] font-extrabold text-white leading-tight truncate">
-                  {bike.driver}
-                </p>
-
-                {bike.rentMode === 'MONTHLY' ? (
-                  <p
-                    style={{ color: state === 'pending' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)' }}
-                    className="relative text-[10px] font-bold mt-1"
-                  >
-                    {bike.monthlyStatus?.status === 'Paid'
-                      ? `Paid ✓ ৳${bike.monthlyRentAmount}`
-                      : bike.monthlyStatus?.status === 'Overdue'
-                        ? 'Overdue'
-                        : `Due in ${bike.monthlyStatus?.daysRemaining ?? '?'}d`}
-                  </p>
-                ) : isLocked ? (
-                  <p
-                    style={{ color: 'rgba(255,255,255,0.75)' }}
-                    className="relative text-[10px] font-bold mt-1"
-                  >
-                    {state === 'lockedOff'
-                      ? 'Off Day'
-                      : bike.collectedToday === 'Half Day' && bike.expectedToday != null
-                        ? `Half Day ${bike.expectedToday} · ৳${bike.paidToday}`
-                        : `${bike.collectedToday} · ৳${bike.paidToday}`}
-                  </p>
                 ) : (
-                  <p
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
-                    className="relative text-[10px] font-semibold mt-1"
-                  >
-                    ৳{bike.dailyRent}<span style={{ color: 'rgba(255,255,255,0.28)' }}>/day</span>
-                  </p>
+                  <div className="relative w-full flex items-center justify-center gap-1 mb-1.5">
+                    <span
+                      style={{
+                        background: state === 'pending' ? '#5de88a' : '#ffffff',
+                        boxShadow: state === 'pending'
+                          ? '0 0 0 2px rgba(93,232,138,0.25)'
+                          : '0 0 0 2px rgba(255,255,255,0.25)',
+                      }}
+                      className="w-1.5 h-1.5 rounded-full"
+                    />
+                    <span
+                      style={{ color: 'rgba(255,255,255,0.7)', letterSpacing: '0.1em' }}
+                      className="text-[9px] font-bold uppercase"
+                    >
+                      Bike {bike.name}
+                    </span>
+                  </div>
                 )}
+
+                <div className={bike.driverImage ? 'relative min-w-0' : 'contents'}>
+                  {bike.driverImage && (
+                    <p
+                      style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}
+                      className="text-[8px] font-bold uppercase mb-0.5"
+                    >
+                      Bike {bike.name}
+                    </p>
+                  )}
+
+                  <p className="relative w-full text-[12px] font-extrabold text-white leading-tight truncate">
+                    {bike.driver}
+                  </p>
+
+                  {bike.rentMode === 'MONTHLY' ? (
+                    <p
+                      style={{ color: state === 'pending' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)' }}
+                      className="relative text-[10px] font-bold mt-1"
+                    >
+                      {bike.monthlyStatus?.status === 'Paid'
+                        ? `Paid ✓ ৳${bike.monthlyRentAmount}`
+                        : bike.monthlyStatus?.status === 'Overdue'
+                          ? 'Overdue'
+                          : `Due in ${bike.monthlyStatus?.daysRemaining ?? '?'}d`}
+                    </p>
+                  ) : isLocked ? (
+                    <p
+                      style={{ color: 'rgba(255,255,255,0.75)' }}
+                      className="relative text-[10px] font-bold mt-1"
+                    >
+                      {state === 'lockedOff'
+                        ? 'Off Day'
+                        : bike.collectedToday === 'Half Day' && bike.expectedToday != null
+                          ? `Half Day ${bike.expectedToday} · ৳${bike.paidToday}`
+                          : `${bike.collectedToday} · ৳${bike.paidToday}`}
+                    </p>
+                  ) : (
+                    <p
+                      style={{ color: 'rgba(255,255,255,0.4)' }}
+                      className="relative text-[10px] font-semibold mt-1"
+                    >
+                      ৳{bike.dailyRent}<span style={{ color: 'rgba(255,255,255,0.28)' }}>/day</span>
+                    </p>
+                  )}
+                </div>
               </button>
 
               <button

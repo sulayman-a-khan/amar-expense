@@ -16,7 +16,7 @@ export async function GET() {
 export async function PUT(request) {
   try {
     await connectToDatabase();
-    const { id, name, driver, dailyRent, rentMode, monthlyRentAmount } = await request.json();
+    const { id, name, driver, dailyRent, rentMode, monthlyRentAmount, driverImage } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: 'Bike id is required.' }, { status: 400 });
@@ -44,6 +44,10 @@ export async function PUT(request) {
         return NextResponse.json({ error: 'Monthly rent must be a valid positive number.' }, { status: 400 });
       }
       updates.monthlyRentAmount = parsedMonthly;
+    }
+    if (driverImage !== undefined) {
+      // Allow clearing the image (empty string) as well as setting it.
+      updates.driverImage = driverImage;
     }
 
     if (Object.keys(updates).length === 0) {

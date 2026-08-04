@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ImageUploader from './ImageUploader';
 
 export default function EditBikeModal({ bike, onClose, onSaved }) {
   const [name, setName] = useState('');
@@ -8,6 +9,7 @@ export default function EditBikeModal({ bike, onClose, onSaved }) {
   const [dailyRent, setDailyRent] = useState('');
   const [rentMode, setRentMode] = useState('DAILY');
   const [monthlyRentAmount, setMonthlyRentAmount] = useState('');
+  const [driverImage, setDriverImage] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,6 +20,7 @@ export default function EditBikeModal({ bike, onClose, onSaved }) {
       setDailyRent(bike.dailyRent ?? '');
       setRentMode(bike.rentMode || 'DAILY');
       setMonthlyRentAmount(bike.monthlyRentAmount ?? 9000);
+      setDriverImage(bike.driverImage || '');
       setError('');
     }
   }, [bike]);
@@ -50,6 +53,7 @@ export default function EditBikeModal({ bike, onClose, onSaved }) {
           dailyRent,
           rentMode,
           monthlyRentAmount,
+          driverImage,
         }),
       });
       const data = await res.json();
@@ -87,6 +91,15 @@ export default function EditBikeModal({ bike, onClose, onSaved }) {
               className="w-full border border-[#E3D9C2] bg-[#F7F3EA] text-[#2B2620] rounded-xl px-4 py-3 text-sm focus:outline-none"
             />
           </div>
+
+          <ImageUploader
+            value={driverImage}
+            onChange={setDriverImage}
+            label="Driver Photo (optional)"
+            placeholder="📷 Tap to add driver's photo"
+            folder="drivers"
+            imageClassName="w-full h-32 object-cover rounded-xl border border-[#E3D9C2]"
+          />
 
           {/* Rental agreement mode toggle — switching this is how you move a
               bike between the DAILY and MONTHLY rent systems. Nothing about

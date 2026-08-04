@@ -378,6 +378,7 @@ export async function GET(request) {
           _id: b._id,
           name: b.name,
           driver: b.driverName,
+          driverImage: b.driverImage || '',
           dailyRent: b.dailyRent,
           isShajahanKaka: b.isShajahanKaka,
           rentMode: b.rentMode || 'DAILY',

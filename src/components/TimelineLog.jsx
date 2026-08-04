@@ -9,6 +9,8 @@ export default function TimelineLog({ activities, selectedDate, onActivityDelete
   const [deletingId, setDeletingId] = useState(null);
   const [holdingId, setHoldingId] = useState(null);
   const holdTimer = useRef(null);
+  const touchStart = useRef({ x: 0, y: 0 });
+  const MOVE_CANCEL_THRESHOLD = 10; // px of finger movement that cancels a hold (treated as a scroll)
 
   // Every activity here already belongs to the same selected date (the
   // backend filters by it) — show that date once per entry instead of
@@ -51,6 +53,25 @@ export default function TimelineLog({ activities, selectedDate, onActivityDelete
     }, HOLD_DURATION);
   };
 
+  const startTouchHold = (e, act, canDelete) => {
+    const touch = e.touches?.[0];
+    touchStart.current = { x: touch?.clientX ?? 0, y: touch?.clientY ?? 0 };
+    startHold(act, canDelete);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!holdTimer.current) return;
+    const touch = e.touches?.[0];
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - touchStart.current.x);
+    const dy = Math.abs(touch.clientY - touchStart.current.y);
+    // Finger has moved enough that this is a scroll, not a hold — cancel
+    // the delete timer so scrolling through the ledger never triggers it.
+    if (dx > MOVE_CANCEL_THRESHOLD || dy > MOVE_CANCEL_THRESHOLD) {
+      clearHold();
+    }
+  };
+
   return (
     <section className="space-y-2.5">
       <h3 className="text-[11px] font-bold text-[#6B5F4F] tracking-widest uppercase px-1">
@@ -68,7 +89,8 @@ export default function TimelineLog({ activities, selectedDate, onActivityDelete
               onMouseDown={() => startHold(act, canEditDelete)}
               onMouseUp={clearHold}
               onMouseLeave={clearHold}
-              onTouchStart={() => startHold(act, canEditDelete)}
+              onTouchStart={(e) => startTouchHold(e, act, canEditDelete)}
+              onTouchMove={handleTouchMove}
               onTouchEnd={clearHold}
               onTouchCancel={clearHold}
               onContextMenu={(e) => { if (canEditDelete) e.preventDefault(); }}

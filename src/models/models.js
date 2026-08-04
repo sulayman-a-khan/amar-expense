@@ -30,6 +30,7 @@ const BikeSchema = new mongoose.Schema({
   // moves to MONTHLY, it's simply not used for that bike while inactive.
   rentMode: { type: String, enum: ['DAILY', 'MONTHLY'], default: 'DAILY' },
   monthlyRentAmount: { type: Number, default: 9000 }, // used only when rentMode === 'MONTHLY'
+  driverImage: { type: String, default: '' }, // Cloudinary URL of the driver's photo
   createdAt: { type: Date, default: Date.now },
 });
 

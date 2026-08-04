@@ -194,6 +194,7 @@ export default function Dashboard() {
             bike={bikes.find((b) => b.isShajahanKaka)}
             due={receivableBreakdown.bikeDues.find((d) => d.isShajahanKaka)}
             onView={(bike) => setViewingBike(bike)}
+            onEditBike={(bike) => setEditingBike(bike)}
             onSaved={fetchDashboardData}
           />
           <FleetCard

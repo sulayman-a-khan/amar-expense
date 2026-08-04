@@ -37,34 +37,78 @@ export default function ShopRentCard() {
   return (
     <button
       onClick={() => router.push('/shop-rent')}
-      className="w-full bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform text-left relative"
+      style={{
+        background: 'linear-gradient(150deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.28) 100%)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.6)',
+        boxShadow: '0 8px 24px rgba(46,92,138,0.10), inset 0 1px 0 rgba(255,255,255,0.7)',
+      }}
+      className="relative w-full overflow-hidden rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left"
     >
-      {daysLeft !== null && (
-        <span
-          className={`absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${
-            daysLeft <= 1
-              ? 'bg-[#F7E9E5] text-[#B33B2E]'
-              : daysLeft <= 3
-              ? 'bg-[#FBF0DD] text-[#8A5A1F]'
-              : 'bg-[#E6F0E5] text-[#1F7A4D]'
-          }`}
+      {/* Soft color wash behind the glass */}
+      <div
+        style={{
+          background: 'radial-gradient(circle, rgba(143,194,232,0.28) 0%, transparent 70%)',
+          width: 140, height: 140, top: -50, right: -40,
+        }}
+        className="absolute rounded-full pointer-events-none"
+      />
+
+      <div className="relative flex items-center gap-3 min-w-0">
+        {/* Icon badge */}
+        <div
+          style={{
+            background: 'linear-gradient(150deg, #A9CDEB 0%, #6E9EC4 100%)',
+            boxShadow: '0 4px 10px rgba(110,158,196,0.35)',
+          }}
+          className="w-11 h-11 rounded-full flex items-center justify-center text-base shrink-0"
         >
-          {daysLeft === 0 ? 'Due today' : daysLeft === 1 ? '1 day left' : `${daysLeft} days left`}
-        </span>
-      )}
-      <div>
-        <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block">Shop Rent — This Month</span>
-        {record ? (
-          <span className={`text-sm font-extrabold mt-0.5 block ${STATUS_STYLE[record.status] || 'text-[#2B2620]'}`}>
-            {record.remainingBalance > 0 && `৳${record.remainingBalance.toLocaleString('en-IN')} due`}
-            {record.remainingBalance < 0 && `৳${Math.abs(record.remainingBalance).toLocaleString('en-IN')} advance`}
-            {record.remainingBalance === 0 && 'Fully collected ✓'}
+          🏬
+        </div>
+
+        <div className="min-w-0">
+          <span
+            style={{ color: '#5E7488', letterSpacing: '0.12em' }}
+            className="text-[9px] font-bold uppercase block"
+          >
+            Shop Rent — This Month
           </span>
-        ) : (
-          <span className="text-sm font-extrabold text-[#7D7156] mt-0.5 block">Not started yet</span>
-        )}
+          {record ? (
+            <span className={`text-sm font-extrabold mt-0.5 block truncate ${STATUS_STYLE[record.status] || 'text-[#2B2620]'}`}>
+              {record.remainingBalance > 0 && `৳${record.remainingBalance.toLocaleString('en-IN')} due`}
+              {record.remainingBalance < 0 && `৳${Math.abs(record.remainingBalance).toLocaleString('en-IN')} advance`}
+              {record.remainingBalance === 0 && 'Fully collected ✓'}
+            </span>
+          ) : (
+            <span className="text-sm font-extrabold text-[#7D7156] mt-0.5 block">Not started yet</span>
+          )}
+        </div>
       </div>
-      <span className="text-[#7D7156]">→</span>
+
+      <div className="relative flex items-center gap-2 shrink-0">
+        {daysLeft !== null && (
+          <span
+            style={{
+              background: 'rgba(255,255,255,0.5)',
+              color:
+                daysLeft <= 1 ? '#B33B2E' : daysLeft <= 3 ? '#8A5A1F' : '#1F7A4D',
+              border: `1px solid ${
+                daysLeft <= 1 ? 'rgba(179,59,46,0.3)' : daysLeft <= 3 ? 'rgba(138,90,31,0.3)' : 'rgba(31,122,77,0.3)'
+              }`,
+            }}
+            className="text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+          >
+            {daysLeft === 0 ? 'Due today' : daysLeft === 1 ? '1 day left' : `${daysLeft} days left`}
+          </span>
+        )}
+        <span
+          style={{ background: 'rgba(255,255,255,0.55)', color: '#6B5F4F', border: '1px solid rgba(255,255,255,0.6)' }}
+          className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+        >
+          →
+        </span>
+      </div>
     </button>
   );
 }

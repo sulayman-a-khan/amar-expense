@@ -92,6 +92,17 @@ export default function DriverDuePage() {
                 className="ledger-rule bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 pl-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-3">
+                  {d.driverImage ? (
+                    <img
+                      src={d.driverImage}
+                      alt={d.driverName}
+                      className="w-11 h-11 rounded-full object-cover border border-[#E3D9C2] shrink-0"
+                    />
+                  ) : (
+                    <div className="w-11 h-11 rounded-full bg-[#F7F3EA] border border-[#E3D9C2] shrink-0 flex items-center justify-center text-[#6B5F4F] font-black text-sm">
+                      {(d.driverName || '?').charAt(0)}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0">
@@ -106,8 +117,6 @@ export default function DriverDuePage() {
                         </span>
                       </div>
                     </div>
-
-                    <p className="text-[11px] text-[#6B5F4F] mt-1 leading-snug">৳{d.dailyRent}/day rent</p>
 
                     <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[#EFE8D9]">
                       <p className="text-[10px] text-[#9A8F78] font-semibold">Tap to view full history</p>
@@ -134,6 +143,17 @@ export default function DriverDuePage() {
           >
             <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3 mb-4">
               <div className="flex items-center gap-3">
+                {selectedBike.driverImage ? (
+                  <img
+                    src={selectedBike.driverImage}
+                    alt={selectedBike.driverName}
+                    className="w-11 h-11 rounded-full object-cover border border-[#E3D9C2] shrink-0"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-[#F7F3EA] border border-[#E3D9C2] shrink-0 flex items-center justify-center text-[#6B5F4F] font-black text-sm">
+                    {(selectedBike.driverName || '?').charAt(0)}
+                  </div>
+                )}
                 <div>
                   <h3 className="text-base font-bold text-[#2B2620]">{selectedBike.driverName}</h3>
                   <p className="text-[11px] text-[#7D7156]">

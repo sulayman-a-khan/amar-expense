@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 
-export default function ImageUploader({ value, onChange }) {
+export default function ImageUploader({
+  value,
+  onChange,
+  label = 'Receipt Photo (optional)',
+  placeholder = '📷 Tap to add photo',
+  folder,
+  imageClassName = 'w-full h-32 object-cover rounded-xl border border-[#E3D9C2]',
+}) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
@@ -13,7 +20,7 @@ export default function ImageUploader({ value, onChange }) {
     setUploading(true);
     setError('');
     try {
-      const sigRes = await fetch('/api/upload-signature');
+      const sigRes = await fetch(`/api/upload-signature${folder ? `?folder=${folder}` : ''}`);
       const sig = await sigRes.json();
       if (sig.error) throw new Error(sig.error);
 
@@ -44,12 +51,12 @@ export default function ImageUploader({ value, onChange }) {
   return (
     <div>
       <label className="block text-[11px] font-bold text-[#6B5F4F] mb-1.5 uppercase tracking-wide">
-        Receipt Photo (optional)
+        {label}
       </label>
 
       {value ? (
         <div className="relative">
-          <img src={value} alt="Receipt" className="w-full h-32 object-cover rounded-xl border border-[#E3D9C2]" />
+          <img src={value} alt="Uploaded" className={imageClassName} />
           <button
             type="button"
             onClick={() => onChange('')}
@@ -60,7 +67,7 @@ export default function ImageUploader({ value, onChange }) {
         </div>
       ) : (
         <label className="flex items-center justify-center h-20 border-2 border-dashed border-[#E3D9C2] rounded-xl cursor-pointer text-[#7D7156] text-xs font-semibold active:bg-[#F7F3EA]">
-          {uploading ? 'Uploading…' : '📷 Tap to add photo'}
+          {uploading ? 'Uploading…' : placeholder}
           <input type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" disabled={uploading} />
         </label>
       )}

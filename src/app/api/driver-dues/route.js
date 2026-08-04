@@ -17,7 +17,7 @@ export async function GET(request) {
       const bike = await Bike.findById(bikeId);
       return NextResponse.json({
         due: due ? { bikeId, balance: due.balance, updatedAt: due.updatedAt } : { bikeId, balance: 0 },
-        bike: bike ? { _id: bike._id, name: bike.name, driver: bike.driverName } : null,
+        bike: bike ? { _id: bike._id, name: bike.name, driver: bike.driverName, driverImage: bike.driverImage || '' } : null,
         entries,
       });
     }
@@ -38,6 +38,7 @@ export async function GET(request) {
         driverName: bike?.driverName || 'Unknown',
         dailyRent: bike?.dailyRent || 0,
         isShajahanKaka: bike?.isShajahanKaka || false,
+        driverImage: bike?.driverImage || '',
       };
     });
 
