@@ -203,50 +203,54 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
   const isMonthly = bike.rentMode === 'MONTHLY';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
       <div className="bg-[#F7F3EA] w-full max-w-md rounded-[32px] overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-slide-up">
 
         {/* Header */}
-        <div className="bg-[#FFFDF8] px-6 py-5 border-b border-[#E3D9C2] shrink-0 flex justify-between items-center relative z-10">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div style={{ background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)' }} className="px-6 py-4.5 border-b border-white/10 shrink-0 flex justify-between items-center relative z-10">
+          <div className="flex items-center gap-3 min-w-0">
             {bike.driverImage ? (
               <img
                 src={bike.driverImage}
                 alt={bike.driver}
-                className="w-11 h-11 rounded-full object-cover border border-[#E3D9C2] shrink-0"
+                className="w-12 h-12 rounded-full object-cover shrink-0"
+                style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.5)' }}
               />
             ) : (
-              <div className="w-11 h-11 rounded-full bg-[#F7F3EA] border border-[#E3D9C2] shrink-0 flex items-center justify-center text-[#6B5F4F] font-black text-sm">
+              <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 shrink-0 flex items-center justify-center text-white font-black text-base shadow-md">
                 {(bike.driver || '?').charAt(0)}
               </div>
             )}
             <div className="min-w-0">
-              <h2 className="text-xl font-black text-[#2B2620] truncate">
-                {bike.isShajahanKaka ? bike.name : `Bike ${bike.name}`}
-              </h2>
-              <p className="text-sm font-bold text-[#6B5F4F] truncate">{bike.driver}</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-black text-white truncate">
+                  {bike.driver || 'Driver'}
+                </h2>
+                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/80 shrink-0">
+                  {bike.isShajahanKaka ? 'Shajahan Kaka' : `Bike ${bike.name}`}
+                </span>
+              </div>
+              <p className="text-xs font-bold text-white/60 truncate mt-0.5">
+                {isMonthly ? 'Monthly Rent System' : `Daily Rent: ৳${bike.dailyRent}/day`}
+              </p>
             </div>
-            {/* Week/Month/Year/All Time period selector is a DAILY-system
-                concept (it drives the earning-history stats query below) —
-                hidden for MONTHLY bikes since there's nothing to page
-                through there beyond the current + past months already shown. */}
             {!isMonthly && (
               <div className="relative shrink-0">
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  className="appearance-none pl-3 pr-7 py-1.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-[#2B2620] text-white border border-[#2B2620] focus:outline-none cursor-pointer"
+                  className="appearance-none pl-3 pr-7 py-1.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-white/10 text-white border border-white/20 focus:outline-none cursor-pointer"
                 >
-                  <option value="week">Week</option>
-                  <option value="month">Month</option>
-                  <option value="year">Year</option>
-                  <option value="alltime">All Time</option>
+                  <option value="week" className="bg-[#0F172A] text-white">Week</option>
+                  <option value="month" className="bg-[#0F172A] text-white">Month</option>
+                  <option value="year" className="bg-[#0F172A] text-white">Year</option>
+                  <option value="alltime" className="bg-[#0F172A] text-white">All Time</option>
                 </select>
-                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white text-[8px]">▼</span>
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white/70 text-[8px]">▼</span>
               </div>
             )}
           </div>
-          <button onClick={onClose} className="p-2 bg-[#F7F3EA] hover:bg-[#E3D9C2] text-[#6B5F4F] rounded-full transition-colors font-bold shrink-0">
+          <button onClick={onClose} className="w-8 h-8 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full transition-colors flex items-center justify-center text-xs font-bold border border-white/15 shrink-0">
             ✕
           </button>
         </div>
@@ -723,7 +727,9 @@ function MonthlyRentPanel({ bike, data, onPaid }) {
         {/* Header line: Month & Status Badge */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1F7A4D] animate-pulse" />
+            <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+              isPaid ? 'bg-[#1F7A4D]' : isPartial ? 'bg-[#B27B00]' : 'bg-[#B33B2E]'
+            }`} />
             <span className="text-xs font-black text-[#2B2620] uppercase tracking-wider">{monthName}</span>
           </div>
           <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border shadow-xs ${

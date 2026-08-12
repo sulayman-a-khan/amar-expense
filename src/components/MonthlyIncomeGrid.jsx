@@ -144,23 +144,6 @@ export default function MonthlyIncomeGrid({ monthlyBikes, onEditBike, onViewBike
               >
 
 
-
-                {/* Top Commitment Navbar Line */}
-                {bike.monthlyStatus?.commitmentDate && !isPaid && (
-                  <div className="absolute top-0 left-0 right-0 h-4.5 bg-black/45 backdrop-blur-md border-b border-white/15 px-2 flex items-center justify-between text-[8px] font-semibold z-10">
-                    {bike.monthlyStatus.extraDaysRequested > 0 ? (
-                      <span className="text-[#FFD166] tracking-wide">
-                        +{bike.monthlyStatus.extraDaysRequested} Extra {bike.monthlyStatus.extraDaysRequested === 1 ? 'Day' : 'Days'}
-                      </span>
-                    ) : <span />}
-                    <span className={bike.monthlyStatus.commitmentDaysLeft < 0 ? 'text-[#FF6B5B]' : 'text-[#5DE88A]'}>
-                      {bike.monthlyStatus.commitmentDaysLeft < 0
-                        ? `${Math.abs(bike.monthlyStatus.commitmentDaysLeft)}d overdue`
-                        : `${bike.monthlyStatus.commitmentDaysLeft} days left`}
-                    </span>
-                  </div>
-                )}
-
                 {/* Glow */}
                 <div
                   style={{
@@ -195,7 +178,7 @@ export default function MonthlyIncomeGrid({ monthlyBikes, onEditBike, onViewBike
                       Paid ✓ ৳{bike.monthlyRentAmount}
                     </p>
                   ) : isPartial ? (
-                    <p style={{ color: '#FFB84D' }} className="relative text-[10px] font-bold mt-1">
+                    <p style={{ color: '#FFB84D' }} className="relative text-[10px] font-bold mt-1 animate-pulse">
                       ৳{remainingDue.toLocaleString('en-IN')} due
                     </p>
                   ) : isOverdue ? (
