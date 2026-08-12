@@ -1,5 +1,7 @@
 'use client';
 
+import MonthlyRentCountdown from './MonthlyRentCountdown';
+
 // Visual treatment per lock state:
 // - Not collected yet: the original dark "wallet" card, with a small amber
 //   pending dot so it reads as "still needs today's entry".
@@ -136,16 +138,17 @@ export default function FleetCard({ bikes, onEditBike, onViewBike, title = 'Acti
                   </p>
 
                   {bike.rentMode === 'MONTHLY' ? (
-                    <p
-                      style={{ color: state === 'pending' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)' }}
-                      className="relative text-[10px] font-bold mt-1"
-                    >
-                      {bike.monthlyStatus?.status === 'Paid'
-                        ? `Paid ✓ ৳${bike.monthlyRentAmount}`
-                        : bike.monthlyStatus?.status === 'Overdue'
-                          ? 'Overdue'
-                          : `Due in ${bike.monthlyStatus?.daysRemaining ?? '?'}d`}
-                    </p>
+                    bike.monthlyStatus?.status === 'Paid' ? (
+                      <p style={{ color: 'rgba(255,255,255,0.75)' }} className="relative text-[10px] font-bold mt-1">
+                        Paid ✓ ৳{bike.monthlyRentAmount}
+                      </p>
+                    ) : bike.monthlyStatus?.status === 'Overdue' ? (
+                      <p style={{ color: '#FF6B5B' }} className="relative text-[10px] font-bold mt-1 animate-pulse">
+                        Overdue
+                      </p>
+                    ) : (
+                      <MonthlyRentCountdown deadline={bike.monthlyStatus?.deadlineDate} />
+                    )
                   ) : isLocked ? (
                     <p
                       style={{ color: 'rgba(255,255,255,0.75)' }}

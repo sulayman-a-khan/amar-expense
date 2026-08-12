@@ -19,10 +19,16 @@ function deadlineDateFor(year, month) {
 }
 
 // Recomputes what a record's status SHOULD be right now, without writing
-// anything. Paid stays Paid regardless of date. Otherwise it's Pending
+// anything. Paid stays Paid regardless of date. Partial stays Partial
+// (some money received but not fully paid). Otherwise it's Pending
 // through the deadline day and Overdue after.
 function deriveStatus(record, now = nowInDhaka()) {
-  if (record.totalReceived > 0) return 'Paid';
+  if (record.totalReceived >= record.rentAmount) return 'Paid';
+  if (record.totalReceived > 0) {
+    // Some money received but not fully paid — Partial, but if past deadline
+    // it should also feel overdue (the UI reads isOverdue separately).
+    return 'Partial';
+  }
   return now.getTime() > record.deadlineDate.getTime() ? 'Overdue' : 'Pending';
 }
 
@@ -35,20 +41,38 @@ export async function ensureBikeMonthRecord(bike, year, month) {
   let record = await BikeMonthlyRentRecord.findOne({ bikeId: bike._id, year, month });
 
   if (!record) {
+    const rentAmt = bike.monthlyRentAmount || 9000;
     record = await BikeMonthlyRentRecord.create({
       bikeId: bike._id,
       year,
       month,
-      rentAmount: bike.monthlyRentAmount || 9000,
+      rentAmount: rentAmt,
       deadlineDate: deadlineDateFor(year, month),
       totalReceived: 0,
+      remainingBalance: rentAmt,
       status: 'Pending',
     });
+  }
+
+  // Self-heal records created prior to remainingBalance field addition
+  const expectedRemaining = Math.max(0, record.rentAmount - (record.totalReceived || 0));
+  let needsSave = false;
+  if (
+    record.remainingBalance === undefined ||
+    record.remainingBalance === null ||
+    (record.remainingBalance === 0 && record.totalReceived < record.rentAmount && record.status !== 'Paid')
+  ) {
+    record.remainingBalance = expectedRemaining;
+    needsSave = true;
   }
 
   const freshStatus = deriveStatus(record);
   if (freshStatus !== record.status) {
     record.status = freshStatus;
+    needsSave = true;
+  }
+
+  if (needsSave) {
     await record.save();
   }
 
@@ -71,9 +95,9 @@ export async function getCurrentMonthStatus(bike) {
 
 // Records a payment against a given month (defaults to the current month),
 // crediting the wallet exactly like every other cash-in flow in the app.
-// Marks the month Paid once any payment lands, since the agreement is a
-// single flat monthly amount rather than a running balance to chip away at.
-export async function recordMonthlyPayment(bike, { amount, note = '', date, wallet = 'Pocket', year, month }) {
+// Tracks remaining balance like shop rent — only marks Paid when fully paid.
+// Accepts optional shortfallReason and commitmentDate for partial payments.
+export async function recordMonthlyPayment(bike, { amount, note = '', date, wallet = 'Pocket', year, month, shortfallReason = '', commitmentDate = null }) {
   const parsedAmount = Number(amount);
   if (!parsedAmount || parsedAmount <= 0) {
     throw new Error('Amount must be a valid positive number.');
@@ -99,12 +123,19 @@ export async function recordMonthlyPayment(bike, { amount, note = '', date, wall
     amount: parsedAmount,
     note,
     wallet,
+    shortfallReason: shortfallReason || '',
+    commitmentDate: commitmentDate || null,
     date: paymentDate,
   });
 
   record.totalReceived += parsedAmount;
-  record.status = 'Paid';
-  record.paidAt = record.paidAt || new Date();
+  record.remainingBalance = record.rentAmount - record.totalReceived;
+  if (record.remainingBalance <= 0) {
+    record.status = 'Paid';
+    record.paidAt = record.paidAt || new Date();
+  } else {
+    record.status = 'Partial';
+  }
   await record.save();
 
   targetWallet.balance += parsedAmount;

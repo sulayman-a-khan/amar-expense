@@ -162,6 +162,7 @@ export default function LedgerPage() {
         ) : (
           filtered.map((t) => {
             const isBikeCollection = t.subType === 'Bike Collection';
+            const isBikeMonthlyRent = t.subType === 'BikeMonthlyRent';
             const isExpense = t.type === 'Expense';
             const dateLabel = new Date(t.date).toLocaleDateString('en-GB');
             const dayTimeLabel = t.createdAt
@@ -228,6 +229,35 @@ export default function LedgerPage() {
                   ) : null}
                   {isBikeCollection ? (
                     t.activityText && <p className="text-[11px] text-[#6B5F4F] mt-1">{t.activityText}</p>
+                  ) : isBikeMonthlyRent ? (
+                    <>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {t.bikeName && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#6B5F4F] bg-[#F0EAD9] border border-[#E3D9C2] px-2 py-0.5 rounded-md whitespace-nowrap">
+                            {t.bikeName}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#1F7A4D]">
+                          Monthly Rent
+                        </span>
+                        {t.wallet && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-[#6B5124] bg-[#F3E3B8]">
+                            {t.wallet}
+                          </span>
+                        )}
+                        <span className="ml-auto flex flex-col items-end leading-tight">
+                          <span className="text-[10px] text-[#9A8C6F]">{dateLabel}</span>
+                          {dayTimeLabel && <span className="text-[9px] text-[#B5A88A]">{dayTimeLabel}</span>}
+                        </span>
+                      </div>
+                      {t.shortfallReason && (
+                        <p className="text-[11px] text-[#B33B2E] font-medium mt-1">{t.shortfallReason}</p>
+                      )}
+                      {t.commitmentDate && (
+                        <p className="text-[11px] text-[#2E5C8A] font-medium mt-0.5">Commitment Date: {new Date(t.commitmentDate).toLocaleDateString('en-GB')}</p>
+                      )}
+                      {t.note && <p className="text-[11px] text-[#6B5F4F] mt-0.5">{t.note}</p>}
+                    </>
                   ) : isExpense ? (
                     <>
                       <div className="flex items-center gap-1.5 mt-1">

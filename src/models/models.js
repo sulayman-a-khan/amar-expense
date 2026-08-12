@@ -206,7 +206,8 @@ const BikeMonthlyRentRecordSchema = new mongoose.Schema({
   rentAmount: { type: Number, required: true }, // snapshot of bike.monthlyRentAmount at time of month creation
   deadlineDate: { type: Date, required: true }, // the 12th of (year, month), noon UTC
   totalReceived: { type: Number, required: true, default: 0 },
-  status: { type: String, enum: ['Pending', 'Paid', 'Overdue'], required: true, default: 'Pending' },
+  remainingBalance: { type: Number, required: true }, // rentAmount - totalReceived (like shop rent)
+  status: { type: String, enum: ['Pending', 'Partial', 'Paid', 'Overdue'], required: true, default: 'Pending' },
   paidAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },
 });
@@ -219,6 +220,8 @@ const BikeRentPaymentSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   note: { type: String, default: '' },
   wallet: { type: String, enum: ['Pocket', 'Drawer'], default: 'Pocket' },
+  shortfallReason: { type: String, default: '' }, // why driver didn't pay full amount
+  commitmentDate: { type: Date, default: null }, // when driver committed to pay the rest
   date: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });

@@ -177,6 +177,26 @@ export default function TodayLedgerCard({ activities, selectedDate, onActivityDe
                       {act.time && <span className="text-[9px] text-[#B5A88A]">{act.time}</span>}
                     </span>
                   </div>
+                ) : act.subType === 'BikeMonthlyRent' ? (
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    {act.bikeName && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#6B5F4F] bg-[#F0EAD9] border border-[#E3D9C2] px-2 py-0.5 rounded-md whitespace-nowrap">
+                        {act.bikeName}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-white bg-[#1F7A4D]">
+                      Monthly Rent
+                    </span>
+                    {act.wallet && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap text-[#6B5124] bg-[#F3E3B8]">
+                        {act.wallet}
+                      </span>
+                    )}
+                    <span className="ml-auto flex flex-col items-end leading-tight">
+                      <span className="text-[10px] text-[#9A8C6F]">{selectedDateLabel}</span>
+                      {act.time && <span className="text-[9px] text-[#B5A88A]">{act.time}</span>}
+                    </span>
+                  </div>
                 ) : isExpense ? (
                   <>
                     <div className="flex items-center gap-1.5 mt-1">
@@ -221,10 +241,7 @@ export default function TodayLedgerCard({ activities, selectedDate, onActivityDe
                   </div>
                 )}
 
-                {isBikeCollection && act.activityText && (
-                  <p className="text-[11px] text-[#6B5F4F] mt-1">{act.activityText}</p>
-                )}
-                {!isBikeCollection && !isExpense && act.activityText && (
+                {act.activityText && (
                   <p className="text-[11px] text-[#6B5F4F] mt-1">{act.activityText}</p>
                 )}
               </div>

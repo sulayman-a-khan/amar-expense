@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db'; // তোমার db.js ফাইলের পাথ অনুযায়ী
-import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal, DriverDueEntry, DailyPocketSnapshot } from '@/models/models';
+import { Wallet, Bike, DailyCollection, Expense, IncomeSource, Loan, DailyClosing, DriverDue, RentWithdrawal, DriverDueEntry, DailyPocketSnapshot, BikeRentPayment } from '@/models/models';
 import { startOfTodayDhaka, toNoonUTC, todayDhakaDateString } from '@/lib/dateUtils';
 import { backfillMissedDays } from '@/lib/driverDue';
 import { getCurrentMonthStatus } from '@/lib/bikeMonthlyRent';
@@ -145,6 +145,7 @@ export async function GET(request) {
       yesterdayCollections,
       driverDues,
       todayRentWithdrawals,
+      todayBikeRentPayments,
     ] = await Promise.all([
       Wallet.find({ name: { $in: WALLET_NAMES } }).lean(),
       DailyCollection.find({ date: { $gte: startOfDay, $lt: endOfDay } }).populate('bikeId').lean(),
@@ -154,6 +155,7 @@ export async function GET(request) {
       DailyCollection.find({ date: { $gte: yesterdayStart, $lt: yesterdayEnd } }).lean(),
       DriverDue.find({ balance: { $gt: 0 } }).populate('bikeId').lean(),
       RentWithdrawal.find({ date: { $gte: startOfDay, $lt: endOfDay } }).lean(),
+      BikeRentPayment.find({ date: { $gte: startOfDay, $lt: endOfDay } }).populate('bikeId').lean(),
     ]);
 
     const walletsObj = {};
@@ -163,6 +165,7 @@ export async function GET(request) {
     todayCollections.forEach((c) => { totalIncome += c.paidRent; });
     todayIncomes.forEach((i) => { totalIncome += i.amount; });
     todayRentWithdrawals.forEach((w) => { totalIncome += w.amount; });
+    todayBikeRentPayments.forEach((p) => { totalIncome += p.amount; });
 
     let totalExpense = 0;
     todayExpenses.forEach((e) => { if (!e.isCredit) totalExpense += e.amount; });
@@ -328,6 +331,25 @@ export async function GET(request) {
         noteText: e.note,
       });
     });
+    todayBikeRentPayments.forEach((p) => {
+      const driverName = p.bikeId?.driverName || 'Driver';
+      const bikeName = p.bikeId?.name
+        ? (/^bike/i.test(p.bikeId.name.trim()) ? p.bikeId.name : `Bike ${p.bikeId.name}`)
+        : 'Bike';
+      activities.push({
+        id: p._id,
+        createdAt: p.createdAt,
+        time: new Date(p.createdAt).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }),
+        category: 'Income',
+        subType: 'BikeMonthlyRent',
+        sourceType: 'BikeRentPayment',
+        title: driverName,
+        activityText: `${driverName} মাসিক ভাড়া দিয়েছে`,
+        amount: p.amount,
+        bikeName,
+        wallet: p.wallet,
+      });
+    });
     activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Missing-entry check (Module 9)
@@ -371,7 +393,39 @@ export async function GET(request) {
         let monthlyStatus = null;
         if (b.rentMode === 'MONTHLY') {
           const { record, daysRemaining, isOverdue } = await getCurrentMonthStatus(b);
-          monthlyStatus = { status: record.status, daysRemaining, isOverdue, deadlineDate: record.deadlineDate };
+          let commitmentDate = null;
+          let commitmentDaysLeft = null;
+          let extraDaysRequested = null;
+
+          if (record.status !== 'Paid') {
+            const commitPayment = await BikeRentPayment.findOne({ bikeId: b._id, commitmentDate: { $ne: null } })
+              .sort({ createdAt: -1 })
+              .lean();
+            if (commitPayment && commitPayment.commitmentDate) {
+              commitmentDate = commitPayment.commitmentDate;
+              const now = new Date();
+              const commitObj = new Date(commitmentDate);
+              const msPerDay = 24 * 60 * 60 * 1000;
+              commitmentDaysLeft = Math.ceil((commitObj.getTime() - now.getTime()) / msPerDay);
+              const deadline = record.deadlineDate ? new Date(record.deadlineDate) : null;
+              if (deadline) {
+                extraDaysRequested = Math.max(0, Math.ceil((commitObj.getTime() - deadline.getTime()) / msPerDay));
+              }
+            }
+          }
+
+          monthlyStatus = {
+            status: record.status,
+            daysRemaining,
+            isOverdue,
+            deadlineDate: record.deadlineDate,
+            remainingBalance: record.remainingBalance,
+            totalReceived: record.totalReceived,
+            rentAmount: record.rentAmount,
+            commitmentDate,
+            commitmentDaysLeft,
+            extraDaysRequested,
+          };
         }
 
         return {

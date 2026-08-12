@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Wallet, DriverDueEntry, Bike } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Wallet, DriverDueEntry, Bike, BikeRentPayment, BikeMonthlyRentRecord } from '@/models/models';
 import { isWithin48Hours } from '@/lib/dateUtils';
 import { recalcDriverDue } from '@/lib/driverDueRecalc';
 import { markDateForManualReentry } from '@/lib/driverDue';
@@ -37,6 +37,10 @@ export async function DELETE(request, { params }) {
     } else if (type === 'Expense') {
       targetDoc = await Expense.findById(id);
       operation = 'expense';
+      walletName = targetDoc?.wallet || 'Pocket';
+    } else if (type === 'BikeRentPayment') {
+      targetDoc = await BikeRentPayment.findById(id);
+      operation = 'income';
       walletName = targetDoc?.wallet || 'Pocket';
     } else {
       return NextResponse.json({ error: 'Unsupported transaction type' }, { status: 400 });
@@ -80,6 +84,28 @@ export async function DELETE(request, { params }) {
           await markDateForManualReentry(targetDoc.bikeId, targetDoc.date);
         }
       }
+    }
+    else if (type === 'BikeRentPayment') {
+      // Reverse the payment from the parent monthly record, then recalculate
+      // its remaining balance and status so the bike details modal shows the
+      // correct state after deletion.
+      const monthRecord = await BikeMonthlyRentRecord.findById(targetDoc.bikeMonthlyRentRecordId);
+      if (monthRecord) {
+        monthRecord.totalReceived = Math.max(0, monthRecord.totalReceived - targetDoc.amount);
+        monthRecord.remainingBalance = monthRecord.rentAmount - monthRecord.totalReceived;
+        if (monthRecord.remainingBalance <= 0) {
+          monthRecord.status = 'Paid';
+        } else if (monthRecord.totalReceived > 0) {
+          monthRecord.status = 'Partial';
+        } else {
+          // No money received at all — revert to time-based status
+          const now = new Date();
+          monthRecord.status = now.getTime() > monthRecord.deadlineDate.getTime() ? 'Overdue' : 'Pending';
+          monthRecord.paidAt = null;
+        }
+        await monthRecord.save();
+      }
+      await BikeRentPayment.findByIdAndDelete(id);
     }
     else if (type === 'IncomeSource') await IncomeSource.findByIdAndDelete(id);
     else if (type === 'Expense') await Expense.findByIdAndDelete(id);

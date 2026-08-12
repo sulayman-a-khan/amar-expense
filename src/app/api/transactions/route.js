@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, RentWithdrawal, DriverDueEntry } from '@/models/models';
+import { DailyCollection, Expense, IncomeSource, Loan, WalletTransfer, RentWithdrawal, DriverDueEntry, BikeRentPayment } from '@/models/models';
 import { startOfTodayDhaka } from '@/lib/dateUtils';
 
 export async function GET(request) {
@@ -29,13 +29,14 @@ export async function GET(request) {
     // hydration, which matters here since every document ever created is
     // being fetched (no date filtering) — meaningful CPU savings as the
     // ledger grows over time.
-    const [collections, expenses, incomes, loans, transfers, rentWithdrawals] = await Promise.all([
+    const [collections, expenses, incomes, loans, transfers, rentWithdrawals, bikeRentPayments] = await Promise.all([
       DailyCollection.find(dateFilter).populate('bikeId').sort({ date: -1 }).lean(),
       Expense.find(dateFilter).populate('bikeId').sort({ date: -1 }).lean(),
       IncomeSource.find(dateFilter).sort({ date: -1 }).lean(),
       Loan.find(dateFilter).sort({ date: -1 }).lean(),
       WalletTransfer.find(dateFilter).sort({ date: -1 }).lean(),
       RentWithdrawal.find(dateFilter).sort({ date: -1 }).lean(),
+      BikeRentPayment.find(dateFilter).populate('bikeId').sort({ date: -1 }).lean(),
     ]);
 
     // Clearance entries record how much of an overpayment cleared existing
@@ -111,6 +112,28 @@ export async function GET(request) {
         amount: w.amount,
         note: w.note || 'Shop rent collection',
         title: 'Shop Rent',
+        colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
+      });
+    });
+
+    bikeRentPayments.forEach(p => {
+      const driverName = p.bikeId?.driverName || 'Driver';
+      const bikeName = p.bikeId?.name
+        ? (/^bike/i.test(p.bikeId.name.trim()) ? p.bikeId.name : `Bike ${p.bikeId.name}`)
+        : 'Bike';
+      allTransactions.push({
+        _id: p._id,
+        date: p.date,
+        createdAt: p.createdAt,
+        type: 'Income',
+        subType: 'BikeMonthlyRent',
+        amount: p.amount,
+        note: p.note || '',
+        wallet: p.wallet,
+        title: driverName,
+        bikeName,
+        shortfallReason: p.shortfallReason || '',
+        commitmentDate: p.commitmentDate || null,
         colorCode: 'text-[#1F7A4D] border-[#1F7A4D] bg-[#E6F0E5]/50'
       });
     });

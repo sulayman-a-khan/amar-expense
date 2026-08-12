@@ -55,18 +55,8 @@ export default function ShopRentCard() {
         className="absolute rounded-full pointer-events-none"
       />
 
-      <div className="relative flex items-center gap-3 min-w-0">
-        {/* Icon badge */}
-        <div
-          style={{
-            background: 'linear-gradient(150deg, #A9CDEB 0%, #6E9EC4 100%)',
-            boxShadow: '0 4px 10px rgba(110,158,196,0.35)',
-          }}
-          className="w-11 h-11 rounded-full flex items-center justify-center text-base shrink-0"
-        >
-          🏬
-        </div>
-
+      <div className="relative flex items-center gap-2 min-w-0">
+        <span className="w-2 h-2 rounded-full bg-[#5E7488] shrink-0" />
         <div className="min-w-0">
           <span
             style={{ color: '#5E7488', letterSpacing: '0.12em' }}

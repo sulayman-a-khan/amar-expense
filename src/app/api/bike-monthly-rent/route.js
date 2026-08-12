@@ -60,7 +60,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'This bike is not on the monthly rent system.' }, { status: 400 });
     }
 
-    const { amount, date, note, wallet, year, month } = body;
+    const { amount, date, note, wallet, year, month, shortfallReason, commitmentDate } = body;
     const { record, payment } = await recordMonthlyPayment(bike, {
       amount,
       date: date || undefined,
@@ -68,6 +68,8 @@ export async function POST(request) {
       wallet: wallet || 'Pocket',
       year,
       month,
+      shortfallReason: shortfallReason || '',
+      commitmentDate: commitmentDate || null,
     });
 
     return NextResponse.json({ success: true, record, payment });

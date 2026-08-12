@@ -622,21 +622,44 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
 
 function MonthlyRentPanel({ bike, data, onPaid }) {
   const [amount, setAmount] = useState('');
+  const [wallet, setWallet] = useState('Pocket');
   const [note, setNote] = useState('');
+  const [shortfallReason, setShortfallReason] = useState('');
+  const [commitmentDate, setCommitmentDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
 
-  if (!data) return <div className="py-10 text-center text-sm font-bold text-[#7D7156]">Failed to load data</div>;
+  if (!data) return <div className="py-10 text-center text-sm font-bold text-[#7D7156]">Loading payment data...</div>;
 
   const { currentMonth, history, payments } = data;
-  const isPaid = currentMonth.status === 'Paid';
-  const isOverdue = currentMonth.status === 'Overdue';
+  const targetRent = currentMonth.rentAmount || bike.monthlyRentAmount || 9000;
+  const totalReceived = currentMonth.totalReceived || 0;
+  const rawRemaining = currentMonth.remainingBalance;
+  const remainingBalance = (rawRemaining !== undefined && rawRemaining !== null && !(rawRemaining === 0 && totalReceived < targetRent && currentMonth.status !== 'Paid'))
+    ? rawRemaining
+    : Math.max(0, targetRent - totalReceived);
+  const isPaid = currentMonth.status === 'Paid' || (remainingBalance <= 0 && totalReceived >= targetRent);
+  const isPartial = currentMonth.status === 'Partial' || (totalReceived > 0 && remainingBalance > 0);
+  const isOverdue = currentMonth.status === 'Overdue' || (!isPaid && currentMonth.isOverdue);
+
+  const progressPercent = Math.min(100, Math.round((totalReceived / targetRent) * 100));
+
+  const parsedAmount = Number(amount) || 0;
+  const isPartialEntry = parsedAmount > 0 && parsedAmount < remainingBalance;
 
   const handlePay = async () => {
     const parsed = Number(amount);
     if (amount === '' || Number.isNaN(parsed) || parsed <= 0) {
-      setError('Enter a valid amount.');
+      setError('Please enter a valid amount.');
+      return;
+    }
+    if (parsed > remainingBalance) {
+      setError(`Amount cannot exceed remaining due (৳${remainingBalance.toLocaleString('en-IN')}).`);
+      return;
+    }
+    if (isPartialEntry && !shortfallReason.trim()) {
+      setError('Please provide a reason for partial payment.');
       return;
     }
     setSubmitting(true);
@@ -645,7 +668,15 @@ function MonthlyRentPanel({ bike, data, onPaid }) {
       const res = await fetch('/api/bike-monthly-rent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'payment', bikeId: bike._id, amount: parsed, note }),
+        body: JSON.stringify({
+          action: 'payment',
+          bikeId: bike._id,
+          amount: parsed,
+          wallet,
+          note,
+          shortfallReason: isPartialEntry ? shortfallReason : '',
+          commitmentDate: isPartialEntry && commitmentDate ? commitmentDate : null,
+        }),
       });
       const resData = await res.json();
       if (!res.ok || resData.error) {
@@ -653,130 +684,356 @@ function MonthlyRentPanel({ bike, data, onPaid }) {
       } else {
         setAmount('');
         setNote('');
+        setShortfallReason('');
+        setCommitmentDate('');
         setShowForm(false);
         onPaid();
       }
     } catch {
-      setError('Network error');
+      setError('Network connection error.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const statusStyle = isPaid
-    ? { bg: 'bg-[#E6F0E5]', text: 'text-[#1F7A4D]', border: 'border-[#C5DCC2]', label: 'Paid' }
-    : isOverdue
-      ? { bg: 'bg-[#F7E9E5]', text: 'text-[#B33B2E]', border: 'border-[#E3C2B8]', label: 'Overdue' }
-      : { bg: 'bg-[#FFF9E6]', text: 'text-[#B27B00]', border: 'border-[#FCE8B2]', label: 'Pending' };
+  // Find latest committed date from payments if driver gave a commitment date for partial payment
+  const latestCommitmentPayment = payments?.find(p => p.commitmentDate);
+  const commitmentDateObj = latestCommitmentPayment?.commitmentDate ? new Date(latestCommitmentPayment.commitmentDate) : null;
+
+  let commitmentDaysLeft = null;
+  let extraDaysRequested = null;
+  if (commitmentDateObj && !isPaid) {
+    const today = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    commitmentDaysLeft = Math.ceil((commitmentDateObj.getTime() - today.getTime()) / msPerDay);
+
+    const deadline = currentMonth.deadlineDate ? new Date(currentMonth.deadlineDate) : null;
+    if (deadline) {
+      extraDaysRequested = Math.max(0, Math.ceil((commitmentDateObj.getTime() - deadline.getTime()) / msPerDay));
+    }
+  }
+
+  const monthName = new Date(Date.UTC(currentMonth.year, currentMonth.month - 1, 1))
+    .toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
   return (
-    <>
-      {/* Current month status card */}
-      <div className="bg-[#FFFDF8] p-4 rounded-2xl border border-[#E3D9C2] shadow-sm space-y-3">
+    <div className="space-y-4">
+      {/* Overview Status Card with Rent Progress Bar */}
+      <div className="bg-[#FFFDF8] p-5 rounded-3xl border border-[#E3D9C2] shadow-sm space-y-4">
+        {/* Header line: Month & Status Badge */}
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wider">
-            {new Date(Date.UTC(currentMonth.year, currentMonth.month - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}
-          </span>
-          <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-            {statusStyle.label}
-          </span>
-        </div>
-
-        <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-black text-[#2B2620]">৳{bike.monthlyRentAmount?.toLocaleString('en-IN')}</span>
-          <span className="text-[10px] font-bold text-[#7D7156]">Due by the 12th</span>
-        </div>
-
-        {!isPaid && (
-          <p className={`text-[11px] font-bold ${isOverdue ? 'text-[#B33B2E]' : 'text-[#6B5F4F]'}`}>
-            {isOverdue ? 'Payment is overdue.' : `${currentMonth.daysRemaining} day${currentMonth.daysRemaining === 1 ? '' : 's'} remaining to pay.`}
-          </p>
-        )}
-
-        {isPaid ? (
-          <div className="text-[11px] font-bold text-[#1F7A4D]">
-            ✓ Paid ৳{currentMonth.totalReceived?.toLocaleString('en-IN')} this month
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#1F7A4D] animate-pulse" />
+            <span className="text-xs font-black text-[#2B2620] uppercase tracking-wider">{monthName}</span>
           </div>
-        ) : showForm ? (
-          <div className="space-y-2">
-            {error && <p className="text-[11px] font-bold text-[#B33B2E] text-center">{error}</p>}
-            <input
-              type="number"
-              min="0"
-              autoFocus
-              placeholder={`e.g. ${bike.monthlyRentAmount}`}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+          <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border shadow-xs ${
+            isPaid
+              ? 'bg-[#E6F0E5] text-[#1F7A4D] border-[#C5DCC2]'
+              : isPartial
+                ? 'bg-[#FFF9E6] text-[#B27B00] border-[#FCE8B2]'
+                : isOverdue
+                  ? 'bg-[#F7E9E5] text-[#B33B2E] border-[#E3C2B8]'
+                  : 'bg-[#F7F3EA] text-[#6B5F4F] border-[#E3D9C2]'
+          }`}>
+            {isPaid ? 'Fully Paid ✓' : isPartial ? 'Partially Paid' : isOverdue ? 'Overdue ⚠️' : 'Pending'}
+          </span>
+        </div>
+
+        {/* 3 Metric Grid: Monthly Rent | Total Paid | Remaining Due */}
+        <div className="grid grid-cols-3 gap-2 bg-[#F7F3EA]/70 p-3 rounded-2xl border border-[#E3D9C2]/60">
+          <div>
+            <span className="text-[9px] font-extrabold text-[#7D7156] uppercase tracking-wide block">Monthly Rent</span>
+            <span className="text-sm font-black text-[#2B2620] mt-0.5 block">৳{targetRent.toLocaleString('en-IN')}</span>
+          </div>
+          <div>
+            <span className="text-[9px] font-extrabold text-[#1F7A4D] uppercase tracking-wide block">Total Paid</span>
+            <span className="text-sm font-black text-[#1F7A4D] mt-0.5 block">৳{totalReceived.toLocaleString('en-IN')}</span>
+          </div>
+          <div>
+            <span className="text-[9px] font-extrabold text-[#B33B2E] uppercase tracking-wide block">Remaining Due</span>
+            <span className={`text-sm font-black mt-0.5 block ${remainingBalance > 0 ? 'text-[#B33B2E]' : 'text-[#7D7156]'}`}>
+              ৳{remainingBalance.toLocaleString('en-IN')}
+            </span>
+          </div>
+        </div>
+
+        {/* Progress Bar & Commitment Countdown */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-[10px] font-extrabold">
+            <span className="text-[#6B5F4F]">Collection Progress ({progressPercent}%)</span>
+            <span className={isOverdue ? 'text-[#B33B2E]' : 'text-[#7D7156]'}>
+              {isPaid ? 'Complete' : isOverdue ? 'Deadline Passed (12th)' : `${currentMonth.daysRemaining} days remaining`}
+            </span>
+          </div>
+          <div className="w-full h-2.5 bg-[#E3D9C2]/50 rounded-full overflow-hidden p-0.5">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isPaid ? 'bg-[#1F7A4D]' : isPartial ? 'bg-[#B27B00]' : 'bg-[#B33B2E]'
+              }`}
+              style={{ width: `${progressPercent}%` }}
             />
-            <input
-              type="text"
-              placeholder="Note (optional)"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="w-full p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
-            />
-            <div className="grid grid-cols-2 gap-1.5">
-              <button disabled={submitting} onClick={() => { setShowForm(false); setError(''); }}
-                className="py-2.5 text-[11px] font-bold bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2] rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                Cancel
-              </button>
-              <button disabled={submitting} onClick={handlePay}
-                className="py-2.5 text-[11px] font-bold bg-[#1F7A4D] text-white rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50">
-                {submitting ? '...' : 'Confirm'}
-              </button>
+          </div>
+
+          {/* Committed Day & Additional Days Badge on Progress Bar */}
+          {commitmentDateObj && !isPaid && (
+            <div className="mt-2 p-2.5 bg-[#FFF9E6] border border-[#FCE8B2] rounded-2xl flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 font-bold text-[#8A6D00]">
+                <span>📅</span>
+                <span>Committed: {formatGlobalDate(commitmentDateObj)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {extraDaysRequested > 0 && (
+                  <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-[#FCE8B2] text-[#6B5124]">
+                    +{extraDaysRequested} extra {extraDaysRequested === 1 ? 'day' : 'days'}
+                  </span>
+                )}
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md text-white ${
+                  commitmentDaysLeft < 0 ? 'bg-[#B33B2E]' : commitmentDaysLeft <= 2 ? 'bg-[#B27B00]' : 'bg-[#1F7A4D]'
+                }`}>
+                  {commitmentDaysLeft < 0
+                    ? `${Math.abs(commitmentDaysLeft)} days overdue`
+                    : commitmentDaysLeft === 0
+                      ? 'Due today'
+                      : `${commitmentDaysLeft} days left`}
+                </span>
+              </div>
             </div>
-          </div>
-        ) : (
+          )}
+        </div>
+
+        {/* Record Payment Toggle / Trigger */}
+        {!isPaid && !showForm && (
           <button
-            onClick={() => setShowForm(true)}
-            className="w-full py-2.5 bg-[#2B2620] text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-transform"
+            onClick={() => {
+              setShowForm(true);
+              setAmount(String(remainingBalance)); // Default to full remaining due
+            }}
+            className="w-full py-3 bg-[#2B2620] hover:bg-[#1E1A16] text-white font-extrabold text-xs rounded-2xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            Record Payment
+            <span>💳</span>
+            <span>{totalReceived > 0 ? 'Record Additional Payment' : 'Record Monthly Collection'}</span>
           </button>
         )}
       </div>
 
-      {/* Payment history */}
-      <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
-        <div className="grid grid-cols-2 px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
-          <span>Date</span>
-          <span className="text-right">Amount</span>
+      {/* Record Payment Form Card */}
+      {!isPaid && showForm && (
+        <div className="bg-[#FFFDF8] p-5 rounded-3xl border-2 border-[#2B2620]/20 shadow-lg space-y-4 animate-fade-scale-in">
+          <div className="flex justify-between items-center border-b border-[#E3D9C2] pb-3">
+            <div>
+              <h4 className="text-sm font-black text-[#2B2620]">Record Rent Collection</h4>
+              <p className="text-[10px] text-[#7D7156] font-semibold">Enter amount given by driver</p>
+            </div>
+            <button
+              onClick={() => { setShowForm(false); setError(''); }}
+              className="text-xs font-bold text-[#6B5F4F] bg-[#F7F3EA] hover:bg-[#E3D9C2] px-2.5 py-1 rounded-full transition-colors"
+            >
+              ✕ Close
+            </button>
+          </div>
+
+          {error && (
+            <div className="p-2.5 bg-[#F7E9E5] border border-[#E3C2B8] rounded-xl text-xs font-bold text-[#B33B2E] text-center">
+              ⚠️ {error}
+            </div>
+          )}
+
+          {/* Quick Preset Buttons */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-extrabold text-[#6B5F4F] uppercase tracking-wider block">Quick Presets</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAmount(String(remainingBalance));
+                  setShortfallReason('');
+                }}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-colors flex items-center justify-between ${
+                  parsedAmount === remainingBalance
+                    ? 'bg-[#1F7A4D] text-white border-[#1F7A4D]'
+                    : 'bg-[#FFFDF8] text-[#2B2620] border-[#E3D9C2] hover:bg-[#F7F3EA]'
+                }`}
+              >
+                <span>Full Due</span>
+                <span className="font-black">৳{remainingBalance.toLocaleString('en-IN')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const half = Math.round(remainingBalance / 2);
+                  setAmount(String(half));
+                }}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-colors flex items-center justify-between ${
+                  parsedAmount > 0 && parsedAmount < remainingBalance
+                    ? 'bg-[#B27B00] text-white border-[#B27B00]'
+                    : 'bg-[#FFFDF8] text-[#2B2620] border-[#E3D9C2] hover:bg-[#F7F3EA]'
+                }`}
+              >
+                <span>Partial (Half)</span>
+                <span className="font-black">৳{Math.round(remainingBalance / 2).toLocaleString('en-IN')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Amount & Wallet Selection */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2">
+              <label className="text-[10px] font-extrabold text-[#6B5F4F] uppercase tracking-wider block mb-1">
+                Amount Received (৳)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={remainingBalance}
+                placeholder="e.g. 5000"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full p-3 text-base font-black bg-[#F7F3EA] border border-[#E3D9C2] rounded-2xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-extrabold text-[#6B5F4F] uppercase tracking-wider block mb-1">
+                Wallet
+              </label>
+              <select
+                value={wallet}
+                onChange={(e) => setWallet(e.target.value)}
+                className="w-full p-3 text-xs font-bold bg-[#F7F3EA] border border-[#E3D9C2] rounded-2xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
+              >
+                <option value="Pocket">Pocket</option>
+                <option value="Drawer">Drawer</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Partial Payment Section: Reason & Commitment Date */}
+          {isPartialEntry && (
+            <div className="p-3.5 bg-[#FFF9E6] border border-[#FCE8B2] rounded-2xl space-y-3 animate-slide-up">
+              <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-[#8A6D00]">
+                <span>⚠️</span>
+                <span>Partial Payment Details (Due Remaining: ৳{(remainingBalance - parsedAmount).toLocaleString('en-IN')})</span>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+                  Reason Driver Paid Partially <span className="text-[#B33B2E]">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Driver requested 5 days extra for family emergency"
+                  value={shortfallReason}
+                  onChange={(e) => setShortfallReason(e.target.value)}
+                  className="w-full p-2.5 text-xs bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+                  Commitment Date to Pay Remaining Rest <span className="text-[#7D7156] font-normal">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={commitmentDate}
+                  onChange={(e) => setCommitmentDate(e.target.value)}
+                  className="w-full p-2.5 text-xs bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Optional Note */}
+          <div>
+            <label className="text-[10px] font-extrabold text-[#6B5F4F] uppercase tracking-wider block mb-1">
+              Note / Reference <span className="text-[#7D7156] font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Paid in cash at garage"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full p-2.5 text-xs bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              disabled={submitting}
+              onClick={() => { setShowForm(false); setError(''); }}
+              className="py-3 text-xs font-bold bg-[#F7F3EA] text-[#6B5F4F] border border-[#E3D9C2] rounded-2xl hover:bg-[#E3D9C2] transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={submitting}
+              onClick={handlePay}
+              className="py-3 text-xs font-black bg-[#1F7A4D] hover:bg-[#165B39] text-white rounded-2xl shadow-md transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              {submitting ? 'Saving Payment...' : 'Confirm & Save'}
+            </button>
+          </div>
         </div>
-        <div className="divide-y divide-[#E3D9C2] max-h-52 overflow-y-auto">
+      )}
+
+      {/* Payment History Log */}
+      <div className="bg-[#FFFDF8] rounded-3xl border border-[#E3D9C2] overflow-hidden shadow-xs">
+        <div className="px-4 py-3 bg-[#F7F3EA] border-b border-[#E3D9C2] flex justify-between items-center">
+          <span className="text-[10px] font-black text-[#6B5F4F] uppercase tracking-wider">Payment History</span>
+          <span className="text-[10px] font-bold text-[#7D7156]">{payments?.length || 0} entry(ies)</span>
+        </div>
+        <div className="divide-y divide-[#E3D9C2] max-h-56 overflow-y-auto">
           {!payments || payments.length === 0 ? (
-            <p className="text-center text-xs text-[#7D7156] py-6">No payments recorded yet.</p>
+            <p className="text-center text-xs font-semibold text-[#7D7156] py-6">No payment records for this bike yet.</p>
           ) : payments.map((p) => (
-            <div key={p._id} className="grid grid-cols-2 px-4 py-3 text-xs items-center">
-              <span className="text-[#2B2620] font-semibold">{formatGlobalDate(p.date)}</span>
-              <span className="text-right font-bold text-[#1F7A4D]">৳{p.amount.toLocaleString('en-IN')}</span>
+            <div key={p._id} className="p-3.5 text-xs space-y-1.5 hover:bg-[#F7F3EA]/40 transition-colors">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#1F7A4D]" />
+                  <span className="text-[#2B2620] font-bold">{formatGlobalDate(p.date)}</span>
+                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#F0EAD9] text-[#6B5F4F]">
+                    {p.wallet || 'Pocket'}
+                  </span>
+                </div>
+                <span className="font-black text-sm text-[#1F7A4D]">+৳{p.amount.toLocaleString('en-IN')}</span>
+              </div>
+              {p.shortfallReason && (
+                <div className="p-2 bg-[#F7E9E5]/60 border border-[#E3C2B8]/40 rounded-xl text-[11px] font-medium text-[#B33B2E]">
+                  {p.shortfallReason}
+                </div>
+              )}
+              {p.commitmentDate && (
+                <p className="text-[11px] font-bold text-[#2E5C8A] flex items-center gap-1">
+                  <span>📅</span> Promised rest by: {formatGlobalDate(p.commitmentDate)}
+                </p>
+              )}
+              {p.note && <p className="text-[10px] text-[#7D7156] italic">&quot;{p.note}&quot;</p>}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Month-by-month history */}
-      <div className="bg-[#FFFDF8] rounded-2xl border border-[#E3D9C2] overflow-hidden">
-        <div className="grid grid-cols-2 px-4 py-2.5 bg-[#F7F3EA] text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide">
-          <span>Month</span>
-          <span className="text-right">Status</span>
+      {/* Monthly Rent History (Past Months) */}
+      <div className="bg-[#FFFDF8] rounded-3xl border border-[#E3D9C2] overflow-hidden shadow-xs">
+        <div className="px-4 py-3 bg-[#F7F3EA] border-b border-[#E3D9C2] flex justify-between items-center">
+          <span className="text-[10px] font-black text-[#6B5F4F] uppercase tracking-wider">Past Months Overview</span>
+          <span className="text-[10px] font-bold text-[#7D7156]">History</span>
         </div>
-        <div className="divide-y divide-[#E3D9C2] max-h-52 overflow-y-auto">
+        <div className="divide-y divide-[#E3D9C2] max-h-48 overflow-y-auto">
           {!history || history.length === 0 ? (
-            <p className="text-center text-xs text-[#7D7156] py-6">No history yet.</p>
+            <p className="text-center text-xs font-semibold text-[#7D7156] py-6">No historical records.</p>
           ) : history.map((r) => (
-            <div key={r._id} className="grid grid-cols-2 px-4 py-3 text-xs items-center">
-              <span className="text-[#2B2620] font-semibold">
+            <div key={r._id} className="grid grid-cols-2 px-4 py-3 text-xs items-center hover:bg-[#F7F3EA]/40 transition-colors">
+              <span className="text-[#2B2620] font-bold">
                 {new Date(Date.UTC(r.year, r.month - 1, 1)).toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}
               </span>
-              <span className={`text-right font-bold ${r.status === 'Paid' ? 'text-[#1F7A4D]' : r.status === 'Overdue' ? 'text-[#B33B2E]' : 'text-[#B27B00]'}`}>
-                {r.status}
+              <span className={`text-right font-black ${
+                r.status === 'Paid' ? 'text-[#1F7A4D]' : r.status === 'Partial' ? 'text-[#B27B00]' : 'text-[#B33B2E]'
+              }`}>
+                {r.status === 'Paid' ? 'Paid ✓' : r.status === 'Partial' ? 'Partial' : r.status}
               </span>
             </div>
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
