@@ -115,6 +115,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
           bikeId: bike._id,
           amount,
           note: manualReduceNote,
+          date: todayStr,
         }),
       });
       const data = await res.json();

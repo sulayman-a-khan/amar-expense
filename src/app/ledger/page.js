@@ -145,6 +145,7 @@ export default function LedgerPage() {
         </div>
       </div>
 
+
       <main className="max-w-md mx-auto px-5 space-y-2.5">
         {loading ? (
           <p className="text-center text-sm text-[#7D7156] py-10">Loading ledger…</p>

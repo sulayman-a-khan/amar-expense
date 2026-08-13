@@ -217,7 +217,7 @@ function IncomeForm({ form, set }) {
   );
 }
 
-const EXPENSE_CATEGORIES = ['বাসার খরচ', 'আমার খরচ', 'মেডিসিন'];
+const EXPENSE_CATEGORIES = ['বাসার খরচ', 'আমার খরচ', 'মেডিসিন', 'অন্যান্য খরচ'];
 
 function ExpenseForm({ form, set, bikes }) {
   const isCredit = !!form.isCredit;

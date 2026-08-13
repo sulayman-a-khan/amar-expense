@@ -97,7 +97,7 @@ export async function GET(request, { params }) {
     // separately, newest first, so they can be shown as their own history
     // list rather than mixed into the day-by-day earning table above.
     const manualDueEntries = dueEntries
-      .filter((e) => e.type === 'clearance' && !e.dailyCollectionId)
+      .filter((e) => e.type === 'clearance' && !e.dailyCollectionId && e.date >= startDate)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .map((e) => ({
         _id: e._id,

@@ -219,7 +219,7 @@ export async function POST(request) {
         amount: reduced,
         balanceAfter: dueDoc.balance,
         note: trimmedNote ? `Manual due reduce: ${trimmedNote}` : 'Manual due reduce',
-        date: nowInDhaka(),
+        date: date ? toNoonUTC(date) : nowInDhaka(),
       });
 
       return NextResponse.json({

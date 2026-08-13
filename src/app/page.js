@@ -143,16 +143,30 @@ export default function Dashboard() {
             <h1 className="text-xl font-black tracking-tight text-[#2B2620]">Amar Hishab</h1>
             <p className="text-[11px] text-[#7D7156] font-semibold mt-0.5">আপনার দৈনিক হিসাব</p>
           </div>
-          <div
-            style={{
-              background: 'linear-gradient(135deg, #163524 0%, #0e2318 100%)',
-              border: '1px solid rgba(93,232,138,0.25)',
-              boxShadow: '0 4px 14px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
-            className="rounded-2xl px-3.5 py-2 text-right"
-          >
-            <p style={{ color: 'rgba(93,232,138,0.6)', letterSpacing: '0.12em' }} className="text-[9px] font-bold uppercase">Drawer</p>
-            <p style={{ color: '#ffffff' }} className="text-sm font-black leading-tight mt-0.5">৳{(wallets.Drawer || 0).toLocaleString('en-IN')}</p>
+          <div className="flex items-center gap-2">
+            <a
+              href="/expenses"
+              style={{
+                background: 'linear-gradient(135deg, #3D1F1A 0%, #2A1410 100%)',
+                border: '1px solid rgba(179,59,46,0.35)',
+                boxShadow: '0 4px 14px rgba(40,15,10,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
+              }}
+              className="rounded-2xl px-3.5 py-2 text-right block"
+            >
+              <p style={{ color: 'rgba(255,107,107,0.7)', letterSpacing: '0.12em' }} className="text-[9px] font-bold uppercase">Expense</p>
+              <p style={{ color: '#ffffff' }} className="text-[10px] font-black leading-tight mt-0.5">Tracker →</p>
+            </a>
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #163524 0%, #0e2318 100%)',
+                border: '1px solid rgba(93,232,138,0.25)',
+                boxShadow: '0 4px 14px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
+              }}
+              className="rounded-2xl px-3.5 py-2 text-right"
+            >
+              <p style={{ color: 'rgba(93,232,138,0.6)', letterSpacing: '0.12em' }} className="text-[9px] font-bold uppercase">Drawer</p>
+              <p style={{ color: '#ffffff' }} className="text-sm font-black leading-tight mt-0.5">৳{(wallets.Drawer || 0).toLocaleString('en-IN')}</p>
+            </div>
           </div>
         </div>
       </header>
