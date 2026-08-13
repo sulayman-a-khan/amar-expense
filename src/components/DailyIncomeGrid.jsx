@@ -47,31 +47,11 @@ export default function DailyIncomeGrid({ shajahanBike, shajahanDue, dailyBikes,
           const isLocked = !isShajahan && !!collectedToday;
           const isOffDay = !isShajahan && collectedToday === 'Off Day';
 
-          // Visual card background themes matching fleet cards
-          const cardStyle = isShajahan
-            ? hasShajahanDue
-              ? {
-                  background: 'linear-gradient(150deg, #1E3A5F 0%, #122540 60%, #0A172B 100%)',
-                  boxShadow: '0 8px 20px rgba(18,37,64,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
-                }
-              : {
-                  background: 'linear-gradient(150deg, #163524 0%, #0e2318 60%, #0a1d10 100%)',
-                  boxShadow: '0 8px 20px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
-                }
-            : isOffDay
-              ? {
-                  background: 'linear-gradient(150deg, #3A2420 0%, #2C1A17 60%, #24130F 100%)',
-                  boxShadow: '0 8px 20px rgba(179,59,46,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
-                }
-              : isLocked
-                ? {
-                    background: 'linear-gradient(150deg, #8A6D22 0%, #6B5117 60%, #4F3B10 100%)',
-                    boxShadow: '0 8px 20px rgba(138,109,34,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
-                  }
-                : {
-                    background: 'linear-gradient(150deg, #163524 0%, #0e2318 60%, #0a1d10 100%)',
-                    boxShadow: '0 8px 20px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
-                  };
+          // Unified dark green style for all Daily Income cards
+          const cardStyle = {
+            background: 'linear-gradient(150deg, #163524 0%, #0e2318 60%, #0a1d10 100%)',
+            boxShadow: '0 8px 20px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
+          };
 
           return (
             <div key={bike._id} className="relative group">
@@ -88,11 +68,7 @@ export default function DailyIncomeGrid({ shajahanBike, shajahanDue, dailyBikes,
                 {/* Glow */}
                 <div
                   style={{
-                    background: isOffDay
-                      ? 'radial-gradient(circle, rgba(255,107,91,0.18) 0%, transparent 70%)'
-                      : isLocked
-                        ? 'radial-gradient(circle, rgba(255,201,92,0.18) 0%, transparent 70%)'
-                        : 'radial-gradient(circle, rgba(52,199,89,0.16) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(52,199,89,0.16) 0%, transparent 70%)',
                     width: 90, height: 90, top: -30, right: -30,
                   }}
                   className="absolute rounded-full pointer-events-none"

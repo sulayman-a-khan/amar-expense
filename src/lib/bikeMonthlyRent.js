@@ -3,7 +3,7 @@ import { nowInDhaka, toNoonUTC } from './dateUtils';
 
 // Rent is payable from the 1st through this day (inclusive) of the month.
 // After it, if still unpaid, the month counts as Overdue.
-export const MONTHLY_RENT_DEADLINE_DAY = 12;
+export const MONTHLY_RENT_DEADLINE_DAY = 10;
 
 export function currentDhakaCalendarMonth() {
   const d = nowInDhaka();

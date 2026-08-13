@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { formatGlobalDate, todayDhakaDateString } from '@/lib/dateUtils';
+import ImagePreviewModal from './ImagePreviewModal';
 
 // Which sub-view is currently expanded below the boxes: null | 'earning' | 'offdays' | 'expenses'
 export default function BikeDetailsModal({ bike, activeDate, onClose }) {
@@ -26,6 +27,7 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
   const [manualReduceNote, setManualReduceNote] = useState('');
   const [manualReduceSubmitting, setManualReduceSubmitting] = useState(false);
   const [manualReduceError, setManualReduceError] = useState('');
+  const [previewImage, setPreviewImage] = useState(null);
 
   const todayStr = activeDate || todayDhakaDateString();
   const todayColl = earningDetails?.find(
@@ -213,7 +215,8 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
               <img
                 src={bike.driverImage}
                 alt={bike.driver}
-                className="w-12 h-12 rounded-full object-cover shrink-0"
+                onClick={() => setPreviewImage(bike.driverImage)}
+                className="w-12 h-12 rounded-full object-cover shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
                 style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.5)' }}
               />
             ) : (
@@ -620,6 +623,15 @@ export default function BikeDetailsModal({ bike, activeDate, onClose }) {
           </div>
         </div>
       )}
+
+      {/* Driver photo preview modal */}
+      {previewImage && (
+        <ImagePreviewModal
+          src={previewImage}
+          title={bike.driver || 'Driver Photo'}
+          onClose={() => setPreviewImage(null)}
+        />
+      )}
     </div>
   );
 }
@@ -768,7 +780,7 @@ function MonthlyRentPanel({ bike, data, onPaid }) {
           <div className="flex justify-between items-center text-[10px] font-extrabold">
             <span className="text-[#6B5F4F]">Collection Progress ({progressPercent}%)</span>
             <span className={isOverdue ? 'text-[#B33B2E]' : 'text-[#7D7156]'}>
-              {isPaid ? 'Complete' : isOverdue ? 'Deadline Passed (12th)' : `${currentMonth.daysRemaining} days remaining`}
+              {isPaid ? 'Complete' : isOverdue ? 'Deadline Passed (10th)' : `${currentMonth.daysRemaining} days remaining`}
             </span>
           </div>
           <div className="w-full h-2.5 bg-[#E3D9C2]/50 rounded-full overflow-hidden p-0.5">
@@ -1055,10 +1067,10 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (shift === 'Off Day' && !offDayReason) return; // guarded by disabling submit below too
+    if (shift === 'Off Day' && !offDayReason.trim()) return; // guarded by disabling submit below too
     if (shift === 'Half Day' && halfDayExpected === '') return; // expected amount required
     const finalPaid = shift === 'Off Day' ? 0 : (paidRent === '' ? expectedRent : Number(paidRent));
-    onSubmit(shift, finalPaid, shift === 'Off Day' ? offDayReason : undefined, shift === 'Half Day' ? expectedRent : undefined);
+    onSubmit(shift, finalPaid, shift === 'Off Day' ? offDayReason.trim() : undefined, shift === 'Half Day' ? expectedRent : undefined);
   };
 
   return (
@@ -1088,26 +1100,17 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
 
       {shift === 'Off Day' ? (
         <div>
-          <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">Reason</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {[
-              { label: 'No Driver', value: 'Driver Unavailable' },
-              { label: 'Mechanical Issue', value: 'Mechanical Issue' },
-            ].map((r) => (
-              <button
-                key={r.value}
-                type="button"
-                onClick={() => setOffDayReason(r.value)}
-                className={`py-2.5 text-xs font-bold rounded-xl border transition-colors ${
-                  offDayReason === r.value
-                    ? 'bg-[#B33B2E] text-white border-[#B33B2E]'
-                    : 'bg-[#FFFDF8] text-[#6B5F4F] border-[#E3D9C2]'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+          <label className="text-[10px] font-bold text-[#6B5F4F] uppercase tracking-wide block mb-1">
+            Off Day Reason <span className="text-[#B33B2E]">* (Required)</span>
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Driver Unavailable, Sick, Maintenance"
+            value={offDayReason}
+            onChange={(e) => setOffDayReason(e.target.value)}
+            className="w-full p-2.5 text-sm bg-[#FFFDF8] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620]"
+          />
         </div>
       ) : shift === 'Half Day' ? (
         <>
@@ -1157,7 +1160,7 @@ function BikeCollectionForm({ bike, submitting, onSubmit }) {
 
       <button
         type="submit"
-        disabled={submitting || (shift === 'Off Day' && !offDayReason) || (shift === 'Half Day' && halfDayExpected === '')}
+        disabled={submitting || (shift === 'Off Day' && !offDayReason.trim()) || (shift === 'Half Day' && halfDayExpected === '')}
         className="w-full py-2.5 bg-[#2B2620] text-white font-bold text-xs rounded-xl active:scale-[0.98] transition-transform disabled:opacity-50"
       >
         {submitting ? 'Saving...' : 'Save Collection'}

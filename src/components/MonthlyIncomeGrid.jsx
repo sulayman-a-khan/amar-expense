@@ -58,52 +58,88 @@ export default function MonthlyIncomeGrid({ monthlyBikes, onEditBike, onViewBike
 
       <div className={`grid ${gridColsClass} gap-2.5`}>
         {/* Card 1: Shop Rent (Same box size & height as bike cards, no icon) */}
-        <div className="relative group">
-          <button
-            onClick={() => router.push('/shop-rent')}
-            style={{
-              background: 'linear-gradient(150deg, #2D3748 0%, #1A202C 60%, #10141D 100%)',
-              boxShadow: '0 8px 20px rgba(26,32,44,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
-            }}
-            className="w-full h-[104px] rounded-2xl p-2.5 active:scale-[0.97] transition-transform flex flex-col items-center justify-center text-center relative overflow-hidden"
-          >
-            {/* Soft decorative glow */}
-            <div
-              style={{
-                background: 'radial-gradient(circle, rgba(226,232,240,0.15) 0%, transparent 70%)',
-                width: 90, height: 90, top: -30, right: -30,
-              }}
-              className="absolute rounded-full pointer-events-none"
-            />
-
-            <p style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '0.1em' }} className="relative text-[9px] font-bold uppercase mb-0.5">
-              Shop Rent
-            </p>
-
-            <p className="relative w-full text-[12px] font-extrabold text-white leading-tight truncate">
-              {shopLoading ? 'Loading...' : shopRecord ? (
-                shopRecord.remainingBalance > 0 ? (
-                  <span className="text-[#FF6B5B]">৳{shopRecord.remainingBalance.toLocaleString('en-IN')} due</span>
-                ) : shopRecord.remainingBalance < 0 ? (
-                  <span className="text-[#8FC2E8]">৳{Math.abs(shopRecord.remainingBalance).toLocaleString('en-IN')} adv</span>
-                ) : (
-                  <span className="text-[#5DE88A]">Paid ✓</span>
-                )
-              ) : 'Not started'}
-            </p>
-
-            {daysLeftShop !== null && (
-              <span
-                style={{
-                  color: daysLeftShop <= 1 ? '#FF6B5B' : daysLeftShop <= 3 ? '#FFB84D' : 'rgba(255,255,255,0.6)',
-                }}
-                className="relative text-[9px] font-bold mt-1 block truncate"
+        {(() => {
+          const isShopPaid = shopRecord && shopRecord.remainingBalance <= 0;
+          return (
+            <div className="relative group">
+              <button
+                onClick={() => router.push('/shop-rent')}
+                style={
+                  isShopPaid
+                    ? {
+                        background: 'linear-gradient(150deg, #163524 0%, #0e2318 60%, #0a1d10 100%)',
+                        boxShadow: '0 8px 20px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
+                      }
+                    : {
+                        background: 'linear-gradient(150deg, #1E293B 0%, #0F172A 60%, #020617 100%)',
+                        boxShadow: '0 8px 20px rgba(15,23,42,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
+                      }
+                }
+                className="w-full h-[104px] rounded-2xl p-2.5 active:scale-[0.97] transition-transform flex flex-col items-center justify-center text-center relative overflow-hidden"
               >
-                {daysLeftShop === 0 ? 'Due today' : `${daysLeftShop} days left`}
-              </span>
-            )}
-          </button>
-        </div>
+                {/* Glow */}
+                <div
+                  style={{
+                    background: isShopPaid
+                      ? 'radial-gradient(circle, rgba(52,199,89,0.22) 0%, transparent 70%)'
+                      : 'radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 70%)',
+                    width: 90, height: 90, top: -30, right: -30,
+                  }}
+                  className="absolute rounded-full pointer-events-none"
+                />
+
+                {/* Paid Badge indicator */}
+                {isShopPaid && (
+                  <div
+                    style={{ background: 'rgba(52,199,89,0.25)', border: '1px solid rgba(52,199,89,0.4)' }}
+                    className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center z-10"
+                  >
+                    <span className="text-[9px] font-black text-white leading-none">✓</span>
+                  </div>
+                )}
+
+                <p className="relative w-full text-[11px] font-extrabold text-white leading-tight truncate">
+                  Shop Rent
+                </p>
+
+                {shopLoading ? (
+                  <p style={{ color: 'rgba(255,255,255,0.4)' }} className="relative text-[10px] font-bold mt-1">
+                    Loading...
+                  </p>
+                ) : shopRecord ? (
+                  shopRecord.remainingBalance > 0 ? (
+                    <p style={{ color: '#FFB84D' }} className="relative text-[10px] font-bold mt-1 animate-pulse">
+                      ৳{shopRecord.remainingBalance.toLocaleString('en-IN')} due
+                    </p>
+                  ) : shopRecord.remainingBalance < 0 ? (
+                    <p style={{ color: '#8FC2E8' }} className="relative text-[10px] font-bold mt-1">
+                      ৳{Math.abs(shopRecord.remainingBalance).toLocaleString('en-IN')} adv
+                    </p>
+                  ) : (
+                    <p style={{ color: 'rgba(255,255,255,0.85)' }} className="relative text-[10px] font-bold mt-1">
+                      Paid ✓
+                    </p>
+                  )
+                ) : (
+                  <p style={{ color: 'rgba(255,255,255,0.4)' }} className="relative text-[10px] font-semibold mt-1">
+                    Not started
+                  </p>
+                )}
+
+                {!isShopPaid && daysLeftShop !== null && (
+                  <span
+                    style={{
+                      color: daysLeftShop <= 1 ? '#FF6B5B' : daysLeftShop <= 3 ? '#FFB84D' : 'rgba(255,255,255,0.6)',
+                    }}
+                    className="relative text-[9px] font-bold mt-0.5 block truncate"
+                  >
+                    {daysLeftShop === 0 ? 'Due today' : `${daysLeftShop} days left`}
+                  </span>
+                )}
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Monthly Bike Cards (Same box size & height) */}
         {monthlyBikes?.map((bike) => {
@@ -115,23 +151,13 @@ export default function MonthlyIncomeGrid({ monthlyBikes, onEditBike, onViewBike
 
           const cardStyle = isPaid
             ? {
-                background: 'linear-gradient(150deg, #8A6D22 0%, #6B5117 60%, #4F3B10 100%)',
-                boxShadow: '0 8px 20px rgba(138,109,34,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
+                background: 'linear-gradient(150deg, #163524 0%, #0e2318 60%, #0a1d10 100%)',
+                boxShadow: '0 8px 20px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
               }
-            : isPartial
-              ? {
-                  background: 'linear-gradient(150deg, #4A3610 0%, #352608 60%, #241903 100%)',
-                  boxShadow: '0 8px 20px rgba(186,138,20,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
-                }
-              : isOverdue
-                ? {
-                    background: 'linear-gradient(150deg, #3A2420 0%, #2C1A17 60%, #24130F 100%)',
-                    boxShadow: '0 8px 20px rgba(179,59,46,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
-                  }
-                : {
-                    background: 'linear-gradient(150deg, #163524 0%, #0e2318 60%, #0a1d10 100%)',
-                    boxShadow: '0 8px 20px rgba(15,40,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
-                  };
+            : {
+                background: 'linear-gradient(150deg, #1E293B 0%, #0F172A 60%, #020617 100%)',
+                boxShadow: '0 8px 20px rgba(15,23,42,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
+              };
 
           return (
             <div key={bike._id} className="relative group">
@@ -148,16 +174,22 @@ export default function MonthlyIncomeGrid({ monthlyBikes, onEditBike, onViewBike
                 <div
                   style={{
                     background: isPaid
-                      ? 'radial-gradient(circle, rgba(255,201,92,0.18) 0%, transparent 70%)'
-                      : isPartial
-                        ? 'radial-gradient(circle, rgba(255,184,77,0.18) 0%, transparent 70%)'
-                        : isOverdue
-                          ? 'radial-gradient(circle, rgba(255,107,91,0.18) 0%, transparent 70%)'
-                          : 'radial-gradient(circle, rgba(52,199,89,0.16) 0%, transparent 70%)',
+                      ? 'radial-gradient(circle, rgba(52,199,89,0.22) 0%, transparent 70%)'
+                      : 'radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 70%)',
                     width: 90, height: 90, top: -30, right: -30,
                   }}
                   className="absolute rounded-full pointer-events-none"
                 />
+
+                {/* Paid Badge indicator */}
+                {isPaid && (
+                  <div
+                    style={{ background: 'rgba(52,199,89,0.25)', border: '1px solid rgba(52,199,89,0.4)' }}
+                    className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center z-10"
+                  >
+                    <span className="text-[9px] font-black text-white leading-none">✓</span>
+                  </div>
+                )}
 
                 {bike.driverImage ? (
                   <img
