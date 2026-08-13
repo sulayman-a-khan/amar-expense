@@ -59,6 +59,7 @@ export default function ExpenseSummaryPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [sortMode, setSortMode] = useState('dateDesc'); // 'dateDesc' | 'amountDesc' | 'amountAsc'
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -235,11 +236,28 @@ export default function ExpenseSummaryPage() {
 
                   {isExpanded && (
                     <div className="px-5 py-4 space-y-3 bg-black/20 border-t border-white/5">
+                      {catEntries.length > 0 && (
+                        <div className="flex justify-end mb-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSortMode(prev => prev === 'dateDesc' ? 'amountDesc' : prev === 'amountDesc' ? 'amountAsc' : 'dateDesc');
+                            }}
+                            className="text-[10px] bg-white/10 hover:bg-white/20 text-white/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            <span>{sortMode === 'dateDesc' ? '📅 By Date' : sortMode === 'amountDesc' ? '⬇️ High to Low' : '⬆️ Low to High'}</span>
+                          </button>
+                        </div>
+                      )}
                       {catEntries.length === 0 ? (
                         <p className="text-[11px] text-white/40 italic">No entries this cycle</p>
                       ) : (
                         catEntries
-                          .sort((a, b) => new Date(b.date) - new Date(a.date))
+                          .sort((a, b) => {
+                            if (sortMode === 'amountDesc') return Number(b.amount) - Number(a.amount);
+                            if (sortMode === 'amountAsc') return Number(a.amount) - Number(b.amount);
+                            return new Date(b.date) - new Date(a.date);
+                          })
                           .map((t) => {
                             const d = new Date(t.date);
                             const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -343,8 +361,25 @@ export default function ExpenseSummaryPage() {
 
                   {isExpanded && (
                     <div className="px-5 py-4 space-y-3 bg-black/20 border-t border-white/5">
+                      {bikeExpenses.length > 0 && (
+                        <div className="flex justify-end mb-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSortMode(prev => prev === 'dateDesc' ? 'amountDesc' : prev === 'amountDesc' ? 'amountAsc' : 'dateDesc');
+                            }}
+                            className="text-[10px] bg-white/10 hover:bg-white/20 text-white/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            <span>{sortMode === 'dateDesc' ? '📅 By Date' : sortMode === 'amountDesc' ? '⬇️ High to Low' : '⬆️ Low to High'}</span>
+                          </button>
+                        </div>
+                      )}
                       {bikeExpenses
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .sort((a, b) => {
+                          if (sortMode === 'amountDesc') return Number(b.amount) - Number(a.amount);
+                          if (sortMode === 'amountAsc') return Number(a.amount) - Number(b.amount);
+                          return new Date(b.date) - new Date(a.date);
+                        })
                         .map((t) => {
                           const d = new Date(t.date);
                           const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
