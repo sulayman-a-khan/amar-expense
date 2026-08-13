@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DoubleCheckModal from './DoubleCheckModal';
 import BottomNav, { ActionSheet } from './BottomNav';
@@ -29,6 +29,12 @@ export default function EntryFlow({ bikes = [], selectedDate, onSaved }) {
   const [bikeList, setBikeList] = useState(bikes);
   const [walletBalances, setWalletBalances] = useState({});
 
+  useEffect(() => {
+    if (bikes && bikes.length > 0) {
+      setBikeList(bikes);
+    }
+  }, [bikes]);
+
   // If a page doesn't already have bikes loaded (e.g. Ledger, Loans), fetch
   // them lazily the first time the "Bike Rent" form is actually opened.
   const ensureBikes = useCallback(async () => {
@@ -37,13 +43,9 @@ export default function EntryFlow({ bikes = [], selectedDate, onSaved }) {
       const res = await fetch('/api/bikes');
       const data = await res.json();
       if (res.ok) {
-        // The quick "Bike Rent" entry sheet is DAILY-only — MONTHLY bikes
-        // use the dedicated monthly rent payment flow inside their own
-        // details card instead, so they're excluded here.
         setBikeList(
           data.bikes
-            ?.filter((b) => (b.rentMode || 'DAILY') === 'DAILY')
-            .map((b) => ({ _id: b._id, name: b.name, driver: b.driverName, dailyRent: b.dailyRent, isShajahanKaka: b.isShajahanKaka })) || []
+            ?.map((b) => ({ _id: b._id, name: b.name, driver: b.driverName || b.driver, dailyRent: b.dailyRent, isShajahanKaka: b.isShajahanKaka })) || []
         );
       } else {
         setErrorBanner(data.error || 'Could not load your bikes.');
@@ -63,7 +65,7 @@ export default function EntryFlow({ bikes = [], selectedDate, onSaved }) {
 
   const handleSelectAction = (key) => {
     setSheetOpen(false);
-    if (key === 'rent') ensureBikes();
+    if (key === 'rent' || key === 'expense') ensureBikes();
     if (key === 'transfer') fetchWallets();
     setActiveForm(key);
   };

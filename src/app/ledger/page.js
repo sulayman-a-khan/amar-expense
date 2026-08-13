@@ -124,7 +124,7 @@ export default function LedgerPage() {
       />
 
       {range === 'today' && (
-        <div className="max-w-md mx-auto px-5 mb-1 -mt-2">
+        <div className="max-w-md mx-auto px-5 mb-1 mt-1">
           <p className="text-[10px] text-[#9A8F78] font-semibold">Showing today only — tap &quot;Today&quot; above to load all-time.</p>
         </div>
       )}

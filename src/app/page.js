@@ -220,7 +220,7 @@ export default function Dashboard() {
       />
 
       <EntryFlow
-        bikes={bikes.filter((b) => (b.rentMode || 'DAILY') === 'DAILY').map((b) => ({ _id: b._id, name: b.name, driver: b.driver, dailyRent: b.dailyRent }))}
+        bikes={bikes.map((b) => ({ _id: b._id, name: b.name, driver: b.driver, dailyRent: b.dailyRent, rentMode: b.rentMode, isShajahanKaka: b.isShajahanKaka }))}
         selectedDate={selectedDate}
         onSaved={fetchDashboardData}
       />
