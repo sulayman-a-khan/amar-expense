@@ -20,17 +20,18 @@ export default function BottomNav({ onSelectAction }) {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-5 left-4 right-4 z-30">
-      <nav className="max-w-md mx-auto rounded-[28px] px-3 py-3 flex justify-between items-center gap-1 relative z-30">
+    <div className="fixed bottom-0 left-0 right-0 z-30">
+      <nav className="max-w-md mx-auto rounded-t-[28px] px-3 pt-3 pb-5 flex justify-between items-center gap-1 relative z-30">
         
         {/* Background Layer with overflow-hidden for circles */}
         <div 
           style={{
             background: 'linear-gradient(145deg, #0e2318 0%, #163524 45%, #0a1d10 100%)',
-            boxShadow: '0 20px 60px rgba(15, 40, 25, 0.45), 0 4px 16px rgba(0,0,0,0.3)',
-            border: '1px solid rgba(93,232,138,0.25)'
+            boxShadow: '0 -10px 40px rgba(15, 40, 25, 0.45)',
+            border: '1px solid rgba(93,232,138,0.25)',
+            borderBottom: 'none'
           }}
-          className="absolute inset-0 rounded-[28px] overflow-hidden -z-10"
+          className="absolute inset-0 rounded-t-[28px] overflow-hidden -z-10"
         >
           {/* Decorative circles */}
           <div

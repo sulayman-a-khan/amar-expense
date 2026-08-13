@@ -2,7 +2,7 @@
 
 export default function PageHeader({ title, subtitle, right }) {
   return (
-    <header className="bg-[#F7F3EA]/95 backdrop-blur-md sticky top-0 z-20 px-5 py-5">
+    <header className="bg-[#F7F3EA]/95 backdrop-blur-md px-5 py-5">
       <div className="max-w-md mx-auto flex items-center gap-3">
         <a
           href="/"

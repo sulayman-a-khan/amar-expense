@@ -119,7 +119,7 @@ export default function Dashboard() {
       />
 
       {isMissingMode && (
-        <div className="bg-[#F7E9E5] border-b border-[#E3C2B8] py-3 px-5 sticky top-0 z-30 shadow-sm">
+        <div className="bg-[#F7E9E5] border-b border-[#E3C2B8] py-3 px-5 shadow-sm">
           <div className="max-w-md mx-auto flex items-center justify-between">
             <span className="text-xs font-bold text-[#B33B2E]">
               ⚠️ Missing Entries — {selectedDate}
@@ -137,7 +137,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <header className={`bg-[#F7F3EA]/95 backdrop-blur-md sticky ${isMissingMode ? 'top-[42px]' : 'top-0'} z-20 px-5 py-5`}>
+      <header className="bg-[#F7F3EA]/95 backdrop-blur-md px-5 py-5">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-xl font-black tracking-tight text-[#2B2620]">Amar Hishab</h1>
@@ -151,10 +151,10 @@ export default function Dashboard() {
                 border: '1px solid rgba(179,59,46,0.35)',
                 boxShadow: '0 4px 14px rgba(40,15,10,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
               }}
-              className="rounded-2xl px-3.5 py-2 text-right block"
+              className="rounded-2xl px-3.5 py-2 text-right block h-full"
             >
               <p style={{ color: 'rgba(255,107,107,0.7)', letterSpacing: '0.12em' }} className="text-[9px] font-bold uppercase">Expense</p>
-              <p style={{ color: '#ffffff' }} className="text-[10px] font-black leading-tight mt-0.5">Tracker →</p>
+              <p style={{ color: '#ffffff' }} className="text-sm font-black leading-tight mt-0.5">Tracker →</p>
             </a>
             <div
               style={{
