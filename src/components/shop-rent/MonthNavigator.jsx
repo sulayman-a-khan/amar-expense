@@ -14,23 +14,30 @@ export default function MonthNavigator({ year, month, isCurrentMonth, onNavigate
   };
 
   return (
-    <div className="flex items-center justify-between bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl px-2 py-2">
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+        boxShadow: '0 4px 20px rgba(15,23,42,0.25)',
+        border: '1px solid rgba(255,255,255,0.06)'
+      }}
+      className="flex items-center justify-between rounded-full px-2 py-1.5"
+    >
       <button
         onClick={goPrev}
         aria-label="Previous month"
-        className="w-9 h-9 flex items-center justify-center rounded-xl text-[#6B5F4F] active:bg-[#F7F3EA] transition-colors font-bold"
+        className="w-10 h-10 flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors font-medium text-lg"
       >
         ←
       </button>
-      <span className="text-sm font-bold text-[#2B2620]">
+      <span className="text-sm font-semibold text-white">
         {formatRentCycleLabel(year, month)}
       </span>
       <button
         onClick={goNext}
         disabled={isCurrentMonth}
         aria-label="Next month"
-        className={`w-9 h-9 flex items-center justify-center rounded-xl font-bold transition-colors ${
-          isCurrentMonth ? 'text-[#E3D9C2] cursor-not-allowed' : 'text-[#6B5F4F] active:bg-[#F7F3EA]'
+        className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors font-medium text-lg ${
+          isCurrentMonth ? 'text-white/15 cursor-not-allowed' : 'text-white/60 hover:text-white hover:bg-white/10'
         }`}
       >
         →

@@ -262,10 +262,13 @@ export default function ExpenseSummaryPage() {
                             const d = new Date(t.date);
                             const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
                             return (
-                              <div key={t._id} className="flex justify-between items-start gap-3 border-l-2 border-[#FF6B6B]/40 pl-3 py-1 bg-white/2 p-2.5 rounded-2xl">
+                              <div key={t._id} className="flex justify-between items-center gap-3 border-l-2 border-[#FF6B6B]/40 pl-3 py-1 bg-white/2 p-2.5 rounded-2xl">
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-[12px] font-black text-white">{t.title}</p>
-                                  {t.noteText && <p className="text-[10px] text-white/60 mt-0.5 leading-relaxed">{t.noteText}</p>}
+                                  {t.noteText ? (
+                                    <p className="text-[11px] font-medium text-white/90 leading-snug">{t.noteText}</p>
+                                  ) : (
+                                    <p className="text-[11px] font-medium text-white/40 italic">No description</p>
+                                  )}
                                   {t.bikeName && (
                                     <span className="inline-block text-[9px] font-black text-white/70 bg-white/10 px-2 py-0.5 rounded-lg mt-1.5">
                                       {t.bikeName}
@@ -273,7 +276,7 @@ export default function ExpenseSummaryPage() {
                                   )}
                                 </div>
                                 <div className="text-right shrink-0">
-                                  <p className="text-[12px] font-black text-[#FF6B6B]">−৳{Number(t.amount).toLocaleString('en-IN')}</p>
+                                  <p className="text-[12px] font-black text-[#FF6B6B]">৳{Number(t.amount).toLocaleString('en-IN')}</p>
                                   <p className="text-[9px] text-white/40 mt-1">{dateStr}</p>
                                   {t.isCredit && (
                                     <span className="inline-block text-[8px] font-black text-white bg-[#B33B2E] px-1.5 py-0.5 rounded-md mt-1">CREDIT</span>
@@ -384,10 +387,13 @@ export default function ExpenseSummaryPage() {
                           const d = new Date(t.date);
                           const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
                           return (
-                            <div key={t._id} className="flex justify-between items-start gap-3 border-l-2 border-[#5DE88A]/40 pl-3 py-1 bg-white/2 p-2.5 rounded-2xl">
+                            <div key={t._id} className="flex justify-between items-center gap-3 border-l-2 border-[#5DE88A]/40 pl-3 py-1 bg-white/2 p-2.5 rounded-2xl">
                               <div className="min-w-0 flex-1">
-                                <p className="text-[12px] font-black text-white">{t.title}</p>
-                                {t.noteText && <p className="text-[10px] text-white/60 mt-0.5 leading-relaxed">{t.noteText}</p>}
+                                {t.noteText ? (
+                                  <p className="text-[11px] font-medium text-white/90 leading-snug">{t.noteText}</p>
+                                ) : (
+                                  <p className="text-[11px] font-medium text-white/40 italic">No description</p>
+                                )}
                                 {t.bikeName && (
                                   <span className="inline-block text-[9px] font-black text-white/70 bg-white/10 px-2 py-0.5 rounded-lg mt-1.5">
                                     {t.bikeName}
@@ -395,7 +401,7 @@ export default function ExpenseSummaryPage() {
                                 )}
                               </div>
                               <div className="text-right shrink-0">
-                                <p className="text-[12px] font-black text-[#5DE88A]">−৳{Number(t.amount).toLocaleString('en-IN')}</p>
+                                <p className="text-[12px] font-black text-[#5DE88A]">৳{Number(t.amount).toLocaleString('en-IN')}</p>
                                 <p className="text-[9px] text-white/40 mt-1">{dateStr}</p>
                               </div>
                             </div>

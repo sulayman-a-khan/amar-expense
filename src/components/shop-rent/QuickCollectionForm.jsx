@@ -46,44 +46,58 @@ export default function QuickCollectionForm({ year, month, isCurrentMonth, onRev
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-5 space-y-3">
-      <h3 className="text-[11px] font-bold text-[#6B5F4F] tracking-widest uppercase">Add Collection</h3>
-      {!isCurrentMonth && (
-        <p className="text-[11px] text-[#7D7156] -mt-1">Adding a backdated collection for this past month.</p>
-      )}
-
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+        boxShadow: '0 4px 20px rgba(15,23,42,0.25)',
+        border: '1px solid rgba(255,255,255,0.06)'
+      }}
+      className="rounded-[24px] p-6 space-y-5"
+    >
       <div>
-        <label className="block text-[10px] font-bold text-[#7D7156] uppercase tracking-wide mb-1">Amount (৳)</label>
-        <input
-          type="number" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)}
-          placeholder="e.g. 3000"
-          className="w-full p-3 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
-        />
+        <h3 className="text-[14px] font-bold text-white">Add Collection</h3>
+        {!isCurrentMonth && (
+          <p className="text-[11px] text-white/40 mt-0.5">Adding a backdated collection for this past month.</p>
+        )}
       </div>
 
-      <div>
-        <label className="block text-[10px] font-bold text-[#7D7156] uppercase tracking-wide mb-1">Date</label>
-        <input
-          type="date" required min={min} max={max} value={date} onChange={(e) => setDate(e.target.value)}
-          className="w-full p-3 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
-        />
+      <div className="space-y-4">
+        <div>
+          <label className="block text-[11px] font-medium text-white/40 mb-1">Amount (৳)</label>
+          <input
+            type="number" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)}
+            placeholder="e.g. 3000"
+            className="w-full pb-2 text-lg font-semibold bg-transparent border-b border-white/15 focus:outline-none focus:border-[#5DE88A]/50 text-white transition-colors placeholder:font-normal placeholder:text-white/20"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[11px] font-medium text-white/40 mb-1">Date</label>
+            <input
+              type="date" required min={min} max={max} value={date} onChange={(e) => setDate(e.target.value)}
+              className="w-full pb-2 text-sm font-medium bg-transparent border-b border-white/15 focus:outline-none focus:border-[#5DE88A]/50 text-white transition-colors [color-scheme:dark]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-medium text-white/40 mb-1">Note</label>
+            <input
+              type="text" value={note} onChange={(e) => setNote(e.target.value)}
+              placeholder="Optional"
+              className="w-full pb-2 text-sm font-medium bg-transparent border-b border-white/15 focus:outline-none focus:border-[#5DE88A]/50 text-white transition-colors placeholder:font-normal placeholder:text-white/20"
+            />
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label className="block text-[10px] font-bold text-[#7D7156] uppercase tracking-wide mb-1">Note (optional)</label>
-        <input
-          type="text" value={note} onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g. partial payment"
-          className="w-full p-3 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none focus:border-[#2B2620] text-[#2B2620]"
-        />
-      </div>
-
-      {error && <p className="text-xs text-[#B33B2E] font-semibold">{error}</p>}
+      {error && <p className="text-[11px] text-[#FF8E8E] font-semibold">{error}</p>}
 
       <button
         type="submit"
         disabled={disabled}
-        className="w-full py-3 bg-[#2B2620] text-white font-bold text-sm rounded-xl disabled:opacity-60"
+        className="w-full py-3.5 bg-gradient-to-r from-[#5DE88A] to-[#34D399] text-[#0F172A] font-bold text-sm rounded-[16px] disabled:opacity-60 hover:opacity-90 transition-opacity mt-2 shadow-lg shadow-[#5DE88A]/15"
       >
         Review Collection
       </button>

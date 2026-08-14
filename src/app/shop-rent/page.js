@@ -23,6 +23,7 @@ export default function ShopRentPage() {
   const [loadError, setLoadError] = useState('');
 
   const [showReports, setShowReports] = useState(false);
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
   const [editingRent, setEditingRent] = useState(false);
   const [newRentValue, setNewRentValue] = useState('');
   const [rentEditError, setRentEditError] = useState('');
@@ -115,67 +116,82 @@ export default function ShopRentPage() {
   };
 
   return (
-    <div>
-      <PageHeader title="Shop Rent Tracker" subtitle="Monthly rent collection and balance" />
+    <div className="min-h-screen bg-[#0F172A] text-white">
+      <PageHeader title="Shop Rent Tracker" subtitle="Monthly rent collection and balance" darkTheme={true} />
 
-      <main className="max-w-md mx-auto px-5 space-y-4">
+      <main className="max-w-md mx-auto px-5 space-y-6">
         <MonthNavigator year={year} month={month} isCurrentMonth={isCurrentMonth} onNavigate={handleNavigate} />
 
         {loading ? (
-          <p className="text-center text-sm text-[#7D7156] py-10">Loading…</p>
+          <p className="text-center text-sm text-white/40 py-10">Loading…</p>
         ) : loadError ? (
           <div className="text-center py-10 space-y-3">
-            <p className="text-sm font-semibold text-[#B33B2E]">{loadError}</p>
-            <button onClick={() => fetchMonth(year, month)} className="px-4 py-2 bg-[#2B2620] text-white text-xs font-bold rounded-xl">
+            <p className="text-sm font-semibold text-[#FF8E8E]">{loadError}</p>
+            <button onClick={() => fetchMonth(year, month)} className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 hover:bg-white/15 transition-colors">
               Try Again
             </button>
           </div>
         ) : (
           <>
-            <RentStatsCard record={record} />
+            <RentStatsCard 
+              record={record} 
+              rentSource={rentSource}
+              onEditRent={() => { setNewRentValue(String(rentSource?.monthlyRent || '')); setEditingRent(true); }}
+            />
 
-            {/* Default monthly rent setting */}
-            <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-4 flex items-center justify-between">
-              {editingRent ? (
-                <div className="flex-1 space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="number" min="0" value={newRentValue} onChange={(e) => setNewRentValue(e.target.value)}
-                      placeholder={`${rentSource?.monthlyRent || 8000}`}
-                      className="flex-1 p-2.5 text-sm bg-[#F7F3EA] border border-[#E3D9C2] rounded-xl focus:outline-none"
-                    />
-                    <button onClick={handleSaveRent} className="px-4 py-2 bg-[#2B2620] text-white text-xs font-bold rounded-xl">Save</button>
-                    <button onClick={() => { setEditingRent(false); setRentEditError(''); }} className="px-3 py-2 bg-[#F0EADA] text-[#6B5F4F] text-xs font-bold rounded-xl">✕</button>
-                  </div>
-                  {rentEditError && <p className="text-xs text-[#B33B2E] font-semibold">{rentEditError}</p>}
-                  <p className="text-[10px] text-[#7D7156]">This only affects future months — past records are never changed.</p>
+            {editingRent && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+                  border: '1px solid rgba(255,255,255,0.08)'
+                }}
+                className="rounded-[20px] p-4 flex-1 space-y-2 shadow-lg"
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" value={newRentValue} onChange={(e) => setNewRentValue(e.target.value)}
+                    placeholder={`${rentSource?.monthlyRent || 8000}`}
+                    className="flex-1 p-2.5 text-sm bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#5DE88A]/40 text-white placeholder:text-white/20"
+                  />
+                  <button onClick={handleSaveRent} className="px-4 py-2 bg-[#5DE88A] text-[#0F172A] text-xs font-bold rounded-xl hover:opacity-90 transition-opacity">Save</button>
+                  <button onClick={() => { setEditingRent(false); setRentEditError(''); }} className="px-3 py-2 bg-white/10 text-white/60 text-xs font-bold rounded-xl hover:bg-white/15 transition-colors">✕</button>
                 </div>
-              ) : (
-                <>
-                  <div>
-                    <span className="text-[10px] font-bold text-[#7D7156] uppercase tracking-wide block">Default Monthly Rent</span>
-                    <span className="text-sm font-extrabold text-[#2B2620]">৳{(rentSource?.monthlyRent || 0).toLocaleString('en-IN')}</span>
-                  </div>
-                  <button
-                    onClick={() => { setNewRentValue(String(rentSource?.monthlyRent || '')); setEditingRent(true); }}
-                    className="text-[11px] font-bold text-[#2E5C8A] px-3 py-1.5"
-                  >
-                    Edit
-                  </button>
-                </>
-              )}
-            </div>
+                {rentEditError && <p className="text-xs text-[#FF8E8E] font-semibold">{rentEditError}</p>}
+                <p className="text-[10px] text-white/30">This only affects future months — past records are never changed.</p>
+              </div>
+            )}
 
-            <QuickCollectionForm year={year} month={month} isCurrentMonth={isCurrentMonth} onReview={handleReviewCollection} />
+            {showCollectionForm ? (
+              <div className="space-y-3">
+                <QuickCollectionForm year={year} month={month} isCurrentMonth={isCurrentMonth} onReview={(data) => { handleReviewCollection(data); setShowCollectionForm(false); }} />
+                <button
+                  type="button"
+                  onClick={() => setShowCollectionForm(false)}
+                  className="w-full text-center text-[12px] font-semibold text-white/40 hover:text-white/60 transition-colors py-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCollectionForm(true)}
+                className="w-full py-3.5 rounded-[16px] text-sm font-bold text-white/50 border border-dashed border-white/15 hover:border-white/30 hover:text-white/70 transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="text-lg leading-none">+</span> Add Collection
+              </button>
+            )}
 
             <WithdrawalHistory withdrawals={withdrawals} />
 
-            <button
-              onClick={() => setShowReports((v) => !v)}
-              className="w-full py-3.5 rounded-2xl text-sm font-bold bg-[#FFFDF8] border border-[#E3D9C2] text-[#2B2620]"
-            >
-              {showReports ? 'Hide Reports ▲' : 'View Reports ▼'}
-            </button>
+            <div className="text-center pt-2">
+              <button
+                onClick={() => setShowReports((v) => !v)}
+                className="text-[12px] font-semibold text-[#7CB9FF] hover:text-[#7CB9FF]/70 transition-colors"
+              >
+                {showReports ? 'Hide Reports ▲' : 'View Reports ▼'}
+              </button>
+            </div>
 
             {showReports && <RentReports year={year} />}
           </>

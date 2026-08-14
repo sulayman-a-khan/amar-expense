@@ -32,7 +32,7 @@ export default function RentReports({ year }) {
             key={m}
             onClick={() => setMode(m)}
             className={`px-3.5 py-2 rounded-full text-xs font-bold transition-colors ${
-              mode === m ? 'bg-[#2B2620] text-white' : 'bg-[#FFFDF8] border border-[#E3D9C2] text-[#6B5F4F]'
+              mode === m ? 'bg-white/15 text-white border border-white/10' : 'bg-transparent border border-white/8 text-white/40 hover:text-white/60'
             }`}
           >
             {m === 'summary' ? 'All-Time' : `Year ${year}`}
@@ -41,18 +41,24 @@ export default function RentReports({ year }) {
       </div>
 
       {loading ? (
-        <p className="text-center text-sm text-[#7D7156] py-6">Loading report…</p>
+        <p className="text-center text-sm text-white/30 py-6">Loading report…</p>
       ) : error ? (
-        <p className="text-center text-sm text-[#B33B2E] py-6">{error}</p>
+        <p className="text-center text-sm text-[#FF8E8E] py-6">{error}</p>
       ) : data ? (
-        <div className="bg-[#FFFDF8] border border-[#E3D9C2] rounded-2xl p-5 space-y-3">
-          <ReportRow label="Total Rent Received" value={data.totals.totalReceived} color="text-[#1F7A4D]" />
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+            border: '1px solid rgba(255,255,255,0.06)'
+          }}
+          className="rounded-[20px] p-5 space-y-3 shadow-lg"
+        >
+          <ReportRow label="Total Rent Received" value={data.totals.totalReceived} color="text-[#5DE88A]" />
           <ReportRow label="Total Expected" value={data.totals.totalExpected} />
-          <ReportRow label="Outstanding Balance" value={data.totals.outstandingBalance} color="text-[#B33B2E]" />
-          <ReportRow label="Advance Balance" value={data.totals.advanceBalance} color="text-[#2E5C8A]" />
-          <div className="pt-3 border-t border-[#E3D9C2] flex justify-between items-center">
-            <span className="text-[11px] font-bold text-[#6B5F4F] uppercase tracking-wide">Collection Rate</span>
-            <span className="text-base font-black text-[#2B2620]">{data.totals.collectionRate}%</span>
+          <ReportRow label="Outstanding Balance" value={data.totals.outstandingBalance} color="text-[#FF6B6B]" />
+          <ReportRow label="Advance Balance" value={data.totals.advanceBalance} color="text-[#7CB9FF]" />
+          <div className="pt-3 border-t border-white/8 flex justify-between items-center">
+            <span className="text-[11px] font-semibold text-white/40">Collection Rate</span>
+            <span className="text-base font-black text-white">{data.totals.collectionRate}%</span>
           </div>
         </div>
       ) : null}
@@ -63,8 +69,8 @@ export default function RentReports({ year }) {
 function ReportRow({ label, value, color }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-[12px] font-semibold text-[#6B5F4F]">{label}</span>
-      <span className={`text-sm font-extrabold ${color || 'text-[#2B2620]'}`}>৳{value.toLocaleString('en-IN')}</span>
+      <span className="text-[12px] font-semibold text-white/40">{label}</span>
+      <span className={`text-sm font-extrabold ${color || 'text-white/80'}`}>৳{value.toLocaleString('en-IN')}</span>
     </div>
   );
 }
