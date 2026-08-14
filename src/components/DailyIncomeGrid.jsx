@@ -92,12 +92,12 @@ export default function DailyIncomeGrid({ shajahanBike, shajahanDue, dailyBikes,
                   <img
                     src={bike.driverImage}
                     alt={bike.driver || bike.driverName}
-                    className="relative w-10 h-10 rounded-full object-cover shrink-0 mt-2"
+                    className="relative w-10 h-10 rounded-full object-cover shrink-0"
                     style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.3)' }}
                   />
                 ) : null}
 
-                <div className={bike.driverImage ? 'relative min-w-0 mt-2' : 'contents mt-2'}>
+                <div className={bike.driverImage ? 'relative min-w-0' : 'contents'}>
                   <p className="relative w-full text-[11px] font-extrabold text-white leading-tight truncate">
                     {bike.driver || bike.driverName}
                   </p>
